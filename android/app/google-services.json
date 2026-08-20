@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "301382781151",
+    "project_id": "project-health-monitor-436da",
+    "storage_bucket": "project-health-monitor-436da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:301382781151:android:967b8da845e98593c8816a",
+        "android_client_info": {
+          "package_name": "za.co.diego.keel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAu9QhMIBX_ct0Yn7tNRn6P8x_PB3cNZ9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
