@@ -1,93 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/project_repository.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/infrastructure_screen.dart';
 import 'screens/signals_screen.dart';
 import 'screens/squads_screen.dart';
+import 'state/providers.dart';
 import 'theme/tokens.dart';
 import 'theme/typography.dart';
 
-class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.repository});
-
-  final ProjectRepository repository;
+class AppShell extends ConsumerStatefulWidget {
+  const AppShell({super.key});
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   int _index = 0;
 
   static const _titles = ['Health', 'Squads', 'Signals', 'Grid'];
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<HealthSnapshot>(
-      stream: widget.repository.watch(),
-      builder: (context, asyncSnapshot) {
-        final snapshot = asyncSnapshot.data;
+    // .value keeps the last good snapshot on screen through a transient error,
+    // which is the behaviour an app built for flaky connectivity wants.
+    final snapshot = ref.watch(healthSnapshotProvider).value;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(_titles[_index]),
-            actions: [
-              if (snapshot != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: Tokens.space4),
-                  child: _SyncBadge(snapshot: snapshot),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_titles[_index]),
+        actions: [
+          if (snapshot != null)
+            Padding(
+              padding: const EdgeInsets.only(right: Tokens.space4),
+              child: _SyncBadge(snapshot: snapshot),
+            ),
+        ],
+      ),
+      body: snapshot == null
+          ? const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Tokens.slate,
                 ),
-            ],
+              ),
+            )
+          : IndexedStack(
+              index: _index,
+              children: [
+                DashboardScreen(snapshot: snapshot),
+                SquadsScreen(snapshot: snapshot),
+                SignalsScreen(snapshot: snapshot),
+                InfrastructureScreen(snapshot: snapshot),
+              ],
+            ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.monitor_heart_outlined),
+            selectedIcon: Icon(Icons.monitor_heart),
+            label: 'Health',
           ),
-          body: snapshot == null
-              ? const Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Tokens.slate,
-                    ),
-                  ),
-                )
-              : IndexedStack(
-                  index: _index,
-                  children: [
-                    DashboardScreen(snapshot: snapshot),
-                    SquadsScreen(snapshot: snapshot),
-                    SignalsScreen(snapshot: snapshot),
-                    InfrastructureScreen(snapshot: snapshot),
-                  ],
-                ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.monitor_heart_outlined),
-                selectedIcon: Icon(Icons.monitor_heart),
-                label: 'Health',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.group_work_outlined),
-                selectedIcon: Icon(Icons.group_work),
-                label: 'Squads',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.notifications_none),
-                selectedIcon: Icon(Icons.notifications),
-                label: 'Signals',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.bolt_outlined),
-                selectedIcon: Icon(Icons.bolt),
-                label: 'Grid',
-              ),
-            ],
+          NavigationDestination(
+            icon: Icon(Icons.group_work_outlined),
+            selectedIcon: Icon(Icons.group_work),
+            label: 'Squads',
           ),
-        );
-      },
+          NavigationDestination(
+            icon: Icon(Icons.notifications_none),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Signals',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bolt_outlined),
+            selectedIcon: Icon(Icons.bolt),
+            label: 'Grid',
+          ),
+        ],
+      ),
     );
   }
 }
