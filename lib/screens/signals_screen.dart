@@ -13,9 +13,8 @@ class SignalsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final signals = [...snapshot.signals]..sort(
-        (a, b) => b.severity.severity.compareTo(a.severity.severity),
-      );
+    final signals = [...snapshot.signals]
+      ..sort((a, b) => b.severity.severity.compareTo(a.severity.severity));
 
     if (signals.isEmpty) {
       return _Empty();
@@ -38,10 +37,7 @@ class SignalsScreen extends StatelessWidget {
   }
 
   String _projectName(String id) => snapshot.projects
-      .firstWhere(
-        (p) => p.id == id,
-        orElse: () => snapshot.projects.first,
-      )
+      .firstWhere((p) => p.id == id, orElse: () => snapshot.projects.first)
       .name;
 }
 
@@ -123,11 +119,17 @@ class _Empty extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline,
-                size: 32, color: Tokens.jade),
+            const Icon(
+              Icons.check_circle_outline,
+              size: 32,
+              color: Tokens.jade,
+            ),
             const SizedBox(height: Tokens.space3),
-            Text('Nothing is trending toward failure',
-                style: AppType.heading, textAlign: TextAlign.center),
+            Text(
+              'Nothing is trending toward failure',
+              style: AppType.heading,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: Tokens.space2),
             Text(
               'Signals appear here as soon as a project starts drifting.',
