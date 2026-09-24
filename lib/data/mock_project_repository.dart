@@ -104,8 +104,18 @@ class MockProjectRepository implements ProjectRepository {
 
   static String _shortDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${d.day} ${months[d.month - 1]}';
   }
@@ -164,7 +174,8 @@ class MockProjectRepository implements ProjectRepository {
             name: 'Idle-time ratio',
             value: 35,
             weight: 0.15,
-            detail: '6.5 hours lost to outages, already excluded from this score',
+            detail:
+                '6.5 hours lost to outages, already excluded from this score',
           ),
         ],
       ),
@@ -326,31 +337,31 @@ class MockProjectRepository implements ProjectRepository {
   }
 
   List<Squad> _seedSquads() => const [
-        Squad(
-          id: 's1',
-          name: 'Platform squad',
-          headcount: 4,
-          capacityUsed: 1.28,
-          activeProjectCount: 2,
-          velocityTrend: -0.31,
-        ),
-        Squad(
-          id: 's2',
-          name: 'Mobile squad',
-          headcount: 3,
-          capacityUsed: 1.02,
-          activeProjectCount: 1,
-          velocityTrend: -0.12,
-        ),
-        Squad(
-          id: 's3',
-          name: 'Integrations squad',
-          headcount: 3,
-          capacityUsed: 0.78,
-          activeProjectCount: 1,
-          velocityTrend: 0.04,
-        ),
-      ];
+    Squad(
+      id: 's1',
+      name: 'Platform squad',
+      headcount: 4,
+      capacityUsed: 1.28,
+      activeProjectCount: 2,
+      velocityTrend: -0.31,
+    ),
+    Squad(
+      id: 's2',
+      name: 'Mobile squad',
+      headcount: 3,
+      capacityUsed: 1.02,
+      activeProjectCount: 1,
+      velocityTrend: -0.12,
+    ),
+    Squad(
+      id: 's3',
+      name: 'Integrations squad',
+      headcount: 3,
+      capacityUsed: 0.78,
+      activeProjectCount: 1,
+      velocityTrend: 0.04,
+    ),
+  ];
 
   List<Signal> _seedSignals() {
     final now = DateTime.now();

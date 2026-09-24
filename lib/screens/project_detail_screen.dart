@@ -118,7 +118,8 @@ class _FactorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '${factor.name}: ${factor.value.round()} out of 100, '
+      label:
+          '${factor.name}: ${factor.value.round()} out of 100, '
           '${factor.state.label}. ${factor.detail}',
       excludeSemantics: true,
       child: Column(

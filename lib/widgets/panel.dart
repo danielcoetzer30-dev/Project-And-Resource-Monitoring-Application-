@@ -45,7 +45,8 @@ class Panel extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                      child: Text(title!.toUpperCase(), style: AppType.label)),
+                    child: Text(title!.toUpperCase(), style: AppType.label),
+                  ),
                   ?trailing,
                 ],
               ),
