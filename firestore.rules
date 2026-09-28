@@ -3,87 +3,120 @@ rules_version = '2';
 // Firestore security rules for the Project & Resource Monitoring Application.
 //
 // Deploy with:  firebase deploy --only firestore:rules
+// Schema:       docs/SCHEMA.md
 //
-// Default posture is closed. The app currently runs entirely on
-// MockProjectRepository and neither reads nor writes Firestore, so denying
-// everything costs no functionality. Collections get opened deliberately, one
-// at a time, as the real data layer is built.
+// Shape of these rules:
 //
-// This matters more here than in most projects: the repository is public and
-// google-services.json is committed, so the Firebase config is freely
-// available. These rules are the only thing protecting the database.
+//   - Everything is denied unless a rule below allows it.
+//   - Organisation data is readable only by members of that organisation.
+//   - Projects, squads and signals are READ-ONLY to clients. They are written
+//     by ingestion, never by the app, which is what stops a team editing its
+//     own health scores.
+//   - Settings are the one thing a team may write, so scoring weights can be
+//     tuned from the app.
+//
+// This matters more here than in most projects: google-services.json is
+// committed, so the Firebase config is available to anyone with repository
+// access. These rules are the only thing protecting the data.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---------------------------------------------------------------------
-    // Helpers — commented out until auth exists, so deploys stay warning-free.
-    // Uncomment these together with the rules that call them.
+    // Helpers
     // ---------------------------------------------------------------------
 
-    // Is the request from a signed-in user?
-    // function isSignedIn() {
-    //   return request.auth != null;
-    // }
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-    // Does the signed-in user belong to the organisation owning this data?
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
     // Reads the caller's own user document to find their organisation.
-    // function belongsToOrg(orgId) {
-    //   return isSignedIn()
-    //     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
-    // }
+    // Costs one document read per rule evaluation, which Firestore caches
+    // within a single request.
+    function callerOrgId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+    }
 
-    // ---------------------------------------------------------------------
-    // Default deny. Anything not explicitly matched below is refused.
-    // ---------------------------------------------------------------------
-    match /{document=**} {
-      allow read, write: if false;
+    function belongsToOrg(orgId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && callerOrgId() == orgId;
     }
 
     // ---------------------------------------------------------------------
-    // Planned rules — intentionally commented out.
-    //
-    // Uncomment each block as the corresponding feature is built, and only
-    // after the anonymiser is in place. Ingested data must already be
-    // aggregated to squad level before it reaches Firestore; these rules
-    // control who may read it, not whether it should have been stored.
+    // Users
     // ---------------------------------------------------------------------
+    match /users/{userId} {
+      // A user reads only their own profile. Reading other members would
+      // expose who is in a squad, which the whole design avoids.
+      allow read: if isSelf(userId);
 
-    // A user may read and update only their own profile.
-    // match /users/{userId} {
-    //   allow read: if isSignedIn() && request.auth.uid == userId;
-    //   allow update: if isSignedIn() && request.auth.uid == userId;
-    //   allow create, delete: if false; // handled server-side
-    // }
+      // Registration creates the caller's own document. The role is pinned to
+      // developer here so an account cannot grant itself a higher one; raising
+      // a role is done in the console.
+      allow create: if isSelf(userId)
+        && request.resource.data.role == 'developer'
+        && request.resource.data.orgId is string;
 
-    // Organisation members may read their organisation.
-    // match /organisations/{orgId} {
-    //   allow read: if belongsToOrg(orgId);
-    //   allow write: if false; // handled server-side
-    // }
+      // Display name only. Changing your own orgId or role is not a thing.
+      allow update: if isSelf(userId)
+        && request.resource.data.orgId == resource.data.orgId
+        && request.resource.data.role == resource.data.role;
 
-    // Projects, squads and signals are readable by the owning organisation.
-    // All three are written by ingestion, never by a client, so client writes
-    // stay closed — this is also what stops anyone editing their own scores.
-    // match /organisations/{orgId}/projects/{projectId} {
-    //   allow read: if belongsToOrg(orgId);
-    //   allow write: if false;
-    // }
+      allow delete: if false;
+    }
 
-    // match /organisations/{orgId}/squads/{squadId} {
-    //   allow read: if belongsToOrg(orgId);
-    //   allow write: if false;
-    // }
+    // ---------------------------------------------------------------------
+    // Organisations
+    // ---------------------------------------------------------------------
+    match /organisations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow write: if false; // created server-side or in the console
 
-    // match /organisations/{orgId}/signals/{signalId} {
-    //   allow read: if belongsToOrg(orgId);
-    //   allow write: if false;
-    // }
+      // -------------------------------------------------------------------
+      // Monitoring data — readable by members, written only by ingestion.
+      // -------------------------------------------------------------------
+      match /projects/{projectId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if false;
+      }
 
-    // Scoring weights are the one thing a team may tune themselves.
-    // match /organisations/{orgId}/settings/{settingId} {
-    //   allow read: if belongsToOrg(orgId);
-    //   allow write: if belongsToOrg(orgId);
-    // }
+      match /squads/{squadId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if false;
+      }
+
+      match /signals/{signalId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if false;
+      }
+
+      match /outages/{outageId} {
+        allow read: if belongsToOrg(orgId);
+        // Teams without a schedule feed enter windows by hand, so this one is
+        // writable by members.
+        allow write: if belongsToOrg(orgId);
+      }
+
+      // -------------------------------------------------------------------
+      // Configuration — writable by the team.
+      // -------------------------------------------------------------------
+      match /sources/{sourceId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if belongsToOrg(orgId)
+          // Tokens belong to the backend. Refuse any document carrying one,
+          // rather than trusting the client not to send it.
+          && !request.resource.data.keys().hasAny(['token', 'accessToken', 'apiKey']);
+      }
+
+      match /settings/{settingId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if belongsToOrg(orgId);
+      }
+    }
   }
 }
