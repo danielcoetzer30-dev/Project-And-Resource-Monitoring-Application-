@@ -2,8 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'app_shell.dart';
 import 'firebase_options.dart';
+import 'routing/app_router.dart';
+import 'routing/routes.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -21,7 +22,12 @@ class KeelApp extends StatelessWidget {
       title: 'Keel',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: const AppShell(),
+      // The shell is the entry point rather than AuthGate: Firestore rules are
+      // closed and the prototype runs on seeded data, so gating it behind a
+      // sign-in that cannot yet succeed would make it undemonstrable. Stage 1
+      // switches this to AuthGate.
+      initialRoute: Routes.shell,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }
