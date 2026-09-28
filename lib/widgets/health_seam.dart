@@ -64,7 +64,8 @@ class HealthSeam extends StatelessWidget {
     final seam = Semantics(
       // The visual is a trend; screen readers get that trend as a sentence
       // rather than a list of eighty colours.
-      label: 'Health history over ${segments.length} periods. '
+      label:
+          'Health history over ${segments.length} periods. '
           'Currently ${latest.state.label}. '
           '${flagCount == 0 ? 'No risk flags' : '$flagCount risk flags'} in this window.',
       excludeSemantics: true,
