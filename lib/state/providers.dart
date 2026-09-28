@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/mock_project_repository.dart';
+import '../data/auth_repository.dart';
+import '../data/firebase_auth_repository.dart';
+import '../data/firestore_project_repository.dart';
 import '../data/project_repository.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
@@ -8,6 +10,7 @@ import '../services/signal_engine.dart';
 import '../services/sync/connectivity_service.dart';
 import '../services/sync/notification_service.dart';
 import '../services/sync/sync_service.dart';
+import 'auth_notifier.dart';
 import 'dashboard_notifier.dart';
 import 'settings_notifier.dart';
 
@@ -19,11 +22,29 @@ import 'settings_notifier.dart';
 ///
 /// Feature-level providers (dashboard state, auth state, settings) live in
 /// their own `*_notifier.dart` files alongside this one, and read these.
+/// Firebase Auth, behind the AuthRepository interface.
+final authRepositoryProvider = Provider<AuthRepository>(
+  (ref) => FirebaseAuthRepository(),
+);
+
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
+
+/// Live project data, scoped to the signed-in user's organisation.
+///
+/// Watches auth, so signing out tears the repository down and signing in as
+/// someone from a different organisation builds a new one pointed at their
+/// data. Nothing above this ever learns which implementation it got.
+///
+/// To go back to seeded data — for a demo with no connection, or for tests —
+/// override this provider with MockProjectRepository. That is the only change
+/// needed; every screen reads through the interface.
 final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
-  // The prototype runs on seeded data so it works with no backend, no
-  // credentials and no connection. Stage 4 replaces this line with
-  // FirestoreProjectRepository and nothing above it changes.
-  final repository = MockProjectRepository();
+  final auth = ref.watch(authNotifierProvider);
+  final orgId = auth is SignedIn ? auth.user.orgId : '';
+
+  final repository = FirestoreProjectRepository(orgId: orgId);
   ref.onDispose(repository.dispose);
   return repository;
 });

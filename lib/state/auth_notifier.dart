@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/errors/failure.dart';
 import '../data/auth_repository.dart';
 import '../models/app_user.dart';
+import 'providers.dart';
 
 /// Where the session currently stands.
 sealed class AuthState {
@@ -38,9 +39,9 @@ class AuthBusy extends AuthState {
 /// place that knows whether somebody is signed in and exactly one path in and
 /// out of that state.
 class AuthNotifier extends Notifier<AuthState> {
-  AuthNotifier(this._repository);
-
-  final AuthRepository _repository;
+  /// Set by [build] from the provider, so the repository can be overridden in
+  /// tests without constructing the notifier by hand.
+  late final AuthRepository _repository = ref.read(authRepositoryProvider);
 
   @override
   AuthState build() {

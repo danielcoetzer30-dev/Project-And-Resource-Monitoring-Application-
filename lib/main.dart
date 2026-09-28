@@ -22,10 +22,6 @@ class KeelApp extends StatelessWidget {
       title: 'Keel',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      // The shell is the entry point rather than AuthGate: Firestore rules are
-      // closed and the prototype runs on seeded data, so gating it behind a
-      // sign-in that cannot yet succeed would make it undemonstrable. Stage 1
-      // switches this to AuthGate.
       initialRoute: Routes.shell,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );

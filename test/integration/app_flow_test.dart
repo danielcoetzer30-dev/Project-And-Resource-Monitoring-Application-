@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:keel/app_shell.dart';
+import 'package:keel/data/mock_project_repository.dart';
 import 'package:keel/routing/app_router.dart';
 import 'package:keel/routing/routes.dart';
+import 'package:keel/state/providers.dart';
 import 'package:keel/theme/app_theme.dart';
+
+import '../support/fake_auth_repository.dart';
 
 /// Walks the app the way someone actually uses it: open it, read the
 /// dashboard, move between tabs, open a project.
@@ -14,26 +18,29 @@ import 'package:keel/theme/app_theme.dart';
 /// no credentials — which is the same reason the prototype can be demonstrated
 /// on a phone with no signal.
 void main() {
-  Widget app() {
-    return const ProviderScope(
+  /// The app with Firebase swapped out: a signed-in fake auth repository and
+  /// the seeded mock instead of Firestore. Exactly the two overrides the
+  /// interfaces exist to make possible.
+  Widget app({bool themed = false}) {
+    return ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
+        projectRepositoryProvider.overrideWith((ref) {
+          final repository = MockProjectRepository();
+          ref.onDispose(repository.dispose);
+          return repository;
+        }),
+      ],
       child: MaterialApp(
         title: 'Keel',
+        theme: themed ? AppTheme.dark : null,
         initialRoute: Routes.shell,
         onGenerateRoute: AppRouter.onGenerateRoute,
       ),
     );
   }
 
-  Widget themedApp() {
-    return ProviderScope(
-      child: MaterialApp(
-        title: 'Keel',
-        theme: AppTheme.dark,
-        initialRoute: Routes.shell,
-        onGenerateRoute: AppRouter.onGenerateRoute,
-      ),
-    );
-  }
+  Widget themedApp() => app(themed: true);
 
   testWidgets('opens on the health dashboard', (tester) async {
     await tester.pumpWidget(app());
