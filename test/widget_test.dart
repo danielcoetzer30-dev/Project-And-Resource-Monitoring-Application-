@@ -35,8 +35,10 @@ void main() {
     // the point.
     for (final project in snapshot.projects) {
       expect(project.factors.length, greaterThan(1));
-      final totalWeight =
-          project.factors.fold<double>(0, (sum, f) => sum + f.weight);
+      final totalWeight = project.factors.fold<double>(
+        0,
+        (sum, f) => sum + f.weight,
+      );
       expect(totalWeight, closeTo(1.0, 0.001));
     }
 
