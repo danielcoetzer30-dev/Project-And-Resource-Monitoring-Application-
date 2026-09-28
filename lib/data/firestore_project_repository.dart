@@ -44,6 +44,14 @@ class FirestoreProjectRepository implements ProjectRepository {
   }
 
   void _listenToCollections() {
+    // No organisation means nobody is signed in yet. Emit an empty snapshot
+    // rather than building a path with a blank segment, which Firestore
+    // rejects outright.
+    if (orgId.isEmpty) {
+      _emit();
+      return;
+    }
+
     final org = _firestore
         .collection(AppConstants.organisationsCollection)
         .doc(orgId);

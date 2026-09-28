@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../app_shell.dart';
 import '../models/project.dart';
 import '../models/squad.dart';
+import '../screens/auth/auth_gate.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/onboarding/connect_source_screen.dart';
 import '../screens/project_detail_screen.dart';
@@ -28,7 +28,9 @@ abstract final class AppRouter {
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case Routes.shell:
-        return _page(const AppShell(), settings);
+        // The gate, not the shell: data is scoped to the signed-in user's
+        // organisation, so there is nothing to render before sign-in.
+        return _page(const AuthGate(), settings);
 
       case Routes.signIn:
         return _page(const SignInScreen(), settings);
