@@ -17,8 +17,10 @@ class InfrastructureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grid = snapshot.grid;
-    final totalLost = snapshot.projects
-        .fold<double>(0, (sum, p) => sum + p.loadSheddingHoursLost);
+    final totalLost = snapshot.projects.fold<double>(
+      0,
+      (sum, p) => sum + p.loadSheddingHoursLost,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -83,9 +85,11 @@ class InfrastructureScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(p.name,
-                            style: AppType.body,
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          p.name,
+                          style: AppType.body,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       const SizedBox(width: Tokens.space3),
                       Text(
@@ -101,8 +105,11 @@ class InfrastructureScreen extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_outlined,
-                      size: 18, color: Tokens.slate),
+                  const Icon(
+                    Icons.shield_outlined,
+                    size: 18,
+                    color: Tokens.slate,
+                  ),
                   const SizedBox(width: Tokens.space3),
                   Expanded(
                     child: Text(

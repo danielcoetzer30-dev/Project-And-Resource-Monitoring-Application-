@@ -63,10 +63,7 @@ class _PortfolioSummary extends StatelessWidget {
 
     return Panel(
       title: 'Portfolio',
-      trailing: Text(
-        '${snapshot.projects.length} active',
-        style: AppType.data,
-      ),
+      trailing: Text('${snapshot.projects.length} active', style: AppType.data),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -132,10 +129,7 @@ class _StateCount extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Tokens.space1),
-          Text(
-            state.label,
-            style: AppType.label.copyWith(letterSpacing: 0.2),
-          ),
+          Text(state.label, style: AppType.label.copyWith(letterSpacing: 0.2)),
         ],
       ),
     );
@@ -179,7 +173,7 @@ class _GridStrip extends StatelessWidget {
                   next == null
                       ? '${grid.hoursLostThisWeek} hours lost this week. Capacity forecasts already account for it.'
                       : 'Next outage ${_time(next)}–${_time(grid.nextOutageEnd!)}. '
-                          '${grid.hoursLostThisWeek} hours lost this week, excluded from every health score.',
+                            '${grid.hoursLostThisWeek} hours lost this week, excluded from every health score.',
                   style: AppType.bodyMuted,
                 ),
               ],
@@ -244,8 +238,9 @@ class _ProjectRow extends StatelessWidget {
                     children: [
                       Text(
                         project.score.round().toString(),
-                        style: AppType.metricSmall
-                            .copyWith(color: project.state.color),
+                        style: AppType.metricSmall.copyWith(
+                          color: project.state.color,
+                        ),
                       ),
                       const SizedBox(height: Tokens.space1),
                       Text('SCORE', style: AppType.label),

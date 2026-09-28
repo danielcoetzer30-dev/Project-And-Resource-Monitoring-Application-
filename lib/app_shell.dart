@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/project_repository.dart';
+import 'routing/routes.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/infrastructure_screen.dart';
 import 'screens/signals_screen.dart';
@@ -9,6 +10,7 @@ import 'screens/squads_screen.dart';
 import 'state/providers.dart';
 import 'theme/tokens.dart';
 import 'theme/typography.dart';
+import 'widgets/offline_banner.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -28,15 +30,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     // which is the behaviour an app built for flaky connectivity wants.
     final snapshot = ref.watch(healthSnapshotProvider).value;
 
+    final syncState = ref.watch(syncStateProvider).value;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_index]),
         actions: [
-          if (snapshot != null)
-            Padding(
-              padding: const EdgeInsets.only(right: Tokens.space4),
-              child: _SyncBadge(snapshot: snapshot),
-            ),
+          if (snapshot != null) _SyncBadge(snapshot: snapshot),
+          IconButton(
+            onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+          ),
         ],
       ),
       body: snapshot == null
@@ -50,13 +55,29 @@ class _AppShellState extends ConsumerState<AppShell> {
                 ),
               ),
             )
-          : IndexedStack(
-              index: _index,
+          : Column(
               children: [
-                DashboardScreen(snapshot: snapshot),
-                SquadsScreen(snapshot: snapshot),
-                SignalsScreen(snapshot: snapshot),
-                InfrastructureScreen(snapshot: snapshot),
+                if (syncState != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Tokens.space4,
+                      Tokens.space2,
+                      Tokens.space4,
+                      0,
+                    ),
+                    child: OfflineBanner(syncState: syncState),
+                  ),
+                Expanded(
+                  child: IndexedStack(
+                    index: _index,
+                    children: [
+                      DashboardScreen(snapshot: snapshot),
+                      SquadsScreen(snapshot: snapshot),
+                      SignalsScreen(snapshot: snapshot),
+                      InfrastructureScreen(snapshot: snapshot),
+                    ],
+                  ),
+                ),
               ],
             ),
       bottomNavigationBar: NavigationBar(
