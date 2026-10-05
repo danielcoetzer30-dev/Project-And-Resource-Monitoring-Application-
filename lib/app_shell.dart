@@ -1,110 +1,170 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/project_repository.dart';
-import 'routing/routes.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/home_screen.dart';
 import 'screens/infrastructure_screen.dart';
 import 'screens/signals_screen.dart';
 import 'screens/squads_screen.dart';
-import 'state/providers.dart';
 import 'theme/tokens.dart';
 import 'theme/typography.dart';
-import 'widgets/offline_banner.dart';
 
-class AppShell extends ConsumerStatefulWidget {
-  const AppShell({super.key});
+class AppShell extends StatefulWidget {
+  const AppShell({super.key, required this.repository});
+
+  final ProjectRepository repository;
 
   @override
-  ConsumerState<AppShell> createState() => _AppShellState();
+  State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends ConsumerState<AppShell> {
+class _AppShellState extends State<AppShell> {
+  /// 0 is Home. The data sections follow, in the order of [_sections].
   int _index = 0;
 
-  static const _titles = ['Health', 'Squads', 'Signals', 'Grid'];
+  /// Everything the user can open from Home. The navigation bar is built from
+  /// this same list, so a section is named and iconed in exactly one place.
+  static const _sections = [
+    HomeDestination(
+      title: 'Health',
+      description:
+          'How each project is doing, worst first, with the trend behind '
+          'every score.',
+      icon: Icons.monitor_heart_outlined,
+      selectedIcon: Icons.monitor_heart,
+    ),
+    HomeDestination(
+      title: 'Squads',
+      description: 'Capacity and velocity for each squad.',
+      icon: Icons.group_work_outlined,
+      selectedIcon: Icons.group_work,
+    ),
+    HomeDestination(
+      title: 'Signals',
+      description: 'Early warnings, each with the reason it was raised.',
+      icon: Icons.notifications_none,
+      selectedIcon: Icons.notifications,
+    ),
+    HomeDestination(
+      title: 'Grid',
+      description: 'Load-shedding, and the hours it has taken from your week.',
+      icon: Icons.bolt_outlined,
+      selectedIcon: Icons.bolt,
+    ),
+  ];
+
+  /// Subscribed once. Calling watch() inside build would ask the repository
+  /// for the stream again on every tab change.
+  late final Stream<HealthSnapshot> _stream = widget.repository.watch();
+
+  String get _title => _index == 0 ? 'Home' : _sections[_index - 1].title;
 
   @override
   Widget build(BuildContext context) {
-    // .value keeps the last good snapshot on screen through a transient error,
-    // which is the behaviour an app built for flaky connectivity wants.
-    final snapshot = ref.watch(healthSnapshotProvider).value;
+    return StreamBuilder<HealthSnapshot>(
+      stream: _stream,
+      builder: (context, asyncSnapshot) {
+        final snapshot = asyncSnapshot.data;
 
-    final syncState = ref.watch(syncStateProvider).value;
+        // Only the data tabs wait for a snapshot. Home needs none, so the app
+        // opens straight onto it with or without a connection.
+        Widget withData(Widget Function(HealthSnapshot snapshot) build) {
+          if (snapshot != null) return build(snapshot);
+          return asyncSnapshot.hasError ? const _LoadError() : const _Loading();
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_index]),
-        actions: [
-          if (snapshot != null) _SyncBadge(snapshot: snapshot),
-          IconButton(
-            onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
-      body: snapshot == null
-          ? const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Tokens.slate,
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(_title),
+            actions: [
+              if (snapshot != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: Tokens.space4),
+                  child: _SyncBadge(snapshot: snapshot),
                 ),
+            ],
+          ),
+          body: IndexedStack(
+            index: _index,
+            children: [
+              HomeScreen(
+                destinations: _sections,
+                onOpen: (i) => setState(() => _index = i + 1),
               ),
-            )
-          : Column(
-              children: [
-                if (syncState != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      Tokens.space4,
-                      Tokens.space2,
-                      Tokens.space4,
-                      0,
-                    ),
-                    child: OfflineBanner(syncState: syncState),
-                  ),
-                Expanded(
-                  child: IndexedStack(
-                    index: _index,
-                    children: [
-                      DashboardScreen(snapshot: snapshot),
-                      SquadsScreen(snapshot: snapshot),
-                      SignalsScreen(snapshot: snapshot),
-                      InfrastructureScreen(snapshot: snapshot),
-                    ],
-                  ),
+              withData((s) => DashboardScreen(snapshot: s)),
+              withData((s) => SquadsScreen(snapshot: s)),
+              withData((s) => SignalsScreen(snapshot: s)),
+              withData((s) => InfrastructureScreen(snapshot: s)),
+            ],
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              for (final section in _sections)
+                NavigationDestination(
+                  icon: Icon(section.icon),
+                  selectedIcon: Icon(section.selectedIcon),
+                  label: section.title,
                 ),
-              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2, color: Tokens.slate),
+      ),
+    );
+  }
+}
+
+/// Shown on a data tab when the first snapshot fails to arrive. The stream
+/// keeps running after an error, so this clears by itself once data flows.
+class _LoadError extends StatelessWidget {
+  const _LoadError();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Tokens.space5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_outlined, size: 24, color: Tokens.slate),
+            const SizedBox(height: Tokens.space3),
+            Text(
+              'Your projects did not load',
+              style: AppType.heading,
+              textAlign: TextAlign.center,
             ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.monitor_heart_outlined),
-            selectedIcon: Icon(Icons.monitor_heart),
-            label: 'Health',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.group_work_outlined),
-            selectedIcon: Icon(Icons.group_work),
-            label: 'Squads',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_none),
-            selectedIcon: Icon(Icons.notifications),
-            label: 'Signals',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bolt_outlined),
-            selectedIcon: Icon(Icons.bolt),
-            label: 'Grid',
-          ),
-        ],
+            const SizedBox(height: Tokens.space2),
+            Text(
+              'Check your connection and that you are signed in to the right '
+              'organisation. This screen updates by itself once data '
+              'returns.',
+              style: AppType.bodyMuted,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
