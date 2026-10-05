@@ -3,287 +3,333 @@ import 'package:flutter/material.dart';
 import '../data/project_repository.dart';
 import '../models/health_state.dart';
 import '../models/project.dart';
-import '../models/squad.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
-import '../widgets/health_seam.dart';
+import '../widgets/dashboard/dashboard_format.dart';
+import '../widgets/dashboard/grid_strip.dart';
+import '../widgets/dashboard/project_row.dart';
+import '../widgets/dashboard/signals_panel.dart';
+import '../widgets/dashboard/summary_strip.dart';
+import '../widgets/dashboard/sync_banner.dart';
 import '../widgets/panel.dart';
-import '../widgets/status_pill.dart';
-import 'project_detail_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key, required this.snapshot});
+/// How the project list is ordered.
+enum _Sort {
+  worstFirst('Worst first'),
+  nameAscending('Name'),
+  deadlineSoonest('Deadline');
+
+  const _Sort(this.label);
+
+  final String label;
+}
+
+/// Where the team lands: every project, worst first, with the signals behind
+/// the scores and the grid as context.
+///
+/// Read-only by design. There is no control here for typing in progress; the
+/// only input is *Connect a source*, handed in as a callback so this screen
+/// never needs to know the router.
+///
+/// Sort and filter live in this widget's state rather than in a provider. The
+/// shell keeps every tab mounted in an IndexedStack, so the choice survives
+/// switching tabs. When the Riverpod state layer arrives, replace [_sort] and
+/// [_states] with DashboardNotifier and nothing else here has to change.
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({
+    super.key,
+    required this.snapshot,
+    this.onOpenProject,
+    this.onConnectSource,
+  });
 
   final HealthSnapshot snapshot;
 
+  /// Called when a project row is tapped. Null leaves rows non-navigating.
+  final ValueChanged<Project>? onOpenProject;
+
+  /// Called from the empty state. Null hides the button.
+  final VoidCallback? onConnectSource;
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  _Sort _sort = _Sort.worstFirst;
+
+  /// Empty means show everything.
+  final Set<HealthState> _states = {};
+
+  /// Worst-first is the default deliberately: in an early warning system the
+  /// thing needing attention belongs at the top, not wherever the alphabet
+  /// happens to put it.
+  List<Project> _apply(List<Project> projects) {
+    final result = _states.isEmpty
+        ? [...projects]
+        : projects.where((p) => _states.contains(p.state)).toList();
+
+    switch (_sort) {
+      case _Sort.worstFirst:
+        result.sort((a, b) {
+          final bySeverity = b.state.severity.compareTo(a.state.severity);
+          return bySeverity != 0 ? bySeverity : a.score.compareTo(b.score);
+        });
+      case _Sort.nameAscending:
+        result.sort((a, b) => a.name.compareTo(b.name));
+      case _Sort.deadlineSoonest:
+        result.sort(
+          (a, b) => a.scheduleDaysRemaining.compareTo(b.scheduleDaysRemaining),
+        );
+    }
+    return result;
+  }
+
+  void _toggleState(HealthState state) {
+    setState(() {
+      if (!_states.remove(state)) _states.add(state);
+    });
+  }
+
+  void _clearFilters() => setState(_states.clear);
+
   @override
   Widget build(BuildContext context) {
-    final worst = snapshot.worstFirst;
+    final snapshot = widget.snapshot;
+    final visible = _apply(snapshot.projects);
+    final squadNames = {for (final s in snapshot.squads) s.id: s.name};
+    final projectNames = {for (final p in snapshot.projects) p.id: p.name};
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        Tokens.space4,
-        Tokens.space2,
-        Tokens.space4,
-        Tokens.space7,
-      ),
+    final banner = snapshot.isLive
+        ? null
+        : 'Showing cached data from ${clockTime(snapshot.capturedAt)}. It '
+              'refreshes when the connection returns.';
+
+    final projects = _ProjectsSection(
+      all: snapshot.projects,
+      visible: visible,
+      isFiltered: _states.isNotEmpty,
+      sort: _sort,
+      squadNames: squadNames,
+      onOpenProject: widget.onOpenProject,
+      onConnectSource: widget.onConnectSource,
+      onSort: (sort) => setState(() => _sort = sort),
+      onClearFilters: _clearFilters,
+    );
+
+    final signals = SignalsPanel(
+      signals: snapshot.signals,
+      projectNames: projectNames,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 960;
+
+        return ListView(
+          padding: const EdgeInsets.all(Tokens.space4),
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Where your projects stand right now, and what is '
+                    'changing.',
+                    style: AppType.bodyMuted,
+                  ),
+                ),
+                const SizedBox(width: Tokens.space3),
+                Text(
+                  'Updated ${clockTime(snapshot.capturedAt)}',
+                  style: AppType.data,
+                ),
+              ],
+            ),
+            const SizedBox(height: Tokens.space4),
+            if (banner != null) ...[
+              SyncBanner(message: banner),
+              const SizedBox(height: Tokens.space3),
+            ],
+            GridStrip(grid: snapshot.grid),
+            const SizedBox(height: Tokens.space3),
+            SummaryStrip(
+              projects: snapshot.projects,
+              selected: _states,
+              onToggle: _toggleState,
+            ),
+            const SizedBox(height: Tokens.space4),
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: projects),
+                  const SizedBox(width: Tokens.space4),
+                  Expanded(flex: 2, child: signals),
+                ],
+              )
+            else ...[
+              projects,
+              const SizedBox(height: Tokens.space4),
+              signals,
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ProjectsSection extends StatelessWidget {
+  const _ProjectsSection({
+    required this.all,
+    required this.visible,
+    required this.isFiltered,
+    required this.sort,
+    required this.squadNames,
+    required this.onOpenProject,
+    required this.onConnectSource,
+    required this.onSort,
+    required this.onClearFilters,
+  });
+
+  final List<Project> all;
+  final List<Project> visible;
+  final bool isFiltered;
+  final _Sort sort;
+  final Map<String, String> squadNames;
+  final ValueChanged<Project>? onOpenProject;
+  final VoidCallback? onConnectSource;
+  final ValueChanged<_Sort> onSort;
+  final VoidCallback onClearFilters;
+
+  @override
+  Widget build(BuildContext context) {
+    if (all.isEmpty) {
+      return _EmptyPanel(
+        icon: Icons.hub_outlined,
+        title: 'No projects yet',
+        body:
+            'Connect a repository or task tracker and your first health '
+            'score appears here, with nobody typing in an update.',
+        actionLabel: onConnectSource == null ? null : 'Connect a source',
+        onAction: onConnectSource,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PortfolioSummary(snapshot: snapshot),
-        const SizedBox(height: Tokens.space4),
-        if (snapshot.grid.isShedding) ...[
-          _GridStrip(grid: snapshot.grid),
-          const SizedBox(height: Tokens.space4),
-        ],
-        Padding(
-          padding: const EdgeInsets.only(
-            left: Tokens.space1,
-            bottom: Tokens.space3,
-          ),
-          child: Text('NEEDS ATTENTION FIRST', style: AppType.label),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Showing ${visible.length} of ${all.length}',
+                style: AppType.data,
+              ),
+            ),
+            if (isFiltered)
+              TextButton(
+                onPressed: onClearFilters,
+                style: TextButton.styleFrom(
+                  foregroundColor: Tokens.beacon,
+                  textStyle: AppType.bodyStrong,
+                ),
+                child: const Text('Clear filters'),
+              ),
+            PopupMenuButton<_Sort>(
+              tooltip: 'Change sort order',
+              color: Tokens.seam,
+              initialValue: sort,
+              onSelected: onSort,
+              itemBuilder: (_) => [
+                for (final option in _Sort.values)
+                  PopupMenuItem(
+                    value: option,
+                    child: Text(option.label, style: AppType.body),
+                  ),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: Tokens.space2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Sort: ${sort.label}',
+                      style: AppType.bodyStrong.copyWith(color: Tokens.beacon),
+                    ),
+                    const Icon(Icons.arrow_drop_down, color: Tokens.beacon),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        for (final project in worst) ...[
-          _ProjectRow(project: project, snapshot: snapshot),
-          const SizedBox(height: Tokens.space3),
-        ],
+        const SizedBox(height: Tokens.space2),
+        if (visible.isEmpty)
+          _EmptyPanel(
+            icon: Icons.filter_alt_off_outlined,
+            title: 'No projects match these filters',
+            body: 'Clear the filters to see every project again.',
+            actionLabel: 'Clear filters',
+            onAction: onClearFilters,
+          )
+        else
+          for (var i = 0; i < visible.length; i++) ...[
+            if (i > 0) const SizedBox(height: Tokens.space3),
+            ProjectRow(
+              project: visible[i],
+              squadName: squadNames[visible[i].squadId],
+              onTap: onOpenProject == null
+                  ? null
+                  : () => onOpenProject!(visible[i]),
+            ),
+          ],
       ],
     );
   }
 }
 
-class _PortfolioSummary extends StatelessWidget {
-  const _PortfolioSummary({required this.snapshot});
+class _EmptyPanel extends StatelessWidget {
+  const _EmptyPanel({
+    required this.icon,
+    required this.title,
+    required this.body,
+    this.actionLabel,
+    this.onAction,
+  });
 
-  final HealthSnapshot snapshot;
+  final IconData icon;
+  final String title;
+  final String body;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    final needsAction = snapshot.projects
-        .where((p) => p.state.severity >= HealthState.atRisk.severity)
-        .length;
-
     return Panel(
-      title: 'Portfolio',
-      trailing: Text('${snapshot.projects.length} active', style: AppType.data),
+      padding: const EdgeInsets.all(Tokens.space5),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text('$needsAction', style: AppType.metric),
-              const SizedBox(width: Tokens.space3),
-              Expanded(
-                child: Text(
-                  needsAction == 1
-                      ? 'project needs action now'
-                      : 'projects need action now',
-                  style: AppType.bodyMuted,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Tokens.space4),
-          Row(
-            children: [
-              for (final state in HealthState.values)
-                Expanded(
-                  child: _StateCount(
-                    state: state,
-                    count: snapshot.countIn(state),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StateCount extends StatelessWidget {
-  const _StateCount({required this.state, required this.count});
-
-  final HealthState state;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final dim = count == 0;
-    return Semantics(
-      label: '$count ${state.label}',
-      excludeSemantics: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 3,
-            margin: const EdgeInsets.only(right: Tokens.space2),
-            color: dim ? Tokens.rule : state.color,
-          ),
+          Icon(icon, size: 24, color: Tokens.slate),
+          const SizedBox(height: Tokens.space3),
+          Text(title, style: AppType.heading, textAlign: TextAlign.center),
           const SizedBox(height: Tokens.space2),
-          Text(
-            '$count',
-            style: AppType.metricSmall.copyWith(
-              color: dim ? Tokens.slate : Tokens.chalk,
+          Text(body, style: AppType.bodyMuted, textAlign: TextAlign.center),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: Tokens.space4),
+            FilledButton(
+              onPressed: onAction,
+              style: FilledButton.styleFrom(
+                backgroundColor: Tokens.beacon,
+                foregroundColor: Tokens.shaft,
+                textStyle: AppType.bodyStrong,
+              ),
+              child: Text(actionLabel!),
             ),
-          ),
-          const SizedBox(height: Tokens.space1),
-          Text(state.label, style: AppType.label.copyWith(letterSpacing: 0.2)),
+          ],
         ],
       ),
     );
-  }
-}
-
-/// Grid state gets its own strip, above the projects.
-///
-/// Placing it here is the point: when the power is out, that is the first
-/// thing explaining today's numbers, and no project should be read without it.
-class _GridStrip extends StatelessWidget {
-  const _GridStrip({required this.grid});
-
-  final GridStatus grid;
-
-  @override
-  Widget build(BuildContext context) {
-    final next = grid.nextOutageStart;
-    return Container(
-      padding: const EdgeInsets.all(Tokens.space3),
-      decoration: BoxDecoration(
-        color: Tokens.brass.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(Tokens.radiusMd),
-        border: Border.all(color: Tokens.brass.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.bolt_outlined, size: 18, color: Tokens.brass),
-          const SizedBox(width: Tokens.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Stage ${grid.stage} load-shedding',
-                  style: AppType.bodyStrong,
-                ),
-                const SizedBox(height: Tokens.space1),
-                Text(
-                  next == null
-                      ? '${grid.hoursLostThisWeek} hours lost this week. Capacity forecasts already account for it.'
-                      : 'Next outage ${_time(next)}–${_time(grid.nextOutageEnd!)}. '
-                            '${grid.hoursLostThisWeek} hours lost this week, excluded from every health score.',
-                  style: AppType.bodyMuted,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _time(DateTime d) =>
-      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-}
-
-class _ProjectRow extends StatelessWidget {
-  const _ProjectRow({required this.project, required this.snapshot});
-
-  final Project project;
-  final HealthSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Tokens.seam,
-      borderRadius: BorderRadius.circular(Tokens.radiusMd),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Tokens.radiusMd),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ProjectDetailScreen(
-              project: project,
-              squad: _squadFor(project.squadId),
-            ),
-          ),
-        ),
-        focusColor: Tokens.beacon.withValues(alpha: 0.18),
-        child: Container(
-          padding: const EdgeInsets.all(Tokens.space4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Tokens.radiusMd),
-            border: Border.all(color: Tokens.rule, width: Tokens.hairline),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(project.name, style: AppType.heading),
-                        const SizedBox(height: Tokens.space1),
-                        Text(project.client, style: AppType.bodyMuted),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: Tokens.space3),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        project.score.round().toString(),
-                        style: AppType.metricSmall.copyWith(
-                          color: project.state.color,
-                        ),
-                      ),
-                      const SizedBox(height: Tokens.space1),
-                      Text('SCORE', style: AppType.label),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: Tokens.space4),
-              HealthSeam(segments: project.seam),
-              const SizedBox(height: Tokens.space3),
-              Row(
-                children: [
-                  StatusPill(state: project.state),
-                  const SizedBox(width: Tokens.space3),
-                  Expanded(
-                    child: Text(
-                      _summary(project),
-                      style: AppType.data,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Squad? _squadFor(String id) {
-    for (final squad in snapshot.squads) {
-      if (squad.id == id) return squad;
-    }
-    return null;
-  }
-
-  static String _summary(Project p) {
-    final parts = <String>[
-      '${(p.budgetBurn * 100).round()}% burn',
-      '${p.scheduleDaysRemaining}d left',
-      if (p.openSignals > 0) '${p.openSignals} signals',
-    ];
-    return parts.join('  ·  ');
   }
 }

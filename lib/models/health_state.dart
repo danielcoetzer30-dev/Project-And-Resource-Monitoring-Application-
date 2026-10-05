@@ -58,15 +58,4 @@ enum HealthState {
     if (score >= 35) return HealthState.atRisk;
     return HealthState.critical;
   }
-
-  /// Parses a stored state name back into a state.
-  ///
-  /// Falls back to onTrack rather than throwing: a malformed document should
-  /// not take down the whole dashboard.
-  static HealthState fromName(String? name) {
-    return HealthState.values.firstWhere(
-      (state) => state.name == name,
-      orElse: () => HealthState.onTrack,
-    );
-  }
 }
