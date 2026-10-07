@@ -76,7 +76,14 @@ void main() {
     await tester.pumpWidget(themedApp());
     await tester.pump();
 
-    for (final label in ['Health', 'Squads', 'Signals', 'Grid', 'Home']) {
+    for (final label in [
+      'Health',
+      'Squads',
+      'Signals',
+      'Grid',
+      'Ask',
+      'Home',
+    ]) {
       await openSection(tester, label);
       expect(tester.takeException(), isNull, reason: '$label tab threw');
     }

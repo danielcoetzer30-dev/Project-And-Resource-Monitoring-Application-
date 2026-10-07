@@ -65,7 +65,16 @@ The app's whole differentiator is passive capture. There is deliberately no UI
 for typing in progress, and `ProjectRepository` has no write method. The one
 screen that accepts input is *Connect a source*, which is one-off setup.
 
-### 5. Status is never colour alone
+### 5. The assistant sends squad-level data only
+
+`lib/services/assistant/snapshot_brief.dart` is the only thing in the app that
+sends project data to a third party. It can only emit squad-level data because
+that is all the domain model holds — there is no per-person field to include by
+accident. `test/unit/snapshot_brief_test.dart` asserts it.
+
+If you ever add individual data to a model, that test fails, and it should.
+
+### 6. Status is never colour alone
 
 Every health state renders as colour **and** icon **and** word, via
 `StatusPill`. Colour-blind users, greyscale and glare all have to work.
@@ -206,6 +215,7 @@ unformatted file shows up as noise in every later diff.
 | `lib/data/project_repository.dart` | The central interface |
 | `lib/services/health_scoring/health_score_engine.dart` | The research contribution |
 | `lib/services/ingestion/anonymiser.dart` | The ethics commitment in code |
+| `lib/services/assistant/snapshot_brief.dart` | Everything the assistant is told |
 | `lib/widgets/health_seam.dart` | The signature component |
 
 ---

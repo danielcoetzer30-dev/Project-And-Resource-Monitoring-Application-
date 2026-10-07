@@ -41,6 +41,13 @@ class SettingsScreen extends StatelessWidget {
                   onTap: () =>
                       Navigator.of(context).pushNamed(Routes.ingestionSources),
                 ),
+                const Divider(height: 1),
+                _Row(
+                  icon: Icons.key_outlined,
+                  title: 'Assistant API key',
+                  subtitle: 'Your own key, kept on this device',
+                  onTap: () => Navigator.of(context).pushNamed(Routes.apiKey),
+                ),
               ],
             ),
           ),

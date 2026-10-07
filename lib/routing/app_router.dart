@@ -6,6 +6,7 @@ import '../screens/auth/auth_gate.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/onboarding/connect_source_screen.dart';
 import '../screens/project_detail_screen.dart';
+import '../screens/settings/api_key_screen.dart';
 import '../screens/settings/ingestion_sources_screen.dart';
 import '../screens/settings/scoring_weights_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -54,6 +55,9 @@ abstract final class AppRouter {
 
       case Routes.connectSource:
         return _page(const ConnectSourceScreen(), settings);
+
+      case Routes.apiKey:
+        return _page(const ApiKeyScreen(), settings);
 
       default:
         return null;

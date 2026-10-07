@@ -8,4 +8,5 @@ abstract final class Routes {
   static const scoringWeights = '/settings/weights';
   static const ingestionSources = '/settings/sources';
   static const connectSource = '/onboarding/connect';
+  static const apiKey = '/settings/api-key';
 }
