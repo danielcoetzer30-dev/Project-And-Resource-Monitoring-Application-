@@ -1,6 +1,7 @@
 /// Small formatting helpers shared by the dashboard widgets.
 ///
 /// Kept as plain functions so they can be tested without pumping a widget.
+library;
 
 /// 24-hour clock, e.g. "09:05". Load-shedding schedules are quoted this way
 /// in South Africa, so it matches what the team already reads elsewhere.

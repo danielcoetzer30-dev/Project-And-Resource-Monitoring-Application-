@@ -63,8 +63,8 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: Tokens.space2),
                 Text(
                   'Pick a view to get started. Nothing asks you to type in '
-                      'progress: it all comes from the tools your squads already '
-                      'use.',
+                  'progress: it all comes from the tools your squads already '
+                  'use.',
                   style: AppType.bodyMuted,
                 ),
                 const SizedBox(height: Tokens.space5),
@@ -125,11 +125,7 @@ class _DestinationTile extends StatelessWidget {
                 ),
                 const SizedBox(width: Tokens.space3),
                 // Beacon is the app's "tappable" colour.
-                const Icon(
-                  Icons.chevron_right,
-                  size: 24,
-                  color: Tokens.beacon,
-                ),
+                const Icon(Icons.chevron_right, size: 24, color: Tokens.beacon),
               ],
             ),
           ),
