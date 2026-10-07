@@ -147,16 +147,33 @@ interview data says where the real boundaries sit.
 
 ## Current state
 
-**Working:** the app builds for Android, iOS and web; reads live Firestore data
-scoped to the signed-in user's organisation; Firebase Auth with email and
-password; security rules open per collection and verified denying anonymous
-access; offline cache so it stays usable during an outage.
+**Working:** builds for Android, iOS and web; reads live Firestore data scoped
+to the signed-in user's organisation; Firebase Auth with email and password;
+security rules open per collection and verified denying anonymous access;
+offline cache so it stays usable during an outage.
+
+Six tabs: **Home** (a neutral landing that needs no data, so it renders with
+no connection), Health, Squads, Signals, Grid, and **Ask**.
+
+**Forecasting** projects the current trend forward — `forecaster.dart` turns
+burn rate and velocity into "the budget runs out eight days before the work
+does". Deliberately linear: "at the current rate" honestly means a straight
+line, and there is no historical outcome data to fit anything against. Every
+field is nullable and null means *cannot say*; a project with no schedule
+total, one that has not started, or a squad at 2% of baseline all produce no
+date rather than a wrong one.
+
+**The assistant** (Ask tab) answers questions about the current snapshot. Each
+user supplies their own Anthropic API key, stored on-device — a shared key
+would ship inside the APK where anyone could extract it. Nobody has added a
+key yet, so it is inert until someone does.
 
 **Not working yet:** nothing is *producing* data. The Firestore documents were
 written once by `tool/seed_firestore.js`, which is why scores no longer move.
 The ingestion layer is fully written and tested but has nowhere server-side to
-run — that is the next significant decision, and it needs either Cloud
-Functions (requires the Blaze plan) or a scheduled GitHub Action.
+run — that is the next significant decision. Cloud Functions need the Blaze
+plan; a scheduled GitHub Action is the free alternative and probably the right
+first move.
 
 **Firebase project:** `project-health-monitor-436da`. Demo data lives under
 `organisations/demo-org`. Register with organisation code `demo-org` or you
@@ -196,7 +213,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 37 tests and they all pass; a failure is
+Both must be clean. There are 59 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -214,9 +231,30 @@ unformatted file shows up as noise in every later diff.
 | `lib/state/providers.dart` | How everything is wired; swap mock for live here |
 | `lib/data/project_repository.dart` | The central interface |
 | `lib/services/health_scoring/health_score_engine.dart` | The research contribution |
+| `lib/services/health_scoring/forecaster.dart` | Projects the trend, and refuses to guess |
 | `lib/services/ingestion/anonymiser.dart` | The ethics commitment in code |
 | `lib/services/assistant/snapshot_brief.dart` | Everything the assistant is told |
 | `lib/widgets/health_seam.dart` | The signature component |
+
+---
+
+## What is outstanding
+
+In rough order of value to the research:
+
+1. **Ingestion running somewhere.** Everything else is built around it and
+   nothing currently produces data. A scheduled GitHub Action is free and the
+   team already has the repo; Cloud Functions need Blaze.
+2. **Onboard the remaining teammates** — only two of five have working
+   environments.
+3. **A decision on the app name.** `keel` is the package name and the display
+   name; the shortlist was Keel, Sightline, Plumb and Trim. Anything that
+   sounds like surveillance was ruled out, for the reasons in section 1 above.
+4. **An API key for the assistant**, if the team wants it live.
+
+Deliberately *not* built: general messaging. It duplicates the WhatsApp the
+team already uses and answers none of the research questions. Comments scoped
+to a single signal would be defensible; a chat tab would not.
 
 ---
 
