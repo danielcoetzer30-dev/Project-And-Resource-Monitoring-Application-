@@ -1,0 +1,32 @@
+# App icon generation.
+#
+# Regenerate after changing anything here or in assets/icon:
+#   dart run flutter_launcher_icons
+#
+# The generated files under android/ and ios/ are committed, so a teammate who
+# pulls does not have to run this to get the right icon.
+#
+# Masters live in assets/icon:
+#   icon_master.png      1024x1024, no alpha. iOS and legacy Android.
+#                        iOS applies its own rounding, so this is a full square.
+#   icon_foreground.png  1024x1024, transparent. The Android adaptive layer.
+#                        Artwork sits inside the inner 66% because launchers
+#                        crop to circles, squircles and rounded squares — any
+#                        closer to the edge and it gets clipped on half of
+#                        Android.
+
+flutter_launcher_icons:
+  image_path: "assets/icon/icon_master.png"
+
+  android: true
+  adaptive_icon_background: "#0D141B"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+
+  ios: true
+  remove_alpha_ios: true
+
+  # Themed icons follow the user's wallpaper colours on Android 13+. The
+  # monochrome layer is the same artwork; the system recolours it, so the
+  # signal ramp is lost there by design — shape has to carry it alone, which
+  # is why the descending staircase was chosen over the segmented band.
+  android_adaptive_monochrome: "assets/icon/icon_foreground.png"
