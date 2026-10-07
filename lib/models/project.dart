@@ -41,6 +41,8 @@ class Project {
     required this.budgetBurn,
     required this.scheduleDaysRemaining,
     required this.loadSheddingHoursLost,
+    this.scheduleTotalDays = 0,
+    this.velocityRatio = 1,
   });
 
   final String id;
@@ -62,5 +64,27 @@ class Project {
   /// other inputs so a team is never scored down for a national power failure.
   final double loadSheddingHoursLost;
 
+  /// Total planned duration in days. Needed to work out a burn *rate* rather
+  /// than a burn *total*: 94% spent means nothing until you know whether that
+  /// took three weeks or three months.
+  ///
+  /// Zero means unknown, and every forecast derived from it is suppressed
+  /// rather than guessed.
+  final int scheduleTotalDays;
+
+  /// Throughput against this squad's own recent baseline. 1.0 is on baseline,
+  /// 0.62 means running at 62% of it.
+  ///
+  /// Held here as well as in the factor breakdown because a forecast needs the
+  /// raw ratio, not the 0–100 score the ratio was turned into.
+  final double velocityRatio;
+
   HealthState get state => HealthState.fromScore(score);
+
+  /// Days of the plan already spent. Null when the total is unknown.
+  int? get scheduleElapsedDays {
+    if (scheduleTotalDays <= 0) return null;
+    final elapsed = scheduleTotalDays - scheduleDaysRemaining;
+    return elapsed > 0 ? elapsed : null;
+  }
 }

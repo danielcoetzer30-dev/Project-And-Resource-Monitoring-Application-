@@ -114,6 +114,8 @@ class LocalCache {
     'budgetBurn': p.budgetBurn,
     'scheduleDaysRemaining': p.scheduleDaysRemaining,
     'loadSheddingHoursLost': p.loadSheddingHoursLost,
+    'scheduleTotalDays': p.scheduleTotalDays,
+    'velocityRatio': p.velocityRatio,
     'factors': p.factors
         .map(
           (f) => {
@@ -146,6 +148,8 @@ class LocalCache {
     scheduleDaysRemaining: (m['scheduleDaysRemaining'] as num?)?.toInt() ?? 0,
     loadSheddingHoursLost:
         (m['loadSheddingHoursLost'] as num?)?.toDouble() ?? 0,
+    scheduleTotalDays: (m['scheduleTotalDays'] as num?)?.toInt() ?? 0,
+    velocityRatio: (m['velocityRatio'] as num?)?.toDouble() ?? 1,
     factors: (m['factors'] as List<dynamic>? ?? const [])
         .map((f) => f as Map<String, dynamic>)
         .map(

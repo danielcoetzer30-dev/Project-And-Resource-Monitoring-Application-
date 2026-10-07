@@ -61,6 +61,8 @@ class MockProjectRepository implements ProjectRepository {
         openSignals: p.openSignals,
         budgetBurn: p.budgetBurn,
         scheduleDaysRemaining: p.scheduleDaysRemaining,
+        scheduleTotalDays: p.scheduleTotalDays,
+        velocityRatio: p.velocityRatio,
         loadSheddingHoursLost: p.loadSheddingHoursLost,
       );
     }).toList();
@@ -135,6 +137,8 @@ class MockProjectRepository implements ProjectRepository {
         openSignals: 4,
         budgetBurn: 0.94,
         scheduleDaysRemaining: 11,
+        scheduleTotalDays: 90,
+        velocityRatio: 0.62,
         loadSheddingHoursLost: 6.5,
         seam: _seedSeam(
           states: [
@@ -188,6 +192,8 @@ class MockProjectRepository implements ProjectRepository {
         openSignals: 2,
         budgetBurn: 0.61,
         scheduleDaysRemaining: 34,
+        scheduleTotalDays: 80,
+        velocityRatio: 0.78,
         loadSheddingHoursLost: 3.0,
         seam: _seedSeam(
           states: [
@@ -240,6 +246,8 @@ class MockProjectRepository implements ProjectRepository {
         openSignals: 1,
         budgetBurn: 0.42,
         scheduleDaysRemaining: 52,
+        scheduleTotalDays: 120,
+        velocityRatio: 0.95,
         loadSheddingHoursLost: 2.0,
         seam: _seedSeam(
           states: [
@@ -291,6 +299,8 @@ class MockProjectRepository implements ProjectRepository {
         openSignals: 0,
         budgetBurn: 0.35,
         scheduleDaysRemaining: 68,
+        scheduleTotalDays: 100,
+        velocityRatio: 1.05,
         loadSheddingHoursLost: 1.5,
         seam: _seedSeam(
           states: [

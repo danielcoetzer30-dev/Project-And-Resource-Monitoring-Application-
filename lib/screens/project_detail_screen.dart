@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/project.dart';
 import '../models/squad.dart';
+import '../services/health_scoring/forecaster.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 import '../widgets/health_seam.dart';
@@ -60,6 +61,7 @@ class ProjectDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Tokens.space4),
+          _ForecastPanel(project: project),
           _DeliveryPanel(project: project),
           if (squad != null) ...[
             const SizedBox(height: Tokens.space4),
@@ -164,6 +166,117 @@ class _FactorRow extends StatelessWidget {
           Text(factor.detail, style: AppType.bodyMuted),
         ],
       ),
+    );
+  }
+}
+
+/// Where the current trend ends up.
+///
+/// Hidden entirely when there is not enough history to project from, rather
+/// than shown empty — a forecast panel with nothing in it reads as "fine",
+/// which is the opposite of "we cannot tell yet".
+class _ForecastPanel extends StatelessWidget {
+  const _ForecastPanel({required this.project});
+
+  final Project project;
+
+  @override
+  Widget build(BuildContext context) {
+    final forecast = project.forecast;
+    if (forecast.isEmpty) return const SizedBox.shrink();
+
+    final headline = const Forecaster().headline(project);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Tokens.space4),
+      child: Panel(
+        title: 'If nothing changes',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (headline != null) ...[
+              Text(
+                headline,
+                style: AppType.body.copyWith(
+                  color: forecast.hasBudgetWarning
+                      ? Tokens.ember
+                      : Tokens.brass,
+                ),
+              ),
+              const SizedBox(height: Tokens.space4),
+            ],
+            if (forecast.budgetRunsOutInDays != null)
+              _Line(
+                label: 'Budget lasts',
+                value: _days(forecast.budgetRunsOutInDays!),
+                against: '${_days(project.scheduleDaysRemaining)} of scope',
+                bad: forecast.hasBudgetWarning,
+              ),
+            if (forecast.projectedCompletionDays != null) ...[
+              const SizedBox(height: Tokens.space3),
+              _Line(
+                label: 'Work finishes in',
+                value: _days(forecast.projectedCompletionDays!),
+                against: '${_days(project.scheduleDaysRemaining)} planned',
+                bad: forecast.hasScheduleWarning,
+              ),
+            ],
+            const SizedBox(height: Tokens.space3),
+            const Divider(height: Tokens.hairline),
+            const SizedBox(height: Tokens.space3),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.trending_flat, size: 16, color: Tokens.slate),
+                const SizedBox(width: Tokens.space3),
+                Expanded(
+                  child: Text(
+                    'A straight line from the current rate, not a prediction. '
+                    'It changes the moment the rate does.',
+                    style: AppType.bodyMuted,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _days(int count) => '$count ${count == 1 ? 'day' : 'days'}';
+}
+
+class _Line extends StatelessWidget {
+  const _Line({
+    required this.label,
+    required this.value,
+    required this.against,
+    required this.bad,
+  });
+
+  final String label;
+  final String value;
+  final String against;
+  final bool bad;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Expanded(child: Text(label, style: AppType.body)),
+        Text(
+          value,
+          style: AppType.metricSmall.copyWith(
+            fontSize: 16,
+            color: bad ? Tokens.ember : Tokens.chalk,
+          ),
+        ),
+        const SizedBox(width: Tokens.space2),
+        Text('vs $against', style: AppType.data),
+      ],
     );
   }
 }

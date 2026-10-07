@@ -29,6 +29,10 @@ abstract final class ProjectDto {
           (data['scheduleDaysRemaining'] as num?)?.toInt() ?? 0,
       loadSheddingHoursLost:
           (data['loadSheddingHoursLost'] as num?)?.toDouble() ?? 0,
+      // Default to 0 and 1 rather than guessing. A document written before
+      // these existed produces no forecast instead of a wrong one.
+      scheduleTotalDays: (data['scheduleTotalDays'] as num?)?.toInt() ?? 0,
+      velocityRatio: (data['velocityRatio'] as num?)?.toDouble() ?? 1,
     );
   }
 
@@ -44,6 +48,8 @@ abstract final class ProjectDto {
       'budgetBurn': project.budgetBurn,
       'scheduleDaysRemaining': project.scheduleDaysRemaining,
       'loadSheddingHoursLost': project.loadSheddingHoursLost,
+      'scheduleTotalDays': project.scheduleTotalDays,
+      'velocityRatio': project.velocityRatio,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

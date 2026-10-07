@@ -73,7 +73,14 @@ what they have done.
 | `budgetBurn` | number | Fraction, 0–1, can exceed 1 |
 | `scheduleDaysRemaining` | number | |
 | `loadSheddingHoursLost` | number | Reported, never deducted from `score` |
+| `scheduleTotalDays` | number | Total planned duration. Needed for a burn *rate* |
+| `velocityRatio` | number | Throughput vs own baseline; 1.0 is on baseline |
 | `updatedAt` | timestamp | |
+
+`scheduleTotalDays` and `velocityRatio` exist for the forecaster. Burn alone
+cannot produce a date — 94% spent means nothing until you know whether that
+took three weeks or three months. Both default safely when absent (0 and 1),
+and a project missing them produces no forecast rather than a wrong one.
 
 **`factors[]`** — each entry:
 
