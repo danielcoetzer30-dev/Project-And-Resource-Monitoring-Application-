@@ -42,29 +42,42 @@ void main() {
 
   Widget themedApp() => app(themed: true);
 
-  testWidgets('opens on the health dashboard', (tester) async {
+  /// Moves from Home to one of the data tabs.
+  ///
+  /// The nav bar and the Home cards both carry the section name, so tapping
+  /// the last match reliably hits the bar.
+  Future<void> openSection(WidgetTester tester, String name) async {
+    await tester.tap(find.text(name).last);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('opens on Home, not on a data view', (tester) async {
     await tester.pumpWidget(app());
     await tester.pump(); // let the first snapshot arrive
 
     expect(find.byType(AppShell), findsOneWidget);
-    expect(find.text('Health'), findsWidgets);
+
+    // Home is deliberately neutral: a health reading should not land on
+    // someone the moment they open the app.
+    expect(find.text('Home'), findsWidgets);
+    expect(find.text('Ledger rebuild'), findsNothing);
   });
 
-  testWidgets('shows projects once the snapshot arrives', (tester) async {
+  testWidgets('shows projects once Health is opened', (tester) async {
     await tester.pumpWidget(app());
     await tester.pump();
 
-    expect(find.text('NEEDS ATTENTION FIRST'), findsOneWidget);
+    await openSection(tester, 'Health');
+
     expect(find.text('Ledger rebuild'), findsWidgets);
   });
 
-  testWidgets('moves between all four tabs without error', (tester) async {
+  testWidgets('moves between every tab without error', (tester) async {
     await tester.pumpWidget(themedApp());
     await tester.pump();
 
-    for (final label in ['Squads', 'Signals', 'Grid']) {
-      await tester.tap(find.text(label).last);
-      await tester.pumpAndSettle();
+    for (final label in ['Health', 'Squads', 'Signals', 'Grid', 'Home']) {
+      await openSection(tester, label);
       expect(tester.takeException(), isNull, reason: '$label tab threw');
     }
   });
@@ -73,11 +86,18 @@ void main() {
     await tester.pumpWidget(themedApp());
     await tester.pump();
 
+    await openSection(tester, 'Health');
     await tester.tap(find.text('Ledger rebuild').first);
     await tester.pumpAndSettle();
 
     // The breakdown is the point of the detail screen — a score with no
-    // reasoning is not actionable.
+    // reasoning is not actionable. It sits below the score and the Seam, so
+    // in a test viewport it is not built until scrolled to.
+    await tester.scrollUntilVisible(
+      find.text('WHAT IS DRIVING THE SCORE'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('WHAT IS DRIVING THE SCORE'), findsOneWidget);
     expect(find.text('Budget burn'), findsWidgets);
   });
