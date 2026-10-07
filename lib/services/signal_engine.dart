@@ -1,6 +1,8 @@
 import '../models/health_state.dart';
+import '../models/project.dart';
 import '../models/project_metrics.dart';
 import '../models/signal.dart';
+import 'health_scoring/forecaster.dart';
 import 'health_scoring/health_score_engine.dart';
 
 /// Turns a health assessment into early warnings.
@@ -25,6 +27,10 @@ class SignalEngine {
     required HealthAssessment assessment,
     required ProjectMetrics metrics,
     required String projectName,
+
+    /// Optional: when supplied, forecast signals are raised as well. Null when
+    /// the caller only has metrics — scoring runs before a Project exists.
+    Project? project,
   }) {
     final signals = <Signal>[];
     final now = DateTime.now();
@@ -66,6 +72,54 @@ class SignalEngine {
           raisedAt: now,
         ),
       );
+    }
+
+    // --- Forecast -----------------------------------------------------------
+    // A date lands harder than a score. "At risk" invites a shrug; "the money
+    // runs out eight days before the work does" is something a team lead can
+    // act on this week.
+    if (project != null) {
+      final forecast = project.forecast;
+
+      if (forecast.hasBudgetWarning) {
+        final shortfall = forecast.budgetShortfallDays!;
+        signals.add(
+          Signal(
+            id: '${metrics.projectId}-budget-runway',
+            title:
+                '$projectName runs out of budget $shortfall '
+                '${shortfall == 1 ? 'day' : 'days'} before the work finishes',
+            because:
+                'At the rate it has been spent, the budget lasts about '
+                '${forecast.budgetRunsOutInDays} more days against '
+                '${project.scheduleDaysRemaining} days of remaining scope. '
+                'This is a projection of the current rate, not a certainty.',
+            severity: shortfall > 7 ? HealthState.critical : HealthState.atRisk,
+            projectId: metrics.projectId,
+            raisedAt: now,
+          ),
+        );
+      }
+
+      if (forecast.hasScheduleWarning) {
+        final overrun = forecast.projectedOverrunDays!;
+        signals.add(
+          Signal(
+            id: '${metrics.projectId}-schedule-overrun',
+            title:
+                '$projectName is tracking $overrun '
+                '${overrun == 1 ? 'day' : 'days'} late',
+            because:
+                'At the current throughput the remaining work takes about '
+                '${forecast.projectedCompletionDays} days rather than the '
+                '${project.scheduleDaysRemaining} planned. Recovering means '
+                'raising velocity or cutting scope.',
+            severity: overrun > 14 ? HealthState.atRisk : HealthState.watch,
+            projectId: metrics.projectId,
+            raisedAt: now,
+          ),
+        );
+      }
     }
 
     // --- Infrastructure -----------------------------------------------------

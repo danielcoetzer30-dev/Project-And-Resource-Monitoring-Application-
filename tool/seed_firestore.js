@@ -154,6 +154,8 @@ const projects = [
     openSignals: 4,
     budgetBurn: 0.94,
     scheduleDaysRemaining: 11,
+    scheduleTotalDays: 90,
+    velocityRatio: 0.62,
     loadSheddingHoursLost: 6.5,
     seam: buildSeam(
       [['onTrack', 9], ['watch', 6], ['atRisk', 8], ['critical', 7]],
@@ -176,6 +178,8 @@ const projects = [
     openSignals: 2,
     budgetBurn: 0.61,
     scheduleDaysRemaining: 34,
+    scheduleTotalDays: 80,
+    velocityRatio: 0.78,
     loadSheddingHoursLost: 3.0,
     seam: buildSeam(
       [['onTrack', 12], ['watch', 9], ['atRisk', 6], ['watch', 3]],
@@ -198,6 +202,8 @@ const projects = [
     openSignals: 1,
     budgetBurn: 0.42,
     scheduleDaysRemaining: 52,
+    scheduleTotalDays: 120,
+    velocityRatio: 0.95,
     loadSheddingHoursLost: 2.0,
     seam: buildSeam([['watch', 7], ['onTrack', 14], ['watch', 9]], [8]),
     factors: [
@@ -217,6 +223,8 @@ const projects = [
     openSignals: 0,
     budgetBurn: 0.35,
     scheduleDaysRemaining: 68,
+    scheduleTotalDays: 100,
+    velocityRatio: 1.05,
     loadSheddingHoursLost: 1.5,
     seam: buildSeam([['onTrack', 18], ['watch', 4], ['onTrack', 8]], []),
     factors: [
