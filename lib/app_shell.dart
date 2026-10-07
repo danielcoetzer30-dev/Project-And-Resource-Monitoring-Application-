@@ -5,6 +5,7 @@ import 'data/project_repository.dart';
 import 'models/squad.dart';
 import 'routing/app_router.dart';
 import 'routing/routes.dart';
+import 'screens/assistant_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/infrastructure_screen.dart';
@@ -54,6 +55,12 @@ class _AppShellState extends ConsumerState<AppShell> {
       description: 'Load-shedding, and the hours it has taken from your week.',
       icon: Icons.bolt_outlined,
       selectedIcon: Icons.bolt,
+    ),
+    HomeDestination(
+      title: 'Ask',
+      description: 'Questions about your projects, answered from this data.',
+      icon: Icons.forum_outlined,
+      selectedIcon: Icons.forum,
     ),
   ];
 
@@ -132,6 +139,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                 withData((s) => SquadsScreen(snapshot: s)),
                 withData((s) => SignalsScreen(snapshot: s)),
                 withData((s) => InfrastructureScreen(snapshot: s)),
+                // Not wrapped in withData: the assistant reads the snapshot
+                // itself when a question is asked, and says so plainly if
+                // there is nothing loaded yet.
+                const AssistantScreen(),
               ],
             ),
           ),

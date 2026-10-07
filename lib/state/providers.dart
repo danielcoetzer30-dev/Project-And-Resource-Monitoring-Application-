@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/assistant_repository.dart';
 import '../data/auth_repository.dart';
+import '../data/claude_assistant_repository.dart';
 import '../data/firebase_auth_repository.dart';
 import '../data/firestore_project_repository.dart';
 import '../data/project_repository.dart';
@@ -10,6 +12,7 @@ import '../services/signal_engine.dart';
 import '../services/sync/connectivity_service.dart';
 import '../services/sync/notification_service.dart';
 import '../services/sync/sync_service.dart';
+import 'assistant_notifier.dart';
 import 'auth_notifier.dart';
 import 'dashboard_notifier.dart';
 import 'settings_notifier.dart';
@@ -94,7 +97,22 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return service;
 });
 
+/// The assistant, behind its interface.
+///
+/// Calls Claude directly with the user's own key today. When a backend exists,
+/// this line points at an implementation that posts to it instead, and nothing
+/// above the interface changes.
+final assistantRepositoryProvider = Provider<AssistantRepository>((ref) {
+  final repository = ClaudeAssistantRepository();
+  ref.onDispose(repository.dispose);
+  return repository;
+});
+
 // --- Feature state ---------------------------------------------------------
+
+final assistantProvider = NotifierProvider<AssistantNotifier, AssistantState>(
+  AssistantNotifier.new,
+);
 
 final dashboardProvider = NotifierProvider<DashboardNotifier, DashboardView>(
   DashboardNotifier.new,
