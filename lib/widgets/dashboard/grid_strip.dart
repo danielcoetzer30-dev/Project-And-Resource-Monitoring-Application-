@@ -27,44 +27,49 @@ class GridStrip extends StatelessWidget {
 
     return Panel(
       padding: const EdgeInsets.all(Tokens.space3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: Tokens.space1),
-            child: Icon(Icons.bolt_outlined, size: 16, color: Tokens.slate),
-          ),
-          const SizedBox(width: Tokens.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  hasStage
-                      ? 'Load-shedding · Stage ${grid.stage}'
-                      : 'Grid stable',
-                  style: AppType.bodyStrong,
-                ),
-                if (start != null && end != null) ...[
+      // One announcement for the whole strip, without the decorative bolt.
+      child: MergeSemantics(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: Tokens.space1),
+              child: ExcludeSemantics(
+                child: Icon(Icons.bolt_outlined, size: 16, color: Tokens.slate),
+              ),
+            ),
+            const SizedBox(width: Tokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hasStage
+                        ? 'Load-shedding · Stage ${grid.stage}'
+                        : 'Grid stable',
+                    style: AppType.bodyStrong,
+                  ),
+                  if (start != null && end != null) ...[
+                    const SizedBox(height: Tokens.space1),
+                    Text(
+                      'Next outage ${clockTime(start)}–${clockTime(end)}',
+                      style: AppType.data,
+                    ),
+                  ],
                   const SizedBox(height: Tokens.space1),
                   Text(
-                    'Next outage ${clockTime(start)}–${clockTime(end)}',
-                    style: AppType.data,
+                    lost > 0
+                        ? '${hoursLabel(lost)} lost this week. Reported for '
+                              'context: scores only measure the time your '
+                              'squads had.'
+                        : 'No outage hours lost this week.',
+                    style: AppType.bodyMuted,
                   ),
                 ],
-                const SizedBox(height: Tokens.space1),
-                Text(
-                  lost > 0
-                      ? '${hoursLabel(lost)} lost this week. Reported for '
-                            'context: scores only measure the time your '
-                            'squads had.'
-                      : 'No outage hours lost this week.',
-                  style: AppType.bodyMuted,
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

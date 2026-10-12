@@ -24,31 +24,36 @@ class OfflineBanner extends StatelessWidget {
 
     final colour = offline ? Tokens.brass : Tokens.slate;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Tokens.space3,
-        vertical: Tokens.space2,
-      ),
-      decoration: BoxDecoration(
-        color: colour.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(Tokens.radiusSm),
-        border: Border.all(color: colour.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            offline ? Icons.cloud_off_outlined : Icons.schedule_outlined,
-            size: 15,
-            color: colour,
-          ),
-          const SizedBox(width: Tokens.space2),
-          Expanded(
-            child: Text(
-              _message,
-              style: AppType.body.copyWith(color: colour, fontSize: 13),
+    // A live region, so a screen reader announces going offline or stale
+    // without the person having to find the banner.
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Tokens.space3,
+          vertical: Tokens.space2,
+        ),
+        decoration: BoxDecoration(
+          color: colour.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(Tokens.radiusSm),
+          border: Border.all(color: colour.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              offline ? Icons.cloud_off_outlined : Icons.schedule_outlined,
+              size: 15,
+              color: colour,
             ),
-          ),
-        ],
+            const SizedBox(width: Tokens.space2),
+            Expanded(
+              child: Text(
+                _message,
+                style: AppType.body.copyWith(color: colour, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

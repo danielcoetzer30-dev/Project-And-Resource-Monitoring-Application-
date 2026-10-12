@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/project_repository.dart';
 import '../models/health_state.dart';
 import '../models/project.dart';
+import '../state/providers.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 import '../widgets/dashboard/dashboard_format.dart';
@@ -35,7 +37,7 @@ enum _Sort {
 /// shell keeps every tab mounted in an IndexedStack, so the choice survives
 /// switching tabs. When the Riverpod state layer arrives, replace [_sort] and
 /// [_states] with DashboardNotifier and nothing else here has to change.
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({
     super.key,
     required this.snapshot,
@@ -52,10 +54,10 @@ class DashboardScreen extends StatefulWidget {
   final VoidCallback? onConnectSource;
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   _Sort _sort = _Sort.worstFirst;
 
   /// Empty means show everything.
@@ -97,6 +99,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final snapshot = widget.snapshot;
     final visible = _apply(snapshot.projects);
+
+    // Both chosen under Customisations, and selected individually so changing
+    // one does not rebuild the dashboard for the other.
+    final signalLimit = ref.watch(
+      preferencesProvider.select((p) => p.signalLimit),
+    );
+    final showGridStrip = ref.watch(
+      preferencesProvider.select((p) => p.showGridStrip),
+    );
     final squadNames = {for (final s in snapshot.squads) s.id: s.name};
     final projectNames = {for (final p in snapshot.projects) p.id: p.name};
 
@@ -120,6 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final signals = SignalsPanel(
       signals: snapshot.signals,
       projectNames: projectNames,
+      limit: signalLimit,
     );
 
     return LayoutBuilder(
@@ -151,8 +163,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SyncBanner(message: banner),
               const SizedBox(height: Tokens.space3),
             ],
-            GridStrip(grid: snapshot.grid),
-            const SizedBox(height: Tokens.space3),
+            if (showGridStrip) ...[
+              GridStrip(grid: snapshot.grid),
+              const SizedBox(height: Tokens.space3),
+            ],
             SummaryStrip(
               projects: snapshot.projects,
               selected: _states,

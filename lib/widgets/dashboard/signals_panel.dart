@@ -69,25 +69,28 @@ class _SignalTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final meta = [?projectName, agoLabel(signal.raisedAt)].join(' · ');
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: Tokens.space2,
-          runSpacing: Tokens.space2,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            StatusPill(state: signal.severity),
-            if (signal.infrastructureRelated) const _InfrastructureTag(),
-          ],
-        ),
-        const SizedBox(height: Tokens.space2),
-        Text(signal.title, style: AppType.bodyStrong),
-        const SizedBox(height: Tokens.space1),
-        Text(signal.because, style: AppType.bodyMuted),
-        const SizedBox(height: Tokens.space2),
-        Text(meta, style: AppType.data),
-      ],
+    // Read as one item: severity, title, reason, then when.
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: Tokens.space2,
+            runSpacing: Tokens.space2,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              StatusPill(state: signal.severity),
+              if (signal.infrastructureRelated) const _InfrastructureTag(),
+            ],
+          ),
+          const SizedBox(height: Tokens.space2),
+          Text(signal.title, style: AppType.bodyStrong),
+          const SizedBox(height: Tokens.space1),
+          Text(signal.because, style: AppType.bodyMuted),
+          const SizedBox(height: Tokens.space2),
+          Text(meta, style: AppType.data),
+        ],
+      ),
     );
   }
 }
@@ -113,7 +116,9 @@ class _InfrastructureTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt_outlined, size: 14, color: Tokens.slate),
+          const ExcludeSemantics(
+            child: Icon(Icons.bolt_outlined, size: 14, color: Tokens.slate),
+          ),
           const SizedBox(width: Tokens.space1),
           Text('Grid, not delivery', style: AppType.label),
         ],

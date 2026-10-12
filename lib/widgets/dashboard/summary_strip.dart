@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/health_state.dart';
 import '../../../models/project.dart';
+import '../../theme/density.dart';
 import '../../../theme/tokens.dart';
 import '../../../theme/typography.dart';
 import '../status_pill.dart';
@@ -36,7 +37,7 @@ class SummaryStrip extends StatelessWidget {
         // Four across when there is room, two by two on a phone. A pill with
         // its word does not fit four-up at 360px.
         final columns = constraints.maxWidth >= 560 ? 4 : 2;
-        const gap = Tokens.space2;
+        final gap = context.dense(Tokens.space2);
         final width = ((constraints.maxWidth - gap * (columns - 1)) / columns)
             .floorToDouble();
 
@@ -97,8 +98,12 @@ class _SummaryTile extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(Tokens.space3),
+          // Never shorter than 48, so Compact tightens the gaps but keeps the
+          // tile a full-size touch target.
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            alignment: Alignment.center,
+            padding: EdgeInsets.all(context.dense(Tokens.space3)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

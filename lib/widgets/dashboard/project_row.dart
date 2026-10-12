@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/project.dart';
+import '../../../theme/density.dart';
 import '../../../theme/tokens.dart';
 import '../../../theme/typography.dart';
 import '../health_seam.dart';
@@ -35,76 +36,96 @@ class ProjectRow extends StatelessWidget {
 
     // The row needs its own Material rather than a Panel: a Panel paints an
     // opaque surface, which would hide the ink ripple underneath it.
-    return Material(
-      color: Tokens.seam,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Tokens.radiusMd),
-        side: const BorderSide(color: Tokens.rule, width: Tokens.hairline),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(Tokens.space4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    // One sentence per project, rather than a dozen fragments to swipe past.
+    // The seam inside has its own description, so it is folded in here.
+    final label = [
+      '${p.name}, ${p.client}${squadName == null ? '' : ', $squadName'}',
+      'Health ${state.label}, score ${p.score.round()}',
+      plural(p.openSignals, 'open signal'),
+      '${plural(p.scheduleDaysRemaining, 'day')} left',
+      '${(p.budgetBurn * 100).round()}% of budget used',
+      if (p.loadSheddingHoursLost > 0)
+        '${hoursLabel(p.loadSheddingHoursLost)} lost to outages, not scored',
+    ].join('. ');
+
+    return Semantics(
+      button: onTap != null,
+      onTap: onTap,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: Tokens.seam,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Tokens.radiusMd),
+          side: const BorderSide(color: Tokens.rule, width: Tokens.hairline),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(context.dense(Tokens.space4)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p.name, style: AppType.heading),
+                          const SizedBox(height: Tokens.space1),
+                          Text(subtitle, style: AppType.bodyMuted),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: Tokens.space3),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(p.name, style: AppType.heading),
-                        const SizedBox(height: Tokens.space1),
-                        Text(subtitle, style: AppType.bodyMuted),
+                        Text(
+                          '${p.score.round()}',
+                          style: AppType.metricSmall.copyWith(
+                            color: state.color,
+                          ),
+                        ),
+                        const SizedBox(height: Tokens.space2),
+                        StatusPill(state: state),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: Tokens.space3),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${p.score.round()}',
-                        style: AppType.metricSmall.copyWith(color: state.color),
-                      ),
-                      const SizedBox(height: Tokens.space2),
-                      StatusPill(state: state),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: Tokens.space3),
-              HealthSeam(segments: p.seam),
-              const SizedBox(height: Tokens.space3),
-              Wrap(
-                spacing: Tokens.space4,
-                runSpacing: Tokens.space2,
-                children: [
-                  _Fact(
-                    icon: Icons.notifications_none_outlined,
-                    text: plural(p.openSignals, 'open signal'),
-                  ),
-                  _Fact(
-                    icon: Icons.schedule,
-                    text: '${plural(p.scheduleDaysRemaining, 'day')} left',
-                  ),
-                  _Fact(
-                    icon: Icons.payments_outlined,
-                    text: '${(p.budgetBurn * 100).round()}% of budget used',
-                  ),
-                  if (p.loadSheddingHoursLost > 0)
+                  ],
+                ),
+                SizedBox(height: context.dense(Tokens.space3)),
+                HealthSeam(segments: p.seam),
+                SizedBox(height: context.dense(Tokens.space3)),
+                Wrap(
+                  spacing: Tokens.space4,
+                  runSpacing: context.dense(Tokens.space2),
+                  children: [
                     _Fact(
-                      icon: Icons.bolt_outlined,
-                      text:
-                          '${hoursLabel(p.loadSheddingHoursLost)} lost to '
-                          'outages, not scored',
+                      icon: Icons.notifications_none_outlined,
+                      text: plural(p.openSignals, 'open signal'),
                     ),
-                ],
-              ),
-            ],
+                    _Fact(
+                      icon: Icons.schedule,
+                      text: '${plural(p.scheduleDaysRemaining, 'day')} left',
+                    ),
+                    _Fact(
+                      icon: Icons.payments_outlined,
+                      text: '${(p.budgetBurn * 100).round()}% of budget used',
+                    ),
+                    if (p.loadSheddingHoursLost > 0)
+                      _Fact(
+                        icon: Icons.bolt_outlined,
+                        text:
+                            '${hoursLabel(p.loadSheddingHoursLost)} lost to '
+                            'outages, not scored',
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
