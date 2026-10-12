@@ -3,9 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/assistant_repository.dart';
 import '../data/auth_repository.dart';
 import '../data/claude_assistant_repository.dart';
+import '../data/comment_repository.dart';
 import '../data/firebase_auth_repository.dart';
+import '../data/firestore_comment_repository.dart';
 import '../data/firestore_project_repository.dart';
+import '../data/firestore_settings_repository.dart';
 import '../data/project_repository.dart';
+import '../data/settings_repository.dart';
+import '../models/comment.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
@@ -79,6 +84,48 @@ final healthSnapshotProvider = StreamProvider<HealthSnapshot>((ref) {
 /// How current the data on screen is, for the offline banner.
 final syncStateProvider = StreamProvider<SyncState>((ref) {
   return ref.watch(syncServiceProvider).watchSyncState();
+});
+
+/// Discussion on signals, scoped to the signed-in user's organisation.
+///
+/// Separate from [projectRepositoryProvider] on purpose: that one is read-only
+/// to the app, this one is written by people. Watches auth for the same reason
+/// the project repository does, and writes comments as whoever is signed in.
+///
+/// Override with MockCommentRepository for tests or a demo with no backend.
+final commentRepositoryProvider = Provider<CommentRepository>((ref) {
+  final auth = ref.watch(authNotifierProvider);
+
+  return switch (auth) {
+    SignedIn(:final user) => FirestoreCommentRepository(
+      orgId: user.orgId,
+      author: user,
+    ),
+    _ => FirestoreCommentRepository(orgId: ''),
+  };
+});
+
+/// One signal's thread, oldest first.
+///
+/// `autoDispose` is what keeps this cheap: the Firestore listener exists only
+/// while the thread screen is open, and is cancelled when it closes.
+final signalCommentsProvider = StreamProvider.autoDispose
+    .family<List<Comment>, String>(
+      (ref, signalId) => ref.watch(commentRepositoryProvider).watch(signalId),
+    );
+
+/// Per-organisation scoring weights.
+///
+/// Written by people, so it checks the signed-in role before it writes and
+/// relies on `firestore.rules` to make that check more than a courtesy.
+///
+/// Not yet read by the weights screen: [settingsProvider] still holds the
+/// slider draft in memory only, so changes do not survive a restart. Pointing
+/// that notifier at this repository is the remaining piece.
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  return FirestoreSettingsRepository(
+    authRepository: ref.watch(authRepositoryProvider),
+  );
 });
 
 /// The scoring engine, with the standard five indicators.

@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../state/auth_notifier.dart';
 import '../../state/providers.dart';
 import '../../state/settings_notifier.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
 import '../../widgets/panel.dart';
 
-/// Lets a team change what it is measured on.
-///
-/// The most important screen in settings, and arguably the most important
-/// non-dashboard screen in the app. An opaque score is the thing that turns
-/// monitoring into surveillance; a score whose inputs you can see, question
-/// and adjust is a tool your team owns.
 class ScoringWeightsScreen extends ConsumerWidget {
   const ScoringWeightsScreen({super.key});
 
@@ -21,6 +16,8 @@ class ScoringWeightsScreen extends ConsumerWidget {
     final draft = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final weights = draft.weights;
+
+    final canEdit = ref.watch(canChangeSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Scoring weights')),
@@ -35,9 +32,9 @@ class ScoringWeightsScreen extends ConsumerWidget {
           Panel(
             title: 'How the score is made',
             child: Text(
-              'Five indicators are combined into one health score. Change how '
-              'much each one counts to match how your team actually works. '
-              'The weights must add up to 100%.',
+              canEdit
+                  ? 'Five indicators are combined into one health score. Change how much each one counts to match how your team actually works.'
+                  : 'Five indicators are combined into one health score. Only Leads and Managers can modify scoring weights.',
               style: AppType.bodyMuted,
             ),
           ),
@@ -46,42 +43,40 @@ class ScoringWeightsScreen extends ConsumerWidget {
             label: 'Budget burn',
             help: 'Spend rate against schedule elapsed',
             value: weights.budgetBurn,
-            onChanged: notifier.setBudgetBurn,
+            onChanged: canEdit ? notifier.setBudgetBurn : null,
           ),
           _WeightSlider(
             label: 'Task velocity',
-            help: 'Throughput against this squad\'s own baseline',
+            help: 'Throughput against baseline',
             value: weights.taskVelocity,
-            onChanged: notifier.setTaskVelocity,
+            onChanged: canEdit ? notifier.setTaskVelocity : null,
           ),
           _WeightSlider(
             label: 'Issue complexity ratio',
-            help: 'Whether remaining work is getting heavier',
+            help: 'Backlog weight distribution',
             value: weights.issueComplexity,
-            onChanged: notifier.setIssueComplexity,
+            onChanged: canEdit ? notifier.setIssueComplexity : null,
           ),
           _WeightSlider(
             label: 'Commit volume',
-            help:
-                'Commit activity against baseline. Easiest to game, so '
-                'weighted lowest by default.',
+            help: 'Code activity across the codebase',
             value: weights.commitVolume,
-            onChanged: notifier.setCommitVolume,
+            onChanged: canEdit ? notifier.setCommitVolume : null,
           ),
           _WeightSlider(
             label: 'Idle-time ratio',
-            help: 'Use of workable time, with outage hours excluded',
+            help: 'Time lost excluding outages',
             value: weights.idleTime,
-            onChanged: notifier.setIdleTime,
+            onChanged: canEdit ? notifier.setIdleTime : null,
           ),
-          const SizedBox(height: Tokens.space4),
+          const SizedBox(height: Tokens.space3),
           _TotalRow(draft: draft, onNormalise: notifier.normalise),
           const SizedBox(height: Tokens.space5),
           Row(
             children: [
               Expanded(
                 child: TextButton(
-                  onPressed: notifier.resetToDefaults,
+                  onPressed: canEdit ? notifier.resetToDefaults : null,
                   child: Text(
                     'Reset to defaults',
                     style: AppType.body.copyWith(color: Tokens.slate),
@@ -91,16 +86,12 @@ class ScoringWeightsScreen extends ConsumerWidget {
               const SizedBox(width: Tokens.space3),
               Expanded(
                 child: FilledButton(
-                  onPressed: draft.canSave ? notifier.markSaved : null,
+                  onPressed: (canEdit && draft.canSave)
+                      ? notifier.markSaved
+                      : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: Tokens.beacon,
                     foregroundColor: Tokens.shaft,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(Tokens.radiusSm),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: Tokens.space3,
-                    ),
                   ),
                   child: Text(
                     'Save weights',
@@ -127,7 +118,7 @@ class _WeightSlider extends StatelessWidget {
   final String label;
   final String help;
   final double value;
-  final void Function(double) onChanged;
+  final ValueChanged<double>? onChanged;
 
   @override
   Widget build(BuildContext context) {
