@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:keel/app_shell.dart';
 import 'package:keel/data/mock_comment_repository.dart';
 import 'package:keel/data/mock_project_repository.dart';
 import 'package:keel/data/mock_settings_repository.dart';
+import 'package:keel/models/preferences.dart';
 import 'package:keel/routing/app_router.dart';
 import 'package:keel/routing/routes.dart';
 import 'package:keel/screens/signal_thread_screen.dart';
@@ -79,6 +81,23 @@ void main() {
     // someone the moment they open the app.
     expect(find.text('Home'), findsWidgets);
     expect(find.text('Ledger rebuild'), findsNothing);
+  });
+
+  testWidgets('opens on the chosen start tab, at the right index', (
+    tester,
+  ) async {
+    // StartTab.index is used directly as the shell's tab index, so this is
+    // what catches the two lists drifting apart — as they did when Grid and
+    // Calendar were folded into Week.
+    SharedPreferences.setMockInitialValues({
+      'preferences.startTab': StartTab.week.name,
+    });
+
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+
+    // The Week tab reports outage hours; Home never does.
+    expect(find.textContaining('HOURS LOST'), findsWidgets);
   });
 
   testWidgets('shows projects once Health is opened', (tester) async {

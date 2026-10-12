@@ -190,6 +190,24 @@ weights and writes them back through `SettingsRepository`. An edit in progress
 is never overwritten by a teammate's save, and a refused save keeps the draft
 so nobody loses work to a permission they could not see.
 
+**Display preferences** live under Settings → Preferences: date and time
+format, density, which tab the app opens on, how many signals the dashboard
+lists, and whether the grid strip shows. Text size and bold text sit
+separately under Accessibility, and have their own reset — somebody who needs
+large text should not lose it by tidying up their date format.
+
+All of it is on-device only, in `shared_preferences`, and never sent anywhere:
+how somebody likes their dates written is not something the organisation needs
+to know. Defaults reproduce how the app looked before any of this existed, so
+nobody sees a change until they choose one, and a storage failure falls back
+to those defaults rather than surfacing an error.
+
+`StartTab` in `preferences.dart` is indexed straight into the shell's
+`_sections`, so the two lists have to stay in step. A stored tab that no
+longer exists falls back to Home rather than opening the wrong screen —
+`preferences_store_test.dart` and the start-tab case in
+`app_flow_test.dart` are what hold that together.
+
 **Forecasting** projects the current trend forward — `forecaster.dart` turns
 burn rate and velocity into "the budget runs out eight days before the work
 does". Deliberately linear: "at the current rate" honestly means a straight
@@ -248,7 +266,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 90 tests and they all pass; a failure is
+Both must be clean. There are 96 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -272,6 +290,7 @@ unformatted file shows up as noise in every later diff.
 | `lib/models/comment.dart` | Why attribution is allowed here and nowhere else |
 | `firestore.rules` | The only thing actually enforcing any of it |
 | `lib/screens/week_screen.dart` | Outage loss stated, then excluded |
+| `lib/models/preferences.dart` | On-device display choices, and their defaults |
 | `lib/widgets/health_seam.dart` | The signature component |
 
 ---

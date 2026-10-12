@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../routing/routes.dart';
 import '../../state/auth_notifier.dart';
 import '../../state/providers.dart';
+import '../../theme/density.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
 import '../../widgets/panel.dart';
@@ -54,6 +55,39 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Assistant API key',
                   subtitle: 'Your own key, kept on this device',
                   onTap: () => Navigator.of(context).pushNamed(Routes.apiKey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Tokens.space4),
+          // Everything in here is this device's business only, which is why it
+          // sits apart from Monitoring above.
+          Panel(
+            title: 'Preferences',
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _Row(
+                  icon: Icons.dashboard_customize_outlined,
+                  title: 'Customisations',
+                  subtitle: 'Formats, density, start screen, dashboard',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(Routes.customisations),
+                ),
+                const Divider(height: 1),
+                _Row(
+                  icon: Icons.accessibility_new_outlined,
+                  title: 'Accessibility',
+                  subtitle: 'Text size, bold text',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(Routes.accessibility),
+                ),
+                const Divider(height: 1),
+                _Row(
+                  icon: Icons.info_outline,
+                  title: 'About and help',
+                  subtitle: 'How scores work, what the colours mean',
+                  onTap: () => Navigator.of(context).pushNamed(Routes.about),
                 ),
               ],
             ),
@@ -154,7 +188,7 @@ class _Row extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(Tokens.space4),
+        padding: EdgeInsets.all(context.dense(Tokens.space4)),
         child: Row(
           children: [
             Icon(icon, size: 18, color: Tokens.slate),

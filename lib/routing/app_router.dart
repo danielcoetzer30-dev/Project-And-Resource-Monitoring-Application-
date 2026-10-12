@@ -8,7 +8,10 @@ import '../screens/auth/auth_gate.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/onboarding/connect_source_screen.dart';
 import '../screens/project_detail_screen.dart';
+import '../screens/settings/about_screen.dart';
+import '../screens/settings/accessibility_screen.dart';
 import '../screens/settings/api_key_screen.dart';
+import '../screens/settings/customisations_screen.dart';
 import '../screens/settings/ingestion_sources_screen.dart';
 import '../screens/settings/scoring_weights_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -36,7 +39,7 @@ class SignalThreadArgs {
 
 /// Builds routes by name.
 ///
-/// Named routes rather than a router package: the app has ten destinations
+/// Named routes rather than a router package: the app has a dozen destinations
 /// and no deep-linking requirement yet, so a third dependency would be
 /// machinery without a job.
 abstract final class AppRouter {
@@ -98,6 +101,15 @@ abstract final class AppRouter {
 
       case Routes.apiKey:
         return _page(const ApiKeyScreen(), settings);
+
+      case Routes.customisations:
+        return _page(const CustomisationsScreen(), settings);
+
+      case Routes.accessibility:
+        return _page(const AccessibilityScreen(), settings);
+
+      case Routes.about:
+        return _page(const AboutScreen(), settings);
 
       default:
         return null;

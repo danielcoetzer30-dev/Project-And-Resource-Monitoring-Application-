@@ -8,9 +8,11 @@ import '../data/firebase_auth_repository.dart';
 import '../data/firestore_comment_repository.dart';
 import '../data/firestore_project_repository.dart';
 import '../data/firestore_settings_repository.dart';
+import '../data/preferences_store.dart';
 import '../data/project_repository.dart';
 import '../data/settings_repository.dart';
 import '../models/comment.dart';
+import '../models/preferences.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
@@ -20,6 +22,7 @@ import '../services/sync/sync_service.dart';
 import 'assistant_notifier.dart';
 import 'auth_notifier.dart';
 import 'dashboard_notifier.dart';
+import 'preferences_notifier.dart';
 import 'settings_notifier.dart';
 
 /// Root providers: the concrete implementations behind each interface.
@@ -167,4 +170,18 @@ final dashboardProvider = NotifierProvider<DashboardNotifier, DashboardView>(
 
 final settingsProvider = NotifierProvider<SettingsNotifier, WeightsDraft>(
   SettingsNotifier.new,
+);
+
+/// Where display preferences are kept on this device.
+final preferencesStoreProvider = Provider<PreferencesStore>(
+  (ref) => const PreferencesStore(),
+);
+
+/// Date format, time format, density and the accessibility choices, applied
+/// app-wide as they change.
+///
+/// On this device only, and never sent anywhere: how somebody likes their
+/// dates written is not something the organisation needs to know.
+final preferencesProvider = NotifierProvider<PreferencesNotifier, Preferences>(
+  PreferencesNotifier.new,
 );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/density.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 
@@ -14,13 +15,15 @@ class Panel extends StatelessWidget {
     required this.child,
     this.title,
     this.trailing,
-    this.padding = const EdgeInsets.all(Tokens.space4),
+    this.padding,
   });
 
   final Widget child;
   final String? title;
   final Widget? trailing;
-  final EdgeInsets padding;
+
+  /// Defaults to the standard panel padding, tightened in Compact.
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -36,16 +39,21 @@ class Panel extends StatelessWidget {
         children: [
           if (title != null) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Tokens.space4,
-                Tokens.space3,
-                Tokens.space3,
-                Tokens.space3,
+              padding: EdgeInsets.fromLTRB(
+                context.dense(Tokens.space4),
+                context.dense(Tokens.space3),
+                context.dense(Tokens.space3),
+                context.dense(Tokens.space3),
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(title!.toUpperCase(), style: AppType.label),
+                    // Marked as a heading so screen reader users can jump
+                    // between panels.
+                    child: Semantics(
+                      header: true,
+                      child: Text(title!.toUpperCase(), style: AppType.label),
+                    ),
                   ),
                   ?trailing,
                 ],
@@ -53,7 +61,10 @@ class Panel extends StatelessWidget {
             ),
             const Divider(height: Tokens.hairline),
           ],
-          Padding(padding: padding, child: child),
+          Padding(
+            padding: padding ?? EdgeInsets.all(context.dense(Tokens.space4)),
+            child: child,
+          ),
         ],
       ),
     );

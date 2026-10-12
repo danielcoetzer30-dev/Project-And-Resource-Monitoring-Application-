@@ -3,13 +3,12 @@
 /// Kept as plain functions so they can be tested without pumping a widget.
 library;
 
-/// 24-hour clock, e.g. "09:05". Load-shedding schedules are quoted this way
-/// in South Africa, so it matches what the team already reads elsewhere.
-String clockTime(DateTime t) {
-  final h = t.hour.toString().padLeft(2, '0');
-  final m = t.minute.toString().padLeft(2, '0');
-  return '$h:$m';
-}
+import '../../core/utils/date_format.dart';
+
+/// Clock time in whichever format the person chose under Customisations.
+/// The default is 24-hour, e.g. "09:05", which is how load-shedding
+/// schedules are quoted in South Africa.
+String clockTime(DateTime t) => DateFormatting.time(t);
 
 /// How long ago something happened, in the coarsest unit that stays useful.
 String agoLabel(DateTime t, {DateTime? now}) {

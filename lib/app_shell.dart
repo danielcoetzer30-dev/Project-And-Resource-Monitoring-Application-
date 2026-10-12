@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/project_repository.dart';
+import 'models/preferences.dart';
 import 'models/squad.dart';
 import 'routing/app_router.dart';
 import 'routing/routes.dart';
@@ -27,6 +28,24 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   /// 0 is Home. The data sections follow, in the order of [_sections].
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _openOnStartTab();
+  }
+
+  /// Opens on the tab the person chose under Customisations.
+  ///
+  /// Saved preferences arrive a moment after launch, so this reads the store
+  /// directly rather than waiting on the provider, and gives up if they have
+  /// already tapped somewhere in the meantime — moving the screen out from
+  /// under somebody is worse than ignoring their preference once.
+  Future<void> _openOnStartTab() async {
+    final saved = await ref.read(preferencesStoreProvider).load();
+    if (!mounted || _index != 0 || saved.startTab == StartTab.home) return;
+    setState(() => _index = saved.startTab.index);
+  }
 
   /// Everything the user can open from Home. The navigation bar is built from
   /// this same list, so a section is named and iconed in exactly one place.
@@ -90,6 +109,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Drives the role chip. Null when signed out, which is the normal state
     // while the mock repository is in use.
     final user = ref.watch(currentUserProvider);
+
+    // Dates and times are formatted through static helpers rather than off the
+    // context, so nothing here depends on them. Watched anyway, so changing a
+    // format repaints the tabs instead of waiting for the next rebuild.
+    ref.watch(preferencesProvider);
 
     // Only the data tabs wait for a snapshot. Home needs none, so the app
     // opens straight onto it with or without a connection.
