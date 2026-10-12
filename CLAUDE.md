@@ -158,10 +158,17 @@ to the signed-in user's organisation; Firebase Auth with email and password;
 security rules open per collection and verified denying anonymous access;
 offline cache so it stays usable during an outage.
 
-Seven tabs: **Home** (a neutral landing that needs no data, so it renders with
-no connection), Health, Squads, Signals, Grid, **Calendar** and **Ask**. That
-is two more than Material's three-to-five guidance for a bottom bar, and it
-shows — the next UI pass should probably fold Grid and Calendar together.
+Six tabs: **Home** (a neutral landing that needs no data, so it renders with
+no connection), Health, Squads, Signals, **Week** and **Ask**.
+
+**Week** is the screen no competing tool has. It lays the week out as a bar
+per project, then states what load-shedding has taken from it and that those
+hours are excluded from every score. Grid and Calendar used to be separate
+tabs; Calendar's grid panel and squad list only repeated what Grid and Squads
+already said, so they were folded into one. Outage state is shown for today
+only — a schedule that changes daily cannot honestly be labelled for Thursday,
+so a future day says so rather than reading as outage-free.
+`test/widget/week_screen_test.dart` holds that promise in place.
 
 **Comments on signals.** The one thing people write that carries a name, and
 fenced in deliberately: four fields only, enforced in `firestore.rules`, no
@@ -170,12 +177,18 @@ not part of `HealthSnapshot`, so the assistant cannot see them. The reasoning
 is in the doc comment on `lib/models/comment.dart`, which is worth reading
 before touching any of it.
 
-**Roles** limit what you can change, never what can be seen about you.
-`AppUser.canChangeSettings` and `canManageProject` are the predicates;
-`currentUserProvider` and friends in `auth_notifier.dart` are how screens ask.
-Every client-side check is repeated in `firestore.rules`, because a check only
-in the client is a courtesy, not a control. `Project.leadId` exists for this
-and nothing else: no indicator is derived from it and no screen displays it.
+**Roles** limit what you can change, never what can be seen about you. A
+developer reads every setting and every score and writes none of them, which
+is the point: scoring a team with numbers it cannot inspect is the thing this
+project exists to argue against. `AppUser.canChangeSettings` is the predicate,
+`currentUserProvider` and friends in `auth_notifier.dart` are how screens ask,
+and every client-side check is repeated in `firestore.rules` — a check only in
+the client is a courtesy, not a control.
+
+**Scoring weights persist.** `SettingsNotifier` reads the organisation's saved
+weights and writes them back through `SettingsRepository`. An edit in progress
+is never overwritten by a teammate's save, and a refused save keeps the draft
+so nobody loses work to a permission they could not see.
 
 **Forecasting** projects the current trend forward — `forecaster.dart` turns
 burn rate and velocity into "the budget runs out eight days before the work
@@ -235,7 +248,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 82 tests and they all pass; a failure is
+Both must be clean. There are 90 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -258,7 +271,30 @@ unformatted file shows up as noise in every later diff.
 | `lib/services/assistant/snapshot_brief.dart` | Everything the assistant is told |
 | `lib/models/comment.dart` | Why attribution is allowed here and nowhere else |
 | `firestore.rules` | The only thing actually enforcing any of it |
+| `lib/screens/week_screen.dart` | Outage loss stated, then excluded |
 | `lib/widgets/health_seam.dart` | The signature component |
+
+---
+
+## Per-project ownership
+
+There is deliberately no project owner or lead field, and no
+`canManageProject`. Both existed briefly and were removed because the feature
+they implied cannot be built as things stand.
+
+To assign a lead you have to pick a person. Picking a person needs a list of
+the organisation's members, and `users` is readable only by its own owner —
+that rule is in `firestore.rules` precisely so a squad's membership cannot be
+enumerated, which is constraint 1 doing its job. Relaxing it to add an
+assignment screen would trade a commitment from the ethics section for a
+feature nothing in the app currently needs.
+
+There is also nothing on a project a client may write, so even a correctly
+assigned lead would have no permission to act on it.
+
+If the team does want it later, it belongs where roles already live: set in
+the Firebase console, written by ingestion, read-only to the app. Adding a
+`leadId` the app can write is the version to refuse.
 
 ---
 

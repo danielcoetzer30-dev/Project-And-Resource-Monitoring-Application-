@@ -98,7 +98,7 @@ void main() {
       'Health',
       'Squads',
       'Signals',
-      'Grid',
+      'Week',
       'Ask',
       'Home',
     ]) {
