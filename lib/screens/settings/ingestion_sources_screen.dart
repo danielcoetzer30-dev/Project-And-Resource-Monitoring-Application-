@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/duration_format.dart';
 import '../../models/ingestion_source.dart';
 import '../../routing/routes.dart';
+import '../../state/auth_notifier.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
 import '../../widgets/empty_state.dart';
@@ -12,13 +14,18 @@ import '../../widgets/empty_state.dart';
 /// "Last synced" is the column that matters. A source that silently stopped
 /// working three weeks ago is worse than no source, because the scores keep
 /// rendering and nobody knows they are stale.
-class IngestionSourcesScreen extends StatelessWidget {
+class IngestionSourcesScreen extends ConsumerWidget {
   const IngestionSourcesScreen({super.key, this.sources = const []});
 
   final List<IngestionSource> sources;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // A developer sees every source and when it last synced, and cannot add
+    // one. The route is gated as well, so this only hides a door that is
+    // already locked.
+    final canConnect = ref.watch(canChangeSettingsProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Connected sources')),
       body: sources.isEmpty
@@ -28,9 +35,10 @@ class IngestionSourcesScreen extends StatelessWidget {
               body:
                   'Connect a repository or issue tracker and the app starts '
                   'reading activity on its own. Nothing needs typing in.',
-              actionLabel: 'Connect a source',
-              onAction: () =>
-                  Navigator.of(context).pushNamed(Routes.connectSource),
+              actionLabel: canConnect ? 'Connect a source' : null,
+              onAction: canConnect
+                  ? () => Navigator.of(context).pushNamed(Routes.connectSource)
+                  : null,
             )
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(
@@ -43,7 +51,7 @@ class IngestionSourcesScreen extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: Tokens.space3),
               itemBuilder: (context, i) => _SourceRow(source: sources[i]),
             ),
-      floatingActionButton: sources.isEmpty
+      floatingActionButton: (sources.isEmpty || !canConnect)
           ? null
           : FloatingActionButton.extended(
               onPressed: () =>

@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:keel/app_shell.dart';
+import 'package:keel/data/mock_comment_repository.dart';
 import 'package:keel/data/mock_project_repository.dart';
 import 'package:keel/routing/app_router.dart';
 import 'package:keel/routing/routes.dart';
+import 'package:keel/screens/signal_thread_screen.dart';
 import 'package:keel/state/providers.dart';
 import 'package:keel/theme/app_theme.dart';
+import 'package:keel/widgets/signal_card.dart';
 
 import '../support/fake_auth_repository.dart';
 
@@ -27,6 +30,13 @@ void main() {
         authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
         projectRepositoryProvider.overrideWith((ref) {
           final repository = MockProjectRepository();
+          ref.onDispose(repository.dispose);
+          return repository;
+        }),
+        commentRepositoryProvider.overrideWith((ref) {
+          final repository = MockCommentRepository(
+            author: FakeAuthRepository.demoUser,
+          );
           ref.onDispose(repository.dispose);
           return repository;
         }),
@@ -107,6 +117,37 @@ void main() {
     );
     expect(find.text('WHAT IS DRIVING THE SCORE'), findsOneWidget);
     expect(find.text('Budget burn'), findsWidgets);
+  });
+
+  testWidgets('opens the discussion on a signal and adds to it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(themedApp());
+    await tester.pump();
+
+    await openSection(tester, 'Signals');
+    await tester.tap(find.text('Discuss').first);
+    await tester.pumpAndSettle();
+
+    // The warning travels with its conversation: the card, with its reasoning,
+    // sits above the thread rather than being left behind on the list.
+    expect(find.text('DISCUSSION'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SignalThreadScreen),
+        matching: find.byType(SignalCard),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Nobody has said anything yet'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Escalated to the client.');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Post comment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Escalated to the client.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('reaches settings and the scoring weights screen', (

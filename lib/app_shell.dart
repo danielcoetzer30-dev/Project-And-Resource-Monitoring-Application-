@@ -11,6 +11,8 @@ import 'screens/home_screen.dart';
 import 'screens/infrastructure_screen.dart';
 import 'screens/signals_screen.dart';
 import 'screens/squads_screen.dart';
+import 'screens/timeline_screen.dart';
+import 'state/auth_notifier.dart';
 import 'state/providers.dart';
 import 'theme/tokens.dart';
 import 'theme/typography.dart';
@@ -46,7 +48,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     ),
     HomeDestination(
       title: 'Signals',
-      description: 'Early warnings, each with the reason it was raised.',
+      description:
+          'Early warnings, each with the reason it was raised and a place '
+          'to discuss it.',
       icon: Icons.notifications_none,
       selectedIcon: Icons.notifications,
     ),
@@ -55,6 +59,12 @@ class _AppShellState extends ConsumerState<AppShell> {
       description: 'Load-shedding, and the hours it has taken from your week.',
       icon: Icons.bolt_outlined,
       selectedIcon: Icons.bolt,
+    ),
+    HomeDestination(
+      title: 'Calendar',
+      description: 'Project timeline, dates, and squad capacity over the week.',
+      icon: Icons.calendar_month_outlined,
+      selectedIcon: Icons.calendar_month,
     ),
     HomeDestination(
       title: 'Ask',
@@ -82,6 +92,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final snapshot = async.value;
     final syncState = ref.watch(syncStateProvider).value;
 
+    // Drives the role chip. Null when signed out, which is the normal state
+    // while the mock repository is in use.
+    final user = ref.watch(currentUserProvider);
+
     // Only the data tabs wait for a snapshot. Home needs none, so the app
     // opens straight onto it with or without a connection.
     Widget withData(Widget Function(HealthSnapshot snapshot) build) {
@@ -94,6 +108,29 @@ class _AppShellState extends ConsumerState<AppShell> {
         title: Text(_title),
         actions: [
           if (snapshot != null) _SyncBadge(snapshot: snapshot),
+          // Shows the signed-in person their own role, so it is obvious why a
+          // setting is or is not editable. It is never anybody else's.
+          if (user != null) ...[
+            const SizedBox(width: Tokens.space2),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Tokens.space2,
+                vertical: Tokens.space1,
+              ),
+              decoration: BoxDecoration(
+                color: Tokens.shaft,
+                borderRadius: BorderRadius.circular(Tokens.radiusSm),
+                border: Border.all(color: Tokens.rule, width: Tokens.hairline),
+              ),
+              child: Text(
+                user.role.label.toUpperCase(),
+                style: AppType.label.copyWith(
+                  fontSize: 10,
+                  color: Tokens.slate,
+                ),
+              ),
+            ),
+          ],
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
             icon: const Icon(Icons.settings_outlined),
@@ -137,8 +174,23 @@ class _AppShellState extends ConsumerState<AppShell> {
                   ),
                 ),
                 withData((s) => SquadsScreen(snapshot: s)),
-                withData((s) => SignalsScreen(snapshot: s)),
+                withData(
+                  (s) => SignalsScreen(
+                    snapshot: s,
+                    // Same split as the dashboard: the screen raises the
+                    // intent, the shell owns the route.
+                    onOpenSignal: (signal, projectName) =>
+                        Navigator.of(context).pushNamed(
+                          Routes.signalThread,
+                          arguments: SignalThreadArgs(
+                            signal: signal,
+                            projectName: projectName,
+                          ),
+                        ),
+                  ),
+                ),
                 withData((s) => InfrastructureScreen(snapshot: s)),
+                withData((s) => TimelineScreen(snapshot: s)),
                 // Not wrapped in withData: the assistant reads the snapshot
                 // itself when a question is asked, and says so plainly if
                 // there is nothing loaded yet.

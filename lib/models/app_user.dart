@@ -38,10 +38,46 @@ class AppUser {
   final String email;
   final String displayName;
 
-  ///Every query in the app is scoped by this.
+  /// Every query in the app is scoped by this.
   final String orgId;
 
   final UserRole role;
 
+  bool get isDeveloper => role == UserRole.developer;
+  bool get isLead => role == UserRole.lead;
+  bool get isManager => role == UserRole.manager;
+
+  /// Leads and managers can change what the team is measured on. A developer
+  /// can read every setting, which is the point: the scoring has to be
+  /// inspectable by the people it scores.
   bool get canChangeSettings => role != UserRole.developer;
+
+  bool get canOverseeAllProjects => role == UserRole.manager;
+
+  /// Whether this person may change the given project's configuration. A lead
+  /// only for their own project, a manager for any of them.
+  bool canManageProject(String? projectLeadId) {
+    if (isManager) return true;
+    if (isLead && projectLeadId == id) return true;
+    return false;
+  }
+
+  factory AppUser.fromMap(Map<String, dynamic> map, String documentId) {
+    return AppUser(
+      id: documentId,
+      email: map['email'] ?? '',
+      displayName: map['displayName'] ?? '',
+      orgId: map['orgId'] ?? '',
+      role: UserRole.fromName(map['role'] ?? 'developer'),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'email': email,
+      'displayName': displayName,
+      'orgId': orgId,
+      'role': role.name,
+    };
+  }
 }

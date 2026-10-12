@@ -33,6 +33,9 @@ abstract final class ProjectDto {
       // these existed produces no forecast instead of a wrong one.
       scheduleTotalDays: (data['scheduleTotalDays'] as num?)?.toInt() ?? 0,
       velocityRatio: (data['velocityRatio'] as num?)?.toDouble() ?? 1,
+      // Empty rather than null: an unassigned project simply has nobody who
+      // can edit it, which is the safe default.
+      leadId: data['leadId'] as String? ?? '',
     );
   }
 
@@ -50,6 +53,7 @@ abstract final class ProjectDto {
       'loadSheddingHoursLost': project.loadSheddingHoursLost,
       'scheduleTotalDays': project.scheduleTotalDays,
       'velocityRatio': project.velocityRatio,
+      'leadId': project.leadId,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

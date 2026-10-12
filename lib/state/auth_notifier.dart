@@ -92,3 +92,30 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const SignedOut();
   }
 }
+
+/// The signed-in person, or null when signed out.
+///
+/// Screens read this rather than pattern-matching on [AuthState], so the role
+/// checks below all come from one place.
+final currentUserProvider = Provider<AppUser?>((ref) {
+  final authState = ref.watch(authNotifierProvider);
+  return authState is SignedIn ? authState.user : null;
+});
+
+/// Returns true if the logged-in user is a Manager.
+final isManagerProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return user?.isManager ?? false;
+});
+
+/// Returns true if the logged-in user is a Lead.
+final isLeadProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return user?.isLead ?? false;
+});
+
+/// Returns true if the logged-in user is allowed to edit settings/weights.
+final canChangeSettingsProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return user?.canChangeSettings ?? false;
+});

@@ -43,12 +43,22 @@ class Project {
     required this.loadSheddingHoursLost,
     this.scheduleTotalDays = 0,
     this.velocityRatio = 1,
+    this.leadId = '',
   });
 
   final String id;
   final String name;
   final String client;
   final String squadId;
+
+  /// Who is accountable for this project, used only to decide what the signed-in
+  /// person is allowed to change.
+  ///
+  /// This is not activity data and is deliberately not readable as any measure
+  /// of a person: nothing in the scoring engine, the anonymiser or the
+  /// assistant brief touches it, and no indicator is derived from it. It
+  /// answers "may this user edit this" and nothing else. Empty when unassigned.
+  final String leadId;
 
   /// 0–100 composite.
   final double score;

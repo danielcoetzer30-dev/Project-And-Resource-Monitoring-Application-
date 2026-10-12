@@ -11,12 +11,19 @@ abstract final class AppConstants {
   static const projectsCollection = 'projects';
   static const squadsCollection = 'squads';
   static const signalsCollection = 'signals';
+
+  /// Subcollection of a signal: the discussion about why it fired.
+  static const commentsCollection = 'comments';
   static const outagesCollection = 'outages';
   static const settingsCollection = 'settings';
 
   /// Document id for the single settings document per organisation.
 
   static const scoringWeightsDoc = 'scoringweights';
+
+  /// Most recent comments a thread loads. Bounds the reads for one signal, so a
+  /// long argument cannot quietly become an expensive screen to open.
+  static const commentsShown = 100;
 
   ///Ingestion
   ///how often does ingestion polls its sources when device is online

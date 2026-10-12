@@ -59,11 +59,17 @@ this lives, and two tests in `health_score_engine_test.dart` protect it.
 Enforced in `firestore.rules`. This is what stops a team editing its own health
 scores, and it is half the anti-gaming argument.
 
+A client may write exactly three things, each with its own rule: `sources`,
+`settings`, and `comments` under a signal. Nothing else. If you find yourself
+adding a write method to `FirestoreProjectRepository`, that is the constraint
+telling you the work belongs in ingestion.
+
 ### 4. No manual status entry
 
 The app's whole differentiator is passive capture. There is deliberately no UI
-for typing in progress, and `ProjectRepository` has no write method. The one
-screen that accepts input is *Connect a source*, which is one-off setup.
+for typing in progress, and `ProjectRepository` has no write method. Input is
+confined to *Connect a source*, which is one-off setup, and to comments on a
+signal, which are a discussion about the data and never the data itself.
 
 ### 5. The assistant sends squad-level data only
 
@@ -152,8 +158,24 @@ to the signed-in user's organisation; Firebase Auth with email and password;
 security rules open per collection and verified denying anonymous access;
 offline cache so it stays usable during an outage.
 
-Six tabs: **Home** (a neutral landing that needs no data, so it renders with
-no connection), Health, Squads, Signals, Grid, and **Ask**.
+Seven tabs: **Home** (a neutral landing that needs no data, so it renders with
+no connection), Health, Squads, Signals, Grid, **Calendar** and **Ask**. That
+is two more than Material's three-to-five guidance for a bottom bar, and it
+shows — the next UI pass should probably fold Grid and Calendar together.
+
+**Comments on signals.** The one thing people write that carries a name, and
+fenced in deliberately: four fields only, enforced in `firestore.rules`, no
+editing, delete your own only. Nothing queries them by author, and they are
+not part of `HealthSnapshot`, so the assistant cannot see them. The reasoning
+is in the doc comment on `lib/models/comment.dart`, which is worth reading
+before touching any of it.
+
+**Roles** limit what you can change, never what can be seen about you.
+`AppUser.canChangeSettings` and `canManageProject` are the predicates;
+`currentUserProvider` and friends in `auth_notifier.dart` are how screens ask.
+Every client-side check is repeated in `firestore.rules`, because a check only
+in the client is a courtesy, not a control. `Project.leadId` exists for this
+and nothing else: no indicator is derived from it and no screen displays it.
 
 **Forecasting** projects the current trend forward — `forecaster.dart` turns
 burn rate and velocity into "the budget runs out eight days before the work
@@ -213,7 +235,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 59 tests and they all pass; a failure is
+Both must be clean. There are 82 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -234,6 +256,8 @@ unformatted file shows up as noise in every later diff.
 | `lib/services/health_scoring/forecaster.dart` | Projects the trend, and refuses to guess |
 | `lib/services/ingestion/anonymiser.dart` | The ethics commitment in code |
 | `lib/services/assistant/snapshot_brief.dart` | Everything the assistant is told |
+| `lib/models/comment.dart` | Why attribution is allowed here and nowhere else |
+| `firestore.rules` | The only thing actually enforcing any of it |
 | `lib/widgets/health_seam.dart` | The signature component |
 
 ---

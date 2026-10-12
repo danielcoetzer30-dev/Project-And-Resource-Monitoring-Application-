@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../routing/routes.dart';
+import '../../state/auth_notifier.dart';
+import '../../state/providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
 import '../../widgets/panel.dart';
 
-/// Account, data sources, and how the score is calculated.
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final canChangeSettings = ref.watch(canChangeSettingsProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -29,7 +34,9 @@ class SettingsScreen extends StatelessWidget {
                 _Row(
                   icon: Icons.tune,
                   title: 'Scoring weights',
-                  subtitle: 'Change what your team is measured on',
+                  subtitle: canChangeSettings
+                      ? 'Change what your team is measured on'
+                      : 'View scoring weight configuration (Read-only)',
                   onTap: () =>
                       Navigator.of(context).pushNamed(Routes.scoringWeights),
                 ),
@@ -78,19 +85,48 @@ class SettingsScreen extends StatelessWidget {
                       'Hours lost to load-shedding are reported but never '
                       'deducted from a health score.',
                 ),
+                const SizedBox(height: Tokens.space3),
+                _PrivacyLine(
+                  text:
+                      'Your role decides what you can change, never what can '
+                      'be seen about you.',
+                ),
               ],
             ),
           ),
           const SizedBox(height: Tokens.space4),
+          // Names the signed-in person and their role, so it is obvious why a
+          // setting above is or is not editable.
           Panel(
             title: 'Account',
             padding: EdgeInsets.zero,
-            child: _Row(
-              icon: Icons.logout,
-              title: 'Sign in',
-              subtitle: 'Not signed in — running on demonstration data',
-              onTap: () => Navigator.of(context).pushNamed(Routes.signIn),
-            ),
+            child: user != null
+                ? Column(
+                    children: [
+                      _Row(
+                        icon: Icons.person_outline,
+                        title: user.displayName.isNotEmpty
+                            ? user.displayName
+                            : user.email,
+                        subtitle: '${user.role.label} in ${user.orgId}',
+                        onTap: null,
+                      ),
+                      const Divider(height: 1),
+                      _Row(
+                        icon: Icons.logout,
+                        title: 'Sign out',
+                        subtitle: 'You will need your password to come back',
+                        onTap: () =>
+                            ref.read(authNotifierProvider.notifier).signOut(),
+                      ),
+                    ],
+                  )
+                : _Row(
+                    icon: Icons.logout,
+                    title: 'Sign in',
+                    subtitle: 'Not signed in — running on demonstration data',
+                    onTap: () => Navigator.of(context).pushNamed(Routes.signIn),
+                  ),
           ),
         ],
       ),
@@ -109,7 +145,9 @@ class _Row extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback onTap;
+
+  /// Null for a row that only states something, so it does not look tappable.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +169,8 @@ class _Row extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: Tokens.slate),
+            if (onTap != null)
+              const Icon(Icons.chevron_right, size: 18, color: Tokens.slate),
           ],
         ),
       ),
