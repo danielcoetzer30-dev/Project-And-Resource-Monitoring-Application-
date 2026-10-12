@@ -9,22 +9,25 @@ import '../theme/tokens.dart';
 import '../theme/typography.dart';
 import '../widgets/panel.dart';
 
-/// The week ahead: which projects still have schedule left, and what the grid
-/// and squad capacity look like on a chosen day.
+/// The week ahead, and what the grid has cost it.
 ///
-/// Horizons are deliberately short. The data behind a bar is the same linear
-/// projection the forecast panel uses, and a straight line stops being honest
-/// past a week or so.
-class TimelineScreen extends StatefulWidget {
-  const TimelineScreen({super.key, required this.snapshot});
+/// This is the screen no competing tool has. Its job is to hold infrastructure
+/// loss separate from delivery performance, so a team is never scored down for
+/// a national power failure — the hours are stated plainly and then excluded
+/// from every score.
+///
+/// Horizons are deliberately short. A bar is the same linear projection the
+/// forecast panel uses, and a straight line stops being honest past a week.
+class WeekScreen extends StatefulWidget {
+  const WeekScreen({super.key, required this.snapshot});
 
   final HealthSnapshot snapshot;
 
   @override
-  State<TimelineScreen> createState() => _TimelineScreenState();
+  State<WeekScreen> createState() => _WeekScreenState();
 }
 
-class _TimelineScreenState extends State<TimelineScreen> {
+class _WeekScreenState extends State<WeekScreen> {
   /// Days from today. 0 is today, which is what the panel below opens on.
   int _selectedDayIndex = 0;
 
@@ -77,7 +80,7 @@ class _TimelineArea extends StatelessWidget {
         Positioned.fill(
           child: Row(
             children: List.generate(
-              _TimelineScreenState._daysShown,
+              _WeekScreenState._daysShown,
               (_) => Container(
                 width: dayWidth,
                 decoration: const BoxDecoration(
@@ -140,7 +143,7 @@ class _WeekStrip extends StatelessWidget {
     final today = DateTime.now().toLocal();
 
     return Row(
-      children: List.generate(_TimelineScreenState._daysShown, (index) {
+      children: List.generate(_WeekScreenState._daysShown, (index) {
         final day = today.add(Duration(days: index));
         final isSelected = selectedDayIndex == index;
 
@@ -224,11 +227,11 @@ class _ProjectBar extends StatelessWidget {
     // and never more than the week on screen.
     final days = min(
       max(1, project.scheduleDaysRemaining),
-      _TimelineScreenState._daysShown,
+      _WeekScreenState._daysShown,
     );
     final colour = project.state.color;
     final runsPastTheWeek =
-        project.scheduleDaysRemaining > _TimelineScreenState._daysShown;
+        project.scheduleDaysRemaining > _WeekScreenState._daysShown;
 
     return Semantics(
       label:
@@ -279,7 +282,11 @@ class _ProjectBar extends StatelessWidget {
   }
 }
 
-/// What the chosen day looks like for the grid and for squad capacity.
+/// The chosen day, and what the grid has taken from the week.
+///
+/// The hours panel is the point of the screen: it states the loss in full and
+/// then says plainly that it is excluded from every score. A team reading this
+/// should never wonder whether an outage counted against them.
 class _DayDetails extends StatelessWidget {
   const _DayDetails({required this.snapshot, required this.dayIndex});
 
@@ -292,6 +299,11 @@ class _DayDetails extends StatelessWidget {
     final isToday = dayIndex == 0;
     final grid = snapshot.grid;
     final isShedding = isToday && grid.isShedding;
+
+    final hoursLost = snapshot.projects.fold<double>(
+      0,
+      (sum, project) => sum + project.loadSheddingHoursLost,
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -307,26 +319,110 @@ class _DayDetails extends StatelessWidget {
           const SizedBox(height: Tokens.space4),
           Panel(
             title: 'The grid',
-            child: Row(
+            // Only stated for today. A schedule that changes daily cannot
+            // honestly be labelled for Thursday.
+            trailing: isToday
+                ? Text(
+                    grid.isShedding ? 'SHEDDING' : 'STABLE',
+                    style: AppType.label.copyWith(
+                      color: grid.isShedding ? Tokens.brass : Tokens.jade,
+                    ),
+                  )
+                : null,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  isShedding ? Icons.bolt : Icons.check_circle_outline,
-                  size: 18,
-                  color: isShedding ? Tokens.brass : Tokens.jade,
+                Row(
+                  children: [
+                    Icon(
+                      isShedding ? Icons.bolt : Icons.check_circle_outline,
+                      size: 18,
+                      color: isShedding ? Tokens.brass : Tokens.jade,
+                    ),
+                    const SizedBox(width: Tokens.space3),
+                    Expanded(
+                      child: Text(
+                        switch ((isToday, grid.isShedding)) {
+                          (true, true) => 'Stage ${grid.stage}',
+                          (true, false) => 'No shedding',
+                          // Schedules change, so a future day is honestly
+                          // unknown rather than quietly assumed to be clear.
+                          _ => 'Outages are only known for today',
+                        },
+                        style: AppType.metricSmall.copyWith(
+                          color: isShedding ? Tokens.brass : Tokens.jade,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: Tokens.space3),
-                Expanded(
-                  child: Text(switch ((isToday, grid.isShedding)) {
-                    (true, true) =>
-                      'Stage ${grid.stage} load shedding. '
-                          '${grid.hoursLostThisWeek.toStringAsFixed(1)} '
-                          'hours lost so far this week, reported only — '
-                          'never deducted from a score.',
-                    (true, false) => 'No outages right now.',
-                    // Schedules change, so a future day is honestly unknown.
-                    _ => 'Outages are only known for today.',
-                  }, style: AppType.body),
+                if (isToday && grid.nextOutageStart != null) ...[
+                  const SizedBox(height: Tokens.space3),
+                  Text(
+                    'Next outage ${_time(grid.nextOutageStart!)}'
+                    '–${_time(grid.nextOutageEnd!)}',
+                    style: AppType.body,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: Tokens.space4),
+          Panel(
+            title: 'Hours lost this week',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(hoursLost.toStringAsFixed(1), style: AppType.metric),
+                    const SizedBox(width: Tokens.space2),
+                    Text('hours', style: AppType.bodyMuted),
+                  ],
+                ),
+                const SizedBox(height: Tokens.space4),
+                for (final project in snapshot.projects)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Tokens.space3),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            project.name,
+                            style: AppType.body,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: Tokens.space3),
+                        Text(
+                          '${project.loadSheddingHoursLost.toStringAsFixed(1)}h',
+                          style: AppType.dataStrong,
+                        ),
+                      ],
+                    ),
+                  ),
+                const Divider(height: Tokens.space4),
+                const SizedBox(height: Tokens.space3),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.shield_outlined,
+                      size: 18,
+                      color: Tokens.slate,
+                    ),
+                    const SizedBox(width: Tokens.space3),
+                    Expanded(
+                      child: Text(
+                        'These hours are excluded from every health score. '
+                        'Outages change what a team could deliver, not how '
+                        'well they delivered it.',
+                        style: AppType.bodyMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -368,4 +464,8 @@ class _DayDetails extends StatelessWidget {
       ),
     );
   }
+
+  static String _time(DateTime d) =>
+      '${d.hour.toString().padLeft(2, '0')}:'
+      '${d.minute.toString().padLeft(2, '0')}';
 }

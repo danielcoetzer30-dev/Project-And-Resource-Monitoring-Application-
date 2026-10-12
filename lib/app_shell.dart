@@ -8,10 +8,9 @@ import 'routing/routes.dart';
 import 'screens/assistant_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/infrastructure_screen.dart';
 import 'screens/signals_screen.dart';
 import 'screens/squads_screen.dart';
-import 'screens/timeline_screen.dart';
+import 'screens/week_screen.dart';
 import 'state/auth_notifier.dart';
 import 'state/providers.dart';
 import 'theme/tokens.dart';
@@ -55,14 +54,10 @@ class _AppShellState extends ConsumerState<AppShell> {
       selectedIcon: Icons.notifications,
     ),
     HomeDestination(
-      title: 'Grid',
-      description: 'Load-shedding, and the hours it has taken from your week.',
-      icon: Icons.bolt_outlined,
-      selectedIcon: Icons.bolt,
-    ),
-    HomeDestination(
-      title: 'Calendar',
-      description: 'Project timeline, dates, and squad capacity over the week.',
+      title: 'Week',
+      description:
+          'What is scheduled, and what load-shedding has taken from the '
+          'week so far.',
       icon: Icons.calendar_month_outlined,
       selectedIcon: Icons.calendar_month,
     ),
@@ -189,8 +184,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         ),
                   ),
                 ),
-                withData((s) => InfrastructureScreen(snapshot: s)),
-                withData((s) => TimelineScreen(snapshot: s)),
+                withData((s) => WeekScreen(snapshot: s)),
                 // Not wrapped in withData: the assistant reads the snapshot
                 // itself when a question is asked, and says so plainly if
                 // there is nothing loaded yet.
