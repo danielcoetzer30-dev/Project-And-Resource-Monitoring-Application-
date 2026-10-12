@@ -52,15 +52,9 @@ class AppUser {
   /// inspectable by the people it scores.
   bool get canChangeSettings => role != UserRole.developer;
 
-  bool get canOverseeAllProjects => role == UserRole.manager;
-
-  /// Whether this person may change the given project's configuration. A lead
-  /// only for their own project, a manager for any of them.
-  bool canManageProject(String? projectLeadId) {
-    if (isManager) return true;
-    if (isLead && projectLeadId == id) return true;
-    return false;
-  }
+  // Deliberately no per-project permission. Every project in an organisation
+  // is visible to every member and writable by none, so there is nothing for
+  // such a check to decide. See "Per-project ownership" in CLAUDE.md.
 
   factory AppUser.fromMap(Map<String, dynamic> map, String documentId) {
     return AppUser(

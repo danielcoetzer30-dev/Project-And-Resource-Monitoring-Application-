@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/errors/failure.dart';
 import '../../state/auth_notifier.dart';
 import '../../state/providers.dart';
 import '../../state/settings_notifier.dart';
@@ -33,8 +34,12 @@ class ScoringWeightsScreen extends ConsumerWidget {
             title: 'How the score is made',
             child: Text(
               canEdit
-                  ? 'Five indicators are combined into one health score. Change how much each one counts to match how your team actually works.'
-                  : 'Five indicators are combined into one health score. Only Leads and Managers can modify scoring weights.',
+                  ? 'Five indicators combine into one health score. Change how '
+                        'much each one counts to match how your team actually '
+                        'works.'
+                  : 'Five indicators combine into one health score. Every '
+                        'member can see the weights; leads and managers '
+                        'change them.',
               style: AppType.bodyMuted,
             ),
           ),
@@ -70,13 +75,22 @@ class ScoringWeightsScreen extends ConsumerWidget {
             onChanged: canEdit ? notifier.setIdleTime : null,
           ),
           const SizedBox(height: Tokens.space3),
-          _TotalRow(draft: draft, onNormalise: notifier.normalise),
+          _TotalRow(
+            draft: draft,
+            onNormalise: canEdit ? notifier.normalise : null,
+          ),
+          if (draft.failure != null) ...[
+            const SizedBox(height: Tokens.space4),
+            _SaveFailure(failure: draft.failure!),
+          ],
           const SizedBox(height: Tokens.space5),
           Row(
             children: [
               Expanded(
                 child: TextButton(
-                  onPressed: canEdit ? notifier.resetToDefaults : null,
+                  onPressed: canEdit && !draft.isSaving
+                      ? notifier.resetToDefaults
+                      : null,
                   child: Text(
                     'Reset to defaults',
                     style: AppType.body.copyWith(color: Tokens.slate),
@@ -86,20 +100,24 @@ class ScoringWeightsScreen extends ConsumerWidget {
               const SizedBox(width: Tokens.space3),
               Expanded(
                 child: FilledButton(
-                  onPressed: (canEdit && draft.canSave)
-                      ? notifier.markSaved
-                      : null,
+                  onPressed: (canEdit && draft.canSave) ? notifier.save : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: Tokens.beacon,
                     foregroundColor: Tokens.shaft,
                   ),
                   child: Text(
-                    'Save weights',
+                    draft.isSaving ? 'Saving…' : 'Save weights',
                     style: AppType.bodyStrong.copyWith(color: Tokens.shaft),
                   ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: Tokens.space4),
+          Text(
+            'Weights are saved for the whole organisation, so everyone is '
+            'measured the same way and can see how.',
+            style: AppType.bodyMuted,
           ),
         ],
       ),
@@ -156,11 +174,47 @@ class _WeightSlider extends StatelessWidget {
   }
 }
 
+/// Why a save was refused. Sits directly above the button that was pressed,
+/// so the reason and the control are in the same glance.
+class _SaveFailure extends StatelessWidget {
+  const _SaveFailure({required this.failure});
+
+  final Failure failure;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(Tokens.space3),
+      decoration: BoxDecoration(
+        color: Tokens.flare.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(Tokens.radiusSm),
+        border: Border.all(color: Tokens.flare.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, size: 16, color: Tokens.flare),
+          const SizedBox(width: Tokens.space2),
+          Expanded(
+            child: Text(
+              failure.message,
+              style: AppType.body.copyWith(color: Tokens.flare),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TotalRow extends StatelessWidget {
   const _TotalRow({required this.draft, required this.onNormalise});
 
   final WeightsDraft draft;
-  final VoidCallback onNormalise;
+
+  /// Null for a read-only viewer, so the "Fix" shortcut is not offered to
+  /// somebody who cannot save the result.
+  final VoidCallback? onNormalise;
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +245,7 @@ class _TotalRow extends StatelessWidget {
               style: AppType.body.copyWith(color: colour),
             ),
           ),
-          if (!valid)
+          if (!valid && onNormalise != null)
             TextButton(
               onPressed: onNormalise,
               child: Text(

@@ -7,10 +7,11 @@ import 'package:keel/models/app_user.dart';
 ///
 /// Lets widget tests exercise the app without Firebase, a network or a real
 /// account. Tests that need the signed-out path construct it with
-/// `signedIn: false`.
+/// `signedIn: false`, and tests about roles pass a `user` of their own.
 class FakeAuthRepository implements AuthRepository {
-  FakeAuthRepository({bool signedIn = true})
-    : _user = signedIn ? demoUser : null;
+  FakeAuthRepository({bool signedIn = true, AppUser? user})
+    : _user = signedIn ? (user ?? demoUser) : null,
+      _signInAs = user ?? demoUser;
 
   static const demoUser = AppUser(
     id: 'test-uid',
@@ -19,6 +20,10 @@ class FakeAuthRepository implements AuthRepository {
     orgId: 'demo-org',
     role: UserRole.lead,
   );
+
+  /// Who [signIn] and [register] produce. Lets a test sign in as a developer
+  /// rather than only as the default lead.
+  final AppUser _signInAs;
 
   AppUser? _user;
 
@@ -40,9 +45,9 @@ class FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    _user = demoUser;
+    _user = _signInAs;
     _controller.add(_user);
-    return demoUser;
+    return _signInAs;
   }
 
   @override
@@ -52,9 +57,9 @@ class FakeAuthRepository implements AuthRepository {
     required String displayName,
     required String orgId,
   }) async {
-    _user = demoUser;
+    _user = _signInAs;
     _controller.add(_user);
-    return demoUser;
+    return _signInAs;
   }
 
   @override

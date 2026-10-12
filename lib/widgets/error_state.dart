@@ -77,6 +77,7 @@ class ErrorState extends StatelessWidget {
     AuthFailure() => Icons.lock_outline,
     PermissionFailure() => Icons.shield_outlined,
     DataFailure() => Icons.error_outline,
+    ValidationFailure() => Icons.error_outline,
   };
 
   String get _headline => switch (failure) {
@@ -84,5 +85,6 @@ class ErrorState extends StatelessWidget {
     AuthFailure() => 'Sign in needed',
     PermissionFailure() => 'No access',
     DataFailure() => 'Could not load this',
+    ValidationFailure() => 'Check this',
   };
 }

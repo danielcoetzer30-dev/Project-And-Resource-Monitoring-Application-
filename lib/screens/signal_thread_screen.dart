@@ -177,6 +177,8 @@ class _SignalThreadScreenState extends ConsumerState<SignalThreadScreen> {
       NetworkFailure() =>
         'Your comment did not send. Check your connection and try again.',
       DataFailure() => 'Your comment did not send. Try again.',
+      // Carries its own message, already written for the person reading it.
+      ValidationFailure(:final message) => message,
     };
   }
 
@@ -188,6 +190,7 @@ class _SignalThreadScreenState extends ConsumerState<SignalThreadScreen> {
       NetworkFailure() =>
         'The comment was not deleted. Check your connection and try again.',
       DataFailure() => 'The comment was not deleted. Try again.',
+      ValidationFailure(:final message) => message,
     };
   }
 }

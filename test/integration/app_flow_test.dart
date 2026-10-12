@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:keel/app_shell.dart';
 import 'package:keel/data/mock_comment_repository.dart';
 import 'package:keel/data/mock_project_repository.dart';
+import 'package:keel/data/mock_settings_repository.dart';
 import 'package:keel/routing/app_router.dart';
 import 'package:keel/routing/routes.dart';
 import 'package:keel/screens/signal_thread_screen.dart';
@@ -35,6 +36,13 @@ void main() {
         }),
         commentRepositoryProvider.overrideWith((ref) {
           final repository = MockCommentRepository(
+            author: FakeAuthRepository.demoUser,
+          );
+          ref.onDispose(repository.dispose);
+          return repository;
+        }),
+        settingsRepositoryProvider.overrideWith((ref) {
+          final repository = MockSettingsRepository(
             author: FakeAuthRepository.demoUser,
           );
           ref.onDispose(repository.dispose);
