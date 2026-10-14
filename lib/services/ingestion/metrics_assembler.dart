@@ -23,6 +23,13 @@ class MetricsAssembler {
   /// without reaching back to a different phase of the project.
   static const historyWindows = 4;
 
+  /// The period utilisation is measured over. See the note in [assemble].
+  static const utilisationDays = 7;
+
+  /// Stored windows needed to cover [utilisationDays] at the default poll
+  /// interval, so a week of utilisation can actually be summed.
+  static const retainedWindows = 28;
+
   /// Assembles metrics for one project.
   ///
   /// [history] is previous windows for the same squad, most recent first, and
@@ -47,21 +54,32 @@ class MetricsAssembler {
       fallback: activity.tasksCompleted.toDouble(),
     );
 
-    final windowLength = activity.windowEnd.difference(activity.windowStart);
+    // Utilisation is measured over a rolling week, not over the poll window.
+    //
+    // Scaling a roster down to six hours assumes a team rostered around the
+    // clock. They are not: an overnight run would find no activity against a
+    // sixth of a week's capacity and report the squad as idle, four times a
+    // day, for the entirely normal act of being asleep.
+    //
+    // A week is the shortest period over which "what did they do with the
+    // time they had" has an honest answer, and it matches the period the
+    // project document already reports outage hours over.
+    final weekStart = now.subtract(const Duration(days: utilisationDays));
 
-    // Rostered hours, scaled from a week down to this window. A six-hour poll
-    // window is not a week of capacity.
-    final availableHours = plan.weeklyHours <= 0
-        ? 0.0
-        : plan.weeklyHours *
-              (windowLength.inMinutes / const Duration(days: 7).inMinutes);
+    final availableHours = plan.weeklyHours;
 
     final outageHours = outageHoursIn(
       outages: outages,
       squadId: activity.squadId,
-      windowStart: activity.windowStart,
-      windowEnd: activity.windowEnd,
+      windowStart: weekStart,
+      windowEnd: now,
     );
+
+    // This window, plus every stored window still inside the week.
+    final activePersonHours = [
+      activity,
+      ...history.where((window) => window.windowEnd.isAfter(weekStart)),
+    ].fold<int>(0, (sum, window) => sum + window.activePersonHours);
 
     return ProjectMetrics(
       projectId: projectId,
@@ -76,12 +94,8 @@ class MetricsAssembler {
       budgetSpent: plan.budgetSpent,
       budgetTotal: plan.budgetTotal,
       scheduleElapsed: plan.scheduleElapsedAt(now) ?? 0,
-      // There is no passive source for hours actually worked, so activity in
-      // the window stands in for it: a squad that committed and closed tasks
-      // was working. It is a proxy and is documented as one — see the note on
-      // idle time in docs/SCHEMA.md.
-      activeHours: _activeHoursProxy(
-        activity: activity,
+      activeHours: _cappedActiveHours(
+        activePersonHours: activePersonHours,
         workableHours: availableHours - outageHours,
       ),
       availableHours: availableHours,
@@ -139,18 +153,18 @@ class MetricsAssembler {
     return minutes / 60;
   }
 
-  /// A stand-in for hours worked, derived from whether the squad was active.
+  /// Hours worked, as close as passive capture can honestly get.
   ///
-  /// Deliberately crude, and capped at the workable hours so it can never
-  /// claim a squad worked more than it could have. A squad with no activity at
-  /// all reports zero; any activity reports the full workable window, because
-  /// the alternative — guessing a fraction from a commit count — would invent
-  /// precision the data does not support.
-  double _activeHoursProxy({
-    required SquadActivity activity,
+  /// Capped at the workable hours, so utilisation never exceeds 1. A squad
+  /// that touched more hours than it was rostered for has a roster figure
+  /// that is wrong, not a superhuman week — and over-commitment is what
+  /// `Squad.capacityUsed` reports, not this.
+  double _cappedActiveHours({
+    required int activePersonHours,
     required double workableHours,
   }) {
     if (workableHours <= 0) return 0;
-    return activity.hasActivity ? workableHours : 0;
+    final hours = activePersonHours.toDouble();
+    return hours > workableHours ? workableHours : hours;
   }
 }
