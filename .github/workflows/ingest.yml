@@ -1,0 +1,84 @@
+# Passive capture, running somewhere.
+#
+# The app reads project health from Firestore; this is what puts it there.
+# Without it the documents are a photograph taken once by tool/seed_firestore.js
+# and the scores never move.
+#
+# Why a scheduled Action rather than Cloud Functions: Functions need the Blaze
+# plan, this project is on Spark, and the team already has the repository.
+#
+# It runs `dart run tool/ingest.dart`, which reuses the same anonymiser and
+# scoring engine the app was built around. That reuse is the point — a
+# reimplementation in another language would mean two anonymisers, and one of
+# them would drift out of compliance without anyone noticing.
+
+name: Ingest project activity
+
+on:
+  schedule:
+    # Every six hours. Keep KEEL_WINDOW_HOURS below in step with this, or a
+    # run either re-reads events it has already counted or misses some.
+    - cron: '0 */6 * * *'
+
+  # Manual runs, which is how to try a change without waiting for the cron.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Read and score, but write nothing'
+        type: boolean
+        default: true
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    # A stuck HTTP call should not hold a runner for six hours and collide
+    # with the next scheduled run.
+    timeout-minutes: 15
+
+    # The job reads a repository's commits through the GitHub API and writes
+    # to Firestore. It needs nothing else, so it is granted nothing else.
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Pinned rather than 'stable': the whole value of this job is that
+          # scores change only when the team's activity changes, so the
+          # toolchain underneath should not move on its own.
+          flutter-version: '3.47.1'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Catches a broken merge before it writes anything to the research
+      # database. Cheap, and the alternative is finding out afterwards.
+      - name: Check the scoring path still runs without Flutter
+        run: dart test test/pure/
+
+      - name: Run ingestion
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+          # Maps a source id to the token that reads it. GITHUB_TOKEN is
+          # issued to this run automatically and can read this repository;
+          # any other repository or a ClickUp board needs its own secret.
+          KEEL_SOURCE_TOKENS: ${{ secrets.KEEL_SOURCE_TOKENS }}
+
+          # The one genuinely identifying configuration in this system: which
+          # person belongs to which squad. A secret rather than a Firestore
+          # document on purpose — see Anonymiser.squadOfAuthor.
+          KEEL_SQUAD_OF_AUTHOR: ${{ secrets.KEEL_SQUAD_OF_AUTHOR }}
+
+          KEEL_ORG_ID: demo-org
+          KEEL_WINDOW_HOURS: '6'
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            dart run tool/ingest.dart --dry-run
+          else
+            dart run tool/ingest.dart
+          fi
