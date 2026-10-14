@@ -46,6 +46,10 @@ dependencies:
   connectivity_plus: ^7.3.1
   shared_preferences: ^2.5.5
 
+  # Service-account auth for the ingestion job. Server-side only — the app
+  # never imports it, so it is tree-shaken out of the APK.
+  googleapis_auth: ^1.6.0
+
 dev_dependencies:
   # Plain Dart test runner, for the tests that must prove the scoring and
   # ingestion path works without Flutter. flutter_test would hide that.
