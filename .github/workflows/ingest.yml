@@ -15,12 +15,24 @@
 name: Ingest project activity
 
 on:
-  schedule:
-    # Every six hours. Keep KEEL_WINDOW_HOURS below in step with this, or a
-    # run either re-reads events it has already counted or misses some.
-    - cron: '0 */6 * * *'
+  # The schedule is off until there is a source worth reading.
+  #
+  # Nothing is configured yet: KEEL_SQUAD_OF_AUTHOR and KEEL_SOURCE_TOKENS do
+  # not exist, and the sources in Firestore still point at the fictional repo
+  # the seed script invented. Every run would fail, and a job that always
+  # fails teaches everyone to ignore it — including on the day it fails for a
+  # real reason.
+  #
+  # To switch it on, uncomment the two lines below. The interval has to match
+  # KEEL_WINDOW_HOURS, or a run either re-reads events it has already counted
+  # or misses some. That interval is still an open decision: the team commits
+  # a few times a week, so a six-hour window would be suppressed by the
+  # anonymiser almost every time.
+  #
+  # schedule:
+  #   - cron: '0 */6 * * *'
 
-  # Manual runs, which is how to try a change without waiting for the cron.
+  # Manual runs still work, and default to a dry run.
   workflow_dispatch:
     inputs:
       dry_run:
