@@ -37,12 +37,12 @@ class MetricsAssembler {
     required List<OutageWindow> outages,
     required DateTime now,
   }) {
-    final commitsBaseline = _baseline(
+    final commitsBaseline = baselineOf(
       history.map((window) => window.commitCount.toDouble()),
       fallback: activity.commitCount.toDouble(),
     );
 
-    final tasksBaseline = _baseline(
+    final tasksBaseline = baselineOf(
       history.map((window) => window.tasksCompleted.toDouble()),
       fallback: activity.tasksCompleted.toDouble(),
     );
@@ -56,7 +56,7 @@ class MetricsAssembler {
         : plan.weeklyHours *
               (windowLength.inMinutes / const Duration(days: 7).inMinutes);
 
-    final outageHours = _outageHoursIn(
+    final outageHours = outageHoursIn(
       outages: outages,
       squadId: activity.squadId,
       windowStart: activity.windowStart,
@@ -91,9 +91,12 @@ class MetricsAssembler {
 
   /// The mean of up to [historyWindows] past windows.
   ///
+  /// Public because squad velocity is derived from the same history, and two
+  /// implementations of "what normal looks like" would eventually disagree.
+  ///
   /// Falls back to the current window when there is no history, which makes
   /// the first run score as no change rather than as a sudden drop to zero.
-  double _baseline(Iterable<double> past, {required double fallback}) {
+  double baselineOf(Iterable<double> past, {required double fallback}) {
     final windows = past.take(historyWindows).toList();
     if (windows.isEmpty) return fallback;
 
@@ -101,12 +104,16 @@ class MetricsAssembler {
     return total / windows.length;
   }
 
-  /// Outage hours overlapping this window for this squad.
+  /// Outage hours overlapping a window for a squad.
+  ///
+  /// Public because the project document reports a weekly figure while
+  /// scoring uses the poll window, and both have to count overlap the same
+  /// way or the two numbers will not agree.
   ///
   /// Only the overlapping part is counted. An outage that started before the
   /// window or runs past its end would otherwise remove hours the squad never
   /// had in the first place.
-  double _outageHoursIn({
+  double outageHoursIn({
     required List<OutageWindow> outages,
     required String squadId,
     required DateTime windowStart,

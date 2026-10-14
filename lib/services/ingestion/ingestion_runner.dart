@@ -3,6 +3,7 @@ import '../../core/errors/failure.dart';
 import '../../models/health_state.dart';
 import '../../models/ingestion_source.dart';
 import '../../models/outage_window.dart';
+import '../../models/project_metrics.dart';
 import '../../models/project_plan.dart';
 import '../../models/scoring_weights.dart';
 import '../../models/signal.dart';
@@ -112,6 +113,14 @@ class IngestionRunner {
     var raised = 0;
     final skipped = <String, String>{};
 
+    // Two projects can share a squad, and the history behind them is the
+    // same. Read once: Firestore reads are the metered thing on the free
+    // plan, and this runs four times a day forever.
+    final historyCache = <String, List<SquadActivity>>{};
+
+    Future<List<SquadActivity>> historyFor(String squadId) async =>
+        historyCache[squadId] ??= await _readHistory(squadId);
+
     for (final entry in projects.entries) {
       final projectId = entry.key;
       final document = entry.value;
@@ -131,7 +140,7 @@ class IngestionRunner {
       }
 
       final plan = _planFrom(projectId, plans[projectId]);
-      final history = await _readHistory(squadId);
+      final history = await historyFor(squadId);
 
       final metrics = assembler.assemble(
         projectId: projectId,
@@ -155,9 +164,18 @@ class IngestionRunner {
         projectId: projectId,
         existing: document,
         assessment: assessment,
+        metrics: metrics,
         plan: plan,
-        activity: activity,
         openSignals: signals.length,
+        // Reported over the week, not the poll window: the Week tab adds
+        // these up and calls the total "hours lost this week", and a
+        // six-hour slice under that heading would be wrong.
+        outageHoursThisWeek: assembler.outageHoursIn(
+          outages: outages,
+          squadId: squadId,
+          windowStart: now.subtract(const Duration(days: 7)),
+          windowEnd: now,
+        ),
         now: now,
       );
 
@@ -166,6 +184,16 @@ class IngestionRunner {
       scored++;
       raised += signals.length;
     }
+
+    // Before the history is appended, so a squad's baseline is still the
+    // windows before this one rather than including it.
+    await _writeSquads(
+      activityBySquad: activityBySquad,
+      projects: projects,
+      plans: plans,
+      historyFor: historyFor,
+      now: now,
+    );
 
     for (final activity in result.activity) {
       await _appendHistory(activity);
@@ -277,9 +305,10 @@ class IngestionRunner {
     required String projectId,
     required Map<String, dynamic> existing,
     required HealthAssessment assessment,
+    required ProjectMetrics metrics,
     required ProjectPlan plan,
-    required SquadActivity activity,
     required int openSignals,
+    required double outageHoursThisWeek,
     required DateTime now,
   }) async {
     final seam = _appendToSeam(
@@ -302,8 +331,18 @@ class IngestionRunner {
       ],
       'seam': seam,
       'openSignals': openSignals,
+      'loadSheddingHoursLost': outageHoursThisWeek,
       'updatedAt': now,
     };
+
+    // The forecaster divides schedule remaining by this to project a
+    // completion date. Leaving it stale would pair a fresh burn rate with
+    // last month's velocity and produce a confidently wrong date — worse
+    // than no forecast, which the forecaster is otherwise careful to give.
+    if (metrics.tasksCompletedBaseline > 0) {
+      fields['velocityRatio'] =
+          metrics.tasksCompletedInWindow / metrics.tasksCompletedBaseline;
+    }
 
     // Only written when the plan actually says something. Writing a zero burn
     // for a project nobody filled in would read as "spent nothing", which is
@@ -325,6 +364,79 @@ class IngestionRunner {
       mergeFields: fields.keys.toList(),
     );
   }
+
+  /// Updates what the Squads tab shows.
+  ///
+  /// Only ever a merge, and only the three fields ingestion can actually
+  /// measure. `name` and `headcount` are stated by the team — a headcount is
+  /// not something a commit log knows, and overwriting it with a guess would
+  /// be worse than leaving it alone.
+  ///
+  /// Nothing written here is per-person. `velocityTrend` is a squad total
+  /// against that squad's own past totals, and `capacityUsed` divides by a
+  /// headcount rather than naming anybody.
+  Future<void> _writeSquads({
+    required Map<String, SquadActivity> activityBySquad,
+    required Map<String, Map<String, dynamic>> projects,
+    required Map<String, Map<String, dynamic>> plans,
+    required Future<List<SquadActivity>> Function(String squadId) historyFor,
+    required DateTime now,
+  }) async {
+    final squads = await firestore.list('$_org/squads');
+
+    for (final entry in activityBySquad.entries) {
+      final squadId = entry.key;
+      final activity = entry.value;
+
+      final squad = squads[squadId];
+      if (squad == null) continue;
+
+      final history = await historyFor(squadId);
+      final baseline = assembler.baselineOf(
+        history.map((window) => window.tasksCompleted.toDouble()),
+        fallback: activity.tasksCompleted.toDouble(),
+      );
+
+      final squadProjects = [
+        for (final project in projects.entries)
+          if (project.value['squadId'] == squadId) project.key,
+      ];
+
+      final fields = <String, dynamic>{
+        'activeProjectCount': squadProjects.length,
+        'updatedAt': now,
+      };
+
+      // A ratio of 1 is no change, so the trend is the distance from it.
+      // Without a baseline there is no trend to report, and zero would be a
+      // claim of "steady" rather than an absence.
+      if (baseline > 0) {
+        fields['velocityTrend'] = (activity.tasksCompleted / baseline) - 1;
+      }
+
+      final committed = squadProjects
+          .map((id) => _planFrom(id, plans[id]).weeklyHours)
+          .fold<double>(0, (sum, hours) => sum + hours);
+
+      final headcount = (squad['headcount'] as num?)?.toInt() ?? 0;
+
+      // Hours committed across the squad's projects against the hours the
+      // squad has. Written only when both are known: a capacity of zero
+      // would render as an idle team rather than as an unanswered question.
+      if (committed > 0 && headcount > 0) {
+        fields['capacityUsed'] = committed / (headcount * _hoursPerWeek);
+      }
+
+      await firestore.write(
+        '$_org/squads/$squadId',
+        fields,
+        mergeFields: fields.keys.toList(),
+      );
+    }
+  }
+
+  /// A full working week per person, for turning a headcount into capacity.
+  static const _hoursPerWeek = 40.0;
 
   /// Adds today's state to the project's history strip.
   ///

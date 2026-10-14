@@ -253,6 +253,96 @@ void main() {
     },
   );
 
+  test('writes the fields the forecast and the Week tab depend on', () async {
+    final documents = seedDocuments();
+
+    // An outage inside the reported week, overlapping it only partly: the
+    // hours before the window opened were never this squad's to lose.
+    documents['organisations/demo-org/outages/out-1'] = {
+      'stage': 4,
+      'start': now.subtract(const Duration(days: 2, hours: 1)),
+      'end': now.subtract(const Duration(days: 2)),
+      'affectedSquadIds': ['squad-platform'],
+    };
+
+    final store = FakeStore(documents);
+    final runner = runnerOver(store);
+
+    // Twice, so the second run has a baseline and can report a velocity.
+    await runner.run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+    await runner.run(
+      tokensBySourceId: const {'src-1': 'token'},
+      now: now.add(const Duration(hours: 6)),
+    );
+
+    final written = store.documents['organisations/demo-org/projects/proj-1']!;
+
+    // Without this the forecaster pairs a fresh burn rate with a stale
+    // velocity and gives a confidently wrong completion date.
+    expect(written['velocityRatio'], isA<double>());
+    expect(written['velocityRatio'], closeTo(1, 0.0001));
+
+    // One hour of overlap, reported over the week rather than the window.
+    expect(written['loadSheddingHoursLost'], closeTo(1, 0.0001));
+  });
+
+  test('updates the squad, without touching what the team stated', () async {
+    final documents = seedDocuments();
+    documents['organisations/demo-org/squads/squad-platform'] = {
+      'name': 'Platform squad',
+      'headcount': 4,
+      'capacityUsed': 0.5,
+      'activeProjectCount': 0,
+      'velocityTrend': 0.0,
+    };
+
+    final store = FakeStore(documents);
+    final runner = runnerOver(store);
+
+    await runner.run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+    await runner.run(
+      tokensBySourceId: const {'src-1': 'token'},
+      now: now.add(const Duration(hours: 6)),
+    );
+
+    final squad =
+        store.documents['organisations/demo-org/squads/squad-platform']!;
+
+    expect(squad['activeProjectCount'], 1);
+    expect(squad['velocityTrend'], closeTo(0, 0.0001));
+
+    // 120 planned hours against four people at a 40-hour week.
+    expect(squad['capacityUsed'], closeTo(120 / 160, 0.0001));
+
+    // A headcount is not something a commit log knows.
+    expect(squad['name'], 'Platform squad');
+    expect(squad['headcount'], 4);
+  });
+
+  test('a squad with no plan hours keeps its stated capacity', () async {
+    final documents = seedDocuments();
+    documents.remove('organisations/demo-org/projectPlans/proj-1');
+    documents['organisations/demo-org/squads/squad-platform'] = {
+      'name': 'Platform squad',
+      'headcount': 4,
+      'capacityUsed': 0.88,
+    };
+
+    final store = FakeStore(documents);
+
+    await runnerOver(
+      store,
+    ).run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+
+    final squad =
+        store.documents['organisations/demo-org/squads/squad-platform']!;
+
+    // Zero would render as an idle team rather than as an unanswered
+    // question, so the previous value stands.
+    expect(squad['capacityUsed'], 0.88);
+    expect(squad['activeProjectCount'], 1);
+  });
+
   test('the squad history it writes carries no identity', () async {
     final store = FakeStore(seedDocuments());
 
