@@ -5,7 +5,7 @@ import '../models/health_state.dart';
 import '../models/project.dart';
 import '../models/signal.dart';
 import '../models/squad.dart';
-import '../widgets/health_seam.dart';
+import '../models/seam_segment.dart';
 import 'project_repository.dart';
 
 /// Stands in for passive ingestion until a real one exists.

@@ -1,5 +1,5 @@
 import 'health_state.dart';
-import '../widgets/health_seam.dart';
+import 'seam_segment.dart';
 
 /// One contributing input to a health score.
 ///

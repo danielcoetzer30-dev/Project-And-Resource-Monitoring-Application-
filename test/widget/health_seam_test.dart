@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:keel/models/health_state.dart';
+import 'package:keel/models/seam_segment.dart';
 import 'package:keel/widgets/health_seam.dart';
 
 /// Wraps a widget in the minimum needed to pump it.

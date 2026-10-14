@@ -1,48 +1,23 @@
-import 'package:flutter/material.dart';
-
-import '../theme/tokens.dart';
-
 /// The four states everything in the app resolves to.
 ///
-/// Each state carries a colour, an icon and a word. Presentation code should
-/// use all three: colour alone is not an accessible signal, and this app is
-/// read at a glance by people deciding whether to act.
+/// Deliberately free of Flutter. Ingestion scores projects server-side, where
+/// there is no Flutter to import, and it has to arrive at the same states the
+/// app renders — one definition, used by both.
+///
+/// The colour and icon that go with each state live in
+/// `lib/theme/health_state_style.dart`. They are not optional: a state is
+/// always shown as colour **and** icon **and** word, because colour alone is
+/// not an accessible signal and this app is read at a glance by people
+/// deciding whether to act.
 enum HealthState {
-  onTrack(
-    label: 'On track',
-    color: Tokens.jade,
-    icon: Icons.check_circle_outline,
-    severity: 0,
-  ),
-  watch(
-    label: 'Watch',
-    color: Tokens.brass,
-    icon: Icons.trending_down,
-    severity: 1,
-  ),
-  atRisk(
-    label: 'At risk',
-    color: Tokens.ember,
-    icon: Icons.warning_amber_outlined,
-    severity: 2,
-  ),
-  critical(
-    label: 'Critical',
-    color: Tokens.flare,
-    icon: Icons.error_outline,
-    severity: 3,
-  );
+  onTrack(label: 'On track', severity: 0),
+  watch(label: 'Watch', severity: 1),
+  atRisk(label: 'At risk', severity: 2),
+  critical(label: 'Critical', severity: 3);
 
-  const HealthState({
-    required this.label,
-    required this.color,
-    required this.icon,
-    required this.severity,
-  });
+  const HealthState({required this.label, required this.severity});
 
   final String label;
-  final Color color;
-  final IconData icon;
 
   /// Higher is worse. Used for sorting worst-first, which is the order that
   /// matters in an early warning system.

@@ -47,6 +47,10 @@ dependencies:
   shared_preferences: ^2.5.5
 
 dev_dependencies:
+  # Plain Dart test runner, for the tests that must prove the scoring and
+  # ingestion path works without Flutter. flutter_test would hide that.
+  test: ^1.25.8
+
   flutter_test:
     sdk: flutter
 

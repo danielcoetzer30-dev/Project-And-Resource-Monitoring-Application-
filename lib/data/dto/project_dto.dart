@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/health_state.dart';
 import '../../models/project.dart';
-import '../../widgets/health_seam.dart';
+import '../../models/seam_segment.dart';
 
 abstract final class ProjectDto {
   static Project fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
