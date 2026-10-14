@@ -52,6 +52,12 @@ class Anonymiser {
     final openWeight = <String, double>{};
     final contributors = <String, Set<String>>{};
 
+    // Distinct (person, hour) pairs per squad. Only the *size* of each set
+    // leaves this method, for the same reason as [contributors] below: there
+    // is no honest way to count hours worked without touching whose hours
+    // they were, so it is touched here and discarded here.
+    final activeSlots = <String, Set<String>>{};
+
     for (final event in events) {
       if (event.occurredAt.isBefore(windowStart) ||
           event.occurredAt.isAfter(windowEnd)) {
@@ -65,6 +71,10 @@ class Anonymiser {
       // so the set's *size* can be checked below; the set itself is local and
       // is discarded when this method returns.
       contributors.putIfAbsent(squadId, () => <String>{}).add(event.authorKey);
+
+      activeSlots
+          .putIfAbsent(squadId, () => <String>{})
+          .add('${event.authorKey}@${_hourKey(event.occurredAt)}');
 
       switch (event.type) {
         case ActivityType.commit:
@@ -99,12 +109,23 @@ class Anonymiser {
           closedIssueWeight: closedWeight[squadId] ?? 0,
           openIssueWeight: openWeight[squadId] ?? 0,
           contributorCount: contributorCount,
+          activePersonHours: activeSlots[squadId]?.length ?? 0,
         ),
       );
     }
 
     results.sort((a, b) => a.squadId.compareTo(b.squadId));
     return results;
+  }
+
+  /// An hour, as a string, in UTC.
+  ///
+  /// UTC rather than local so a squad spread across a timezone boundary, or a
+  /// job that runs in one region and a team that works in another, cannot
+  /// double-count the same hour.
+  static String _hourKey(DateTime at) {
+    final utc = at.toUtc();
+    return '${utc.year}-${utc.month}-${utc.day}T${utc.hour}';
   }
 
   /// Squads that had activity but were suppressed for being too small.

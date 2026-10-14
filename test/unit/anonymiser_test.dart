@@ -136,6 +136,94 @@ void main() {
     });
   });
 
+  group('active person-hours', () {
+    test('counts an hour once per person, however busy they were', () {
+      // Three commits from one person inside the same hour is one hour of
+      // that person working, not three. Counting events would make a
+      // utilisation figure out of commit frequency, which is the thing the
+      // scoring is careful not to reward.
+      final result = anonymiser.anonymise(
+        events: [
+          event(author: 'diego@example.com', at: DateTime(2026, 9, 15, 9, 5)),
+          event(author: 'diego@example.com', at: DateTime(2026, 9, 15, 9, 40)),
+          event(author: 'diego@example.com', at: DateTime(2026, 9, 15, 9, 55)),
+          event(
+            author: 'daniele@example.com',
+            at: DateTime(2026, 9, 15, 9, 10),
+          ),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      // One hour for each of two people.
+      expect(result.single.activePersonHours, 2);
+    });
+
+    test('two people in different hours is two person-hours', () {
+      final result = anonymiser.anonymise(
+        events: [
+          event(author: 'diego@example.com', at: DateTime(2026, 9, 15, 9)),
+          event(author: 'daniele@example.com', at: DateTime(2026, 9, 15, 14)),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      expect(result.single.activePersonHours, 2);
+    });
+
+    test('one person across four hours is four person-hours', () {
+      final result = anonymiser.anonymise(
+        events: [
+          for (final hour in [9, 10, 11, 12])
+            event(author: 'diego@example.com', at: DateTime(2026, 9, 15, hour)),
+          // A second contributor, or the squad would be suppressed and there
+          // would be nothing to assert on.
+          event(author: 'daniele@example.com', at: DateTime(2026, 9, 15, 9)),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      expect(result.single.activePersonHours, 5);
+    });
+
+    test('a suppressed squad reports no hours at all', () {
+      // The hours of a one-person squad are one person's working pattern,
+      // which is exactly what the threshold exists to withhold.
+      final result = anonymiser.anonymise(
+        events: [
+          for (final hour in [9, 10, 11])
+            event(author: 'diego@example.com', at: DateTime(2026, 9, 15, hour)),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      expect(result, isEmpty);
+    });
+
+    test('the figure that leaves is a number, not a pattern', () {
+      final result = anonymiser.anonymise(
+        events: [
+          event(author: 'diego@example.com', at: DateTime(2026, 9, 15, 9)),
+          event(author: 'daniele@example.com', at: DateTime(2026, 9, 15, 22)),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      final activity = result.single;
+
+      // 9am and 10pm went in; a 2 comes out. Nothing downstream can tell who
+      // worked, or when, or that anybody worked late.
+      expect(activity.activePersonHours, 2);
+      expect(activity.toString(), isNot(contains('diego')));
+      expect(activity.toString(), isNot(contains('22')));
+    });
+  });
+
   group('aggregation', () {
     test('unmapped authors are discarded, not bucketed', () {
       final results = anonymiser.anonymise(

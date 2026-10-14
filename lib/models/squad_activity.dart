@@ -19,6 +19,7 @@ class SquadActivity {
     required this.closedIssueWeight,
     required this.openIssueWeight,
     required this.contributorCount,
+    this.activePersonHours = 0,
   });
 
   final String squadId;
@@ -35,6 +36,20 @@ class SquadActivity {
 
   /// How many distinct people contributed. A count only.
   final int contributorCount;
+
+  /// Distinct person-hours in which anything happened, summed across the
+  /// squad: two people active in the same hour counts as two.
+  ///
+  /// The closest thing to "hours worked" that passive capture can honestly
+  /// produce. A commit says somebody was working in that hour; it says
+  /// nothing about the rest of the hour, so this counts hours touched rather
+  /// than pretending to measure effort.
+  ///
+  /// It is an aggregate like every other field here. The hour an individual
+  /// worked is used to compute it and then discarded, exactly as an author
+  /// key is used to compute [commitCount] and then discarded, and squads
+  /// below the contributor threshold never reach this type at all.
+  final int activePersonHours;
 
   bool get hasActivity => commitCount > 0 || tasksCompleted > 0;
 }

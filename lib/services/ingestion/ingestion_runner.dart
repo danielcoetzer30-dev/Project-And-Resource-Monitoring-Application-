@@ -295,6 +295,8 @@ class IngestionRunner {
             openIssueWeight:
                 (entry['openIssueWeight'] as num?)?.toDouble() ?? 0,
             contributorCount: (entry['contributorCount'] as num?)?.toInt() ?? 0,
+            activePersonHours:
+                (entry['activePersonHours'] as num?)?.toInt() ?? 0,
           ),
     ];
   }
@@ -528,8 +530,9 @@ class IngestionRunner {
         'closedIssueWeight': activity.closedIssueWeight,
         'openIssueWeight': activity.openIssueWeight,
         'contributorCount': activity.contributorCount,
+        'activePersonHours': activity.activePersonHours,
       },
-      for (final window in existing.take(MetricsAssembler.historyWindows))
+      for (final window in existing.take(MetricsAssembler.retainedWindows - 1))
         {
           'windowStart': window.windowStart,
           'windowEnd': window.windowEnd,
@@ -539,6 +542,7 @@ class IngestionRunner {
           'closedIssueWeight': window.closedIssueWeight,
           'openIssueWeight': window.openIssueWeight,
           'contributorCount': window.contributorCount,
+          'activePersonHours': window.activePersonHours,
         },
     ];
 
