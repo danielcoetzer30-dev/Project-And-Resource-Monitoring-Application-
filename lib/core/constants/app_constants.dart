@@ -15,6 +15,10 @@ abstract final class AppConstants {
   /// Subcollection of a signal: the discussion about why it fired.
   static const commentsCollection = 'comments';
   static const outagesCollection = 'outages';
+
+  /// Repositories and trackers ingestion reads from. One of the three things
+  /// a client may write, and gated to leads and managers.
+  static const sourcesCollection = 'sources';
   static const settingsCollection = 'settings';
 
   /// Document id for the single settings document per organisation.

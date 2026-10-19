@@ -5,6 +5,7 @@ import '../../core/utils/duration_format.dart';
 import '../../models/ingestion_source.dart';
 import '../../routing/routes.dart';
 import '../../state/auth_notifier.dart';
+import '../../state/providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
 import '../../widgets/empty_state.dart';
@@ -15,9 +16,7 @@ import '../../widgets/empty_state.dart';
 /// working three weeks ago is worse than no source, because the scores keep
 /// rendering and nobody knows they are stale.
 class IngestionSourcesScreen extends ConsumerWidget {
-  const IngestionSourcesScreen({super.key, this.sources = const []});
-
-  final List<IngestionSource> sources;
+  const IngestionSourcesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,6 +24,28 @@ class IngestionSourcesScreen extends ConsumerWidget {
     // one. The route is gated as well, so this only hides a door that is
     // already locked.
     final canConnect = ref.watch(canChangeSettingsProvider);
+
+    final async = ref.watch(sourcesProvider);
+
+    // .value keeps the last good list through a transient error, the same
+    // behaviour the rest of the app has on a flaky connection.
+    final sources = async.value ?? const <IngestionSource>[];
+
+    if (async.isLoading && async.value == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Connected sources')),
+        body: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Tokens.slate,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Connected sources')),

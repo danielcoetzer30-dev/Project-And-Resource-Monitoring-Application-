@@ -1,0 +1,119 @@
+import 'dart:async';
+
+import '../core/errors/exceptions.dart';
+import '../models/app_user.dart';
+import '../models/ingestion_source.dart';
+import 'dto/source_dto.dart';
+import 'source_repository.dart';
+
+/// An in-memory [SourceRepository], for tests and for running with no backend.
+///
+/// Applies the same two refusals as the real one — role, then validity — so a
+/// test that passes here cannot rely on something Firestore would reject.
+class MockSourceRepository implements SourceRepository {
+  MockSourceRepository({
+    this.author,
+    List<IngestionSource> initial = const [],
+  }) {
+    _sources.addAll(initial);
+  }
+
+  /// Who writes are made as. Null stands for signed out, which cannot write.
+  final AppUser? author;
+
+  final _sources = <IngestionSource>[];
+  final _changed = StreamController<List<IngestionSource>>.broadcast();
+
+  /// What is stored, for a test to assert on.
+  List<IngestionSource> get sources => List.unmodifiable(_sources);
+
+  @override
+  Stream<List<IngestionSource>> watch() {
+    // Stream.multi, not async*: a listener gets the current value at once and
+    // every change after it, which is how Firestore's snapshots() behaves.
+    return Stream<List<IngestionSource>>.multi((controller) {
+      controller.add(List.unmodifiable(_sources));
+      final subscription = _changed.stream.listen(
+        controller.add,
+        onError: controller.addError,
+      );
+      controller.onCancel = subscription.cancel;
+    });
+  }
+
+  @override
+  Future<void> connect(IngestionSource source) async {
+    _refuseUnlessPermitted();
+
+    final problem = SourceRules.problemWith(source);
+    if (problem != null) throw ValidationException(problem);
+
+    final index = _sources.indexWhere((s) => s.id == source.id);
+    if (index >= 0 && source.id.isNotEmpty) {
+      _sources[index] = source;
+    } else {
+      _sources.add(
+        source.id.isEmpty
+            ? IngestionSource(
+                id: 'mock-${_sources.length + 1}',
+                type: source.type,
+                label: source.label,
+                remoteId: source.remoteId,
+                orgId: source.orgId,
+                isEnabled: source.isEnabled,
+              )
+            : source,
+      );
+    }
+
+    _emit();
+  }
+
+  @override
+  Future<void> setEnabled({
+    required String sourceId,
+    required bool enabled,
+  }) async {
+    _refuseUnlessPermitted();
+
+    final index = _sources.indexWhere((s) => s.id == sourceId);
+    if (index < 0) return;
+
+    final current = _sources[index];
+    _sources[index] = IngestionSource(
+      id: current.id,
+      type: current.type,
+      label: current.label,
+      remoteId: current.remoteId,
+      orgId: current.orgId,
+      isEnabled: enabled,
+      lastSyncedAt: current.lastSyncedAt,
+    );
+
+    _emit();
+  }
+
+  @override
+  Future<void> disconnect(String sourceId) async {
+    _refuseUnlessPermitted();
+    _sources.removeWhere((s) => s.id == sourceId);
+    _emit();
+  }
+
+  void _emit() {
+    if (!_changed.isClosed) _changed.add(List.unmodifiable(_sources));
+  }
+
+  void _refuseUnlessPermitted() {
+    if (author == null) {
+      throw const AuthException('Sign in to change connected sources.');
+    }
+    if (!author!.canChangeSettings) {
+      throw const PermissionException(
+        'Only leads and managers can change connected sources.',
+      );
+    }
+  }
+
+  void dispose() => _changed.close();
+}

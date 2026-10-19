@@ -190,6 +190,17 @@ weights and writes them back through `SettingsRepository`. An edit in progress
 is never overwritten by a teammate's save, and a refused save keeps the draft
 so nobody loses work to a permission they could not see.
 
+**Ingestion sources are managed in the app.** Settings → Connected sources
+lists them with when each last synced, and a lead or manager can add, pause
+or remove one. Pausing keeps the source so a tracker silenced for a fortnight
+does not have to be retyped.
+
+The connect screen takes no access token, deliberately. A source records what
+to read, never how to sign in: the credential lives with the ingestion job,
+and `firestore.rules` refuses any source document carrying one. A token box
+would take a secret, fail to store it, and leave somebody believing they had
+set it up.
+
 **Display preferences** live under Settings → Preferences: date and time
 format, density, which tab the app opens on, how many signals the dashboard
 lists, and whether the grid strip shows. Text size and bold text sit
@@ -266,7 +277,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 96 tests and they all pass; a failure is
+Both must be clean. There are 132 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -334,6 +345,49 @@ In rough order of value to the research:
 Deliberately *not* built: general messaging. It duplicates the WhatsApp the
 team already uses and answers none of the research questions. Comments scoped
 to a single signal would be defensible; a chat tab would not.
+
+---
+
+## Work that was submitted and not merged
+
+Three features arrived from teammates on 19 October 2026. One was merged, two
+were not, and a third is waiting on a decision. This is written down because
+the reasons are not obvious from the code, and whoever wrote them deserves an
+answer better than silence.
+
+**Merged: managing ingestion sources from the app.** The idea was right and
+filled a real gap — the sources screen could only ever show an empty list,
+because nothing provided it one. Reimplemented rather than taken as-is: the
+submitted version also re-added `Project.leadId`, removed the doc comments
+explaining why it had been removed, and stripped the stale-sync highlighting
+from the sources screen for the second time. The idea was kept and the
+regressions were not.
+
+**Not merged: creating and editing projects from the app.** It adds
+`createProject`, `updateProject` and `deleteProject` to `ProjectRepository`,
+against constraints 3 and 4. It also cannot work: the same archive's
+`firestore.rules` is byte-identical to this one, so `projects` is still
+`allow write: if false` and every save would be refused. If the team ever
+wants this, the research position has to change first, not the code.
+
+**Not merged: member management.** `Member` carried a name, an email, a
+`squadId` and a list of `projectIds`. That is a squad member list, which
+constraint 1 rules out by name. The submitted doc comment argued it is safe
+because a member has no metric attached, which is true on its own and misses
+the combination: a member list is harmless, squad metrics are harmless, and
+together they re-identify. "Platform squad: two people, here they are" beside
+"Platform squad, velocity down 31%" is individual performance data about two
+named people — exactly what `Anonymiser.minimumContributors` exists to
+prevent, reached from a direction the anonymiser cannot see.
+
+**Waiting on the team: messaging.** Careful work — forked from current main,
+thorough security rules, roles read from `users` rather than from the
+directory it adds, messages immutable. Its directory carries a name and a role
+and deliberately no squad, so constraint 1 holds. It conflicts only with the
+scope decision above, which is the team's to revisit. One correction if it is
+ever merged: its rules comment claims the `users` rule "still stops anybody
+listing the organisation", which stopped being true the moment the directory
+became readable org-wide.
 
 ---
 

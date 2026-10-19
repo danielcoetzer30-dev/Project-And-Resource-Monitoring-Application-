@@ -11,8 +11,11 @@ import '../data/firestore_settings_repository.dart';
 import '../data/preferences_store.dart';
 import '../data/project_repository.dart';
 import '../data/settings_repository.dart';
+import '../data/firestore_source_repository.dart';
+import '../data/source_repository.dart';
 import '../models/comment.dart';
 import '../models/preferences.dart';
+import '../models/ingestion_source.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
@@ -184,4 +187,21 @@ final preferencesStoreProvider = Provider<PreferencesStore>(
 /// dates written is not something the organisation needs to know.
 final preferencesProvider = NotifierProvider<PreferencesNotifier, Preferences>(
   PreferencesNotifier.new,
+);
+
+/// The repositories and trackers ingestion reads from.
+///
+/// Watches auth for the same reason the comment repository does: writes are
+/// made as whoever is signed in, and the role decides whether they are allowed
+/// at all. Signed out scopes to an empty organisation, which reads as no
+/// sources rather than as an error.
+final sourceRepositoryProvider = Provider<SourceRepository>((ref) {
+  final user = ref.watch(currentUserProvider);
+
+  return FirestoreSourceRepository(orgId: user?.orgId ?? '', author: user);
+});
+
+/// Every source for the organisation, never-synced first.
+final sourcesProvider = StreamProvider<List<IngestionSource>>(
+  (ref) => ref.watch(sourceRepositoryProvider).watch(),
 );

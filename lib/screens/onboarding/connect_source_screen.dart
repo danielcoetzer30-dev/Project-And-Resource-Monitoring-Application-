@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/errors/failure.dart';
 import '../../models/ingestion_source.dart';
+import '../../state/providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
 import '../../widgets/panel.dart';
@@ -11,31 +14,29 @@ import '../../widgets/panel.dart';
 /// else, asking a developer to enter data would repeat the failure the
 /// research identifies in existing tools; here it is a one-off setup step that
 /// buys permanent passive capture.
-class ConnectSourceScreen extends StatefulWidget {
-  const ConnectSourceScreen({super.key, this.onConnect});
-
-  /// Called with the new source and its token. The token is handed straight to
-  /// the caller and never held on this screen's state beyond the call.
-  final Future<void> Function(IngestionSource source, String token)? onConnect;
+class ConnectSourceScreen extends ConsumerStatefulWidget {
+  const ConnectSourceScreen({super.key});
 
   @override
-  State<ConnectSourceScreen> createState() => _ConnectSourceScreenState();
+  ConsumerState<ConnectSourceScreen> createState() =>
+      _ConnectSourceScreenState();
 }
 
-class _ConnectSourceScreenState extends State<ConnectSourceScreen> {
+class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
   final _formKey = GlobalKey<FormState>();
   final _label = TextEditingController();
   final _remoteId = TextEditingController();
-  final _token = TextEditingController();
 
   SourceType _type = SourceType.github;
   bool _busy = false;
+
+  /// Why the last attempt was refused, or null if it was not.
+  Failure? _failure;
 
   @override
   void dispose() {
     _label.dispose();
     _remoteId.dispose();
-    _token.dispose();
     super.dispose();
   }
 
@@ -47,10 +48,17 @@ class _ConnectSourceScreenState extends State<ConnectSourceScreen> {
 
   Future<void> _connect() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _busy = true);
 
+    setState(() {
+      _busy = true;
+      _failure = null;
+    });
+
+    // Id left empty so the repository allocates one. A millisecond timestamp
+    // would collide between two people adding a source at the same moment,
+    // and the loser's source would silently replace the winner's.
     final source = IngestionSource(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '',
       type: _type,
       label: _label.text.trim(),
       remoteId: _remoteId.text.trim(),
@@ -59,8 +67,10 @@ class _ConnectSourceScreenState extends State<ConnectSourceScreen> {
     );
 
     try {
-      await widget.onConnect?.call(source, _token.text.trim());
+      await ref.read(sourceRepositoryProvider).connect(source);
       if (mounted) Navigator.of(context).maybePop();
+    } catch (error) {
+      if (mounted) setState(() => _failure = failureFromException(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -152,25 +162,61 @@ class _ConnectSourceScreenState extends State<ConnectSourceScreen> {
                       ? 'Enter the identifier'
                       : null,
                 ),
-                const SizedBox(height: Tokens.space4),
-                _Input(
-                  controller: _token,
-                  label: 'Access token',
-                  hint: 'Read-only token',
-                  obscure: true,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'A token is needed to read this source'
-                      : null,
+              ],
+            ),
+          ),
+          const SizedBox(height: Tokens.space4),
+          // No token field, deliberately. The credential belongs to the
+          // ingestion job, and `firestore.rules` refuses any source document
+          // carrying one — so a box here would take a secret, fail to store
+          // it, and leave somebody believing they had set it up.
+          Panel(
+            title: 'Where the token goes',
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.key_outlined, size: 18, color: Tokens.slate),
+                const SizedBox(width: Tokens.space3),
+                Expanded(
+                  child: Text(
+                    'This records what to read, never how to sign in. The '
+                    'read-only token lives with the ingestion job, so it is '
+                    'not on anybody\'s phone and cannot be read back out of '
+                    'the app.',
+                    style: AppType.bodyMuted,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: Tokens.space3),
-          Text(
-            'Use a read-only token. The app never writes to your repository or '
-            'tracker.',
-            style: AppType.bodyMuted,
-          ),
+          if (_failure != null) ...[
+            const SizedBox(height: Tokens.space4),
+            Container(
+              padding: const EdgeInsets.all(Tokens.space3),
+              decoration: BoxDecoration(
+                color: Tokens.flare.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(Tokens.radiusSm),
+                border: Border.all(color: Tokens.flare.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 16,
+                    color: Tokens.flare,
+                  ),
+                  const SizedBox(width: Tokens.space2),
+                  Expanded(
+                    child: Text(
+                      _failure!.message,
+                      style: AppType.body.copyWith(color: Tokens.flare),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: Tokens.space5),
           FilledButton(
             onPressed: _busy ? null : _connect,
@@ -198,14 +244,12 @@ class _Input extends StatelessWidget {
     required this.controller,
     required this.label,
     this.hint,
-    this.obscure = false,
     this.validator,
   });
 
   final TextEditingController controller;
   final String label;
   final String? hint;
-  final bool obscure;
   final String? Function(String?)? validator;
 
   @override
@@ -217,7 +261,6 @@ class _Input extends StatelessWidget {
         const SizedBox(height: Tokens.space2),
         TextFormField(
           controller: controller,
-          obscureText: obscure,
           validator: validator,
           style: AppType.body,
           decoration: InputDecoration(
