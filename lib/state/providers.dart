@@ -7,7 +7,9 @@ import '../data/comment_repository.dart';
 import '../data/firebase_auth_repository.dart';
 import '../data/firestore_comment_repository.dart';
 import '../data/firestore_project_repository.dart';
+import '../data/firestore_messaging_repository.dart';
 import '../data/firestore_settings_repository.dart';
+import '../data/messaging_repository.dart';
 import '../data/preferences_store.dart';
 import '../data/project_repository.dart';
 import '../data/settings_repository.dart';
@@ -16,6 +18,9 @@ import '../data/source_repository.dart';
 import '../models/comment.dart';
 import '../models/preferences.dart';
 import '../models/ingestion_source.dart';
+import '../models/conversation.dart';
+import '../models/directory_entry.dart';
+import '../models/message.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
@@ -205,3 +210,43 @@ final sourceRepositoryProvider = Provider<SourceRepository>((ref) {
 final sourcesProvider = StreamProvider<List<IngestionSource>>(
   (ref) => ref.watch(sourceRepositoryProvider).watch(),
 );
+
+/// Direct messages and groups, scoped to the signed-in user's organisation.
+///
+/// Separate from [commentRepositoryProvider]: comments are a discussion about
+/// one signal, this is people talking to people. Watches auth for the same
+/// reason the others do, and sends as whoever is signed in. Nothing here is
+/// part of the health snapshot, so none of it reaches the assistant.
+///
+/// Override with MockMessagingRepository for tests or a demo with no backend.
+final messagingRepositoryProvider = Provider<MessagingRepository>((ref) {
+  final auth = ref.watch(authNotifierProvider);
+
+  return switch (auth) {
+    SignedIn(:final user) => FirestoreMessagingRepository(
+      orgId: user.orgId,
+      user: user,
+    ),
+    _ => FirestoreMessagingRepository(orgId: ''),
+  };
+});
+
+/// Everyone who can be messaged.
+///
+/// `autoDispose` keeps the listener to the time a messaging screen is open.
+final directoryProvider = StreamProvider.autoDispose<List<DirectoryEntry>>(
+  (ref) => ref.watch(messagingRepositoryProvider).watchDirectory(),
+);
+
+/// The conversations the signed-in person is in, most recent first.
+final conversationsProvider = StreamProvider.autoDispose<List<Conversation>>(
+  (ref) => ref.watch(messagingRepositoryProvider).watchConversations(),
+);
+
+/// One conversation's messages, oldest first. The Firestore listener exists
+/// only while that conversation is open.
+final conversationMessagesProvider = StreamProvider.autoDispose
+    .family<List<Message>, String>(
+      (ref, conversationId) =>
+          ref.watch(messagingRepositoryProvider).watchMessages(conversationId),
+    );

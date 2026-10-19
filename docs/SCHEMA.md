@@ -19,7 +19,10 @@ organisations/{orgId}
   ├── signals/{signalId}
   ├── outages/{outageId}
   ├── sources/{sourceId}
-  └── settings/scoringWeights
+  ├── settings/scoringweights
+  ├── directory/{uid}
+  └── conversations/{conversationId}
+        └── messages/{messageId}
 ```
 
 **Everything hangs off an organisation.** That is what makes the security rules
@@ -169,7 +172,12 @@ be readable by every member of the organisation.
 
 ---
 
-## `organisations/{orgId}/settings/scoringWeights`
+## `organisations/{orgId}/settings/scoringweights`
+
+The document id is all lower case, matching `AppConstants.scoringWeightsDoc`.
+It is spelled that way in the code, so it is spelled that way here: a capital
+W produced a second, unread settings document that quietly held different
+weights for weeks.
 
 A single document.
 
@@ -183,6 +191,98 @@ A single document.
 
 Weights must sum to 1. The app normalises them before scoring rather than
 trusting them, because this document is user-editable from the settings screen.
+
+---
+
+## `organisations/{orgId}/directory/{uid}`
+
+Document id is the Firebase Auth uid. Who can be messaged.
+
+| Field | Type | Notes |
+|---|---|---|
+| `displayName` | string | Must match `users/{uid}.displayName` |
+| `role` | string | Must match `users/{uid}.role` |
+
+**Written by:** each person, for themselves only, on every sign-in. That keeps
+the entry in step when a role is raised in the console, and lists people who
+registered before messaging existed.
+
+**Why it exists:** `users` is readable only by its owner, so nothing else lets
+one person find another. The directory is the deliberate, narrow exception: a
+name and a role, nothing else. No email, no squad, no activity, and nothing
+links an entry to a squad or a project. Squads still have a `headcount` and
+never a member list.
+
+**The role here is a display copy.** The rules refuse an entry whose role
+differs from the one on the person's real `users` document, and they never read
+this collection when deciding who may remove whom. They read `users`.
+
+---
+
+## `organisations/{orgId}/conversations/{conversationId}`
+
+A direct conversation or a group.
+
+| Field | Type | Notes |
+|---|---|---|
+| `kind` | string | `direct` or `group` |
+| `name` | string | Groups only. 1–60 characters |
+| `memberIds` | array of strings | Uids. Two for `direct`; 1–50 for `group` |
+| `createdBy` | string | Uid of whoever made it |
+| `createdAt` | timestamp | Server timestamp |
+| `lastMessageAt` | timestamp | Orders the inbox. Set when it is made and on every send |
+
+**Direct conversations** have the id `{uidA}_{uidB}`, the two uids in sorted
+order, so the same pair always lands in the same conversation. Anybody in the
+organisation can start one with anybody else, whether or not they share a
+group.
+
+**Groups** are created by a lead or a manager with the creator as the only
+member, and everybody else is added one write at a time. A rule can check one
+person's organisation per write but cannot loop over a list.
+
+Who may do what to a group, enforced in `firestore.rules` and mirrored in
+`lib/models/messaging_rules.dart`:
+
+| Action | Developer | Lead | Manager |
+|---|---|---|---|
+| Create a group | No | Yes | Yes |
+| Add somebody | No | Yes | Yes |
+| Leave | Yes | Yes | Yes |
+| Remove a developer | No | Yes | Yes |
+| Remove a lead | No | No | Yes |
+| Remove a manager | No | No | No |
+
+Removing somebody needs a role strictly above theirs, so peers cannot remove
+each other: a lead cannot remove a lead, and a manager cannot remove a manager.
+Roles are read from the real `users` documents.
+
+Only members read a conversation. A person who is removed loses access to its
+messages at once. The only fields that change after creation are `memberIds`
+(one person in or out per write) and `lastMessageAt`. A conversation is never
+deleted.
+
+The inbox query filters on `memberIds` and sorts on the device, so it needs no
+composite index.
+
+---
+
+## `organisations/{orgId}/conversations/{conversationId}/messages/{messageId}`
+
+| Field | Type | Notes |
+|---|---|---|
+| `body` | string | 1–2000 characters |
+| `senderId` | string | Must be the signed-in uid |
+| `senderName` | string | Snapshot of the display name when sent. At most 80 characters |
+| `createdAt` | timestamp | Server timestamp |
+
+**Written by:** members of the conversation, as themselves. Exactly these four
+fields: anything else is refused, so a message cannot carry a squad id, a score
+or an activity count. Messages are never edited or deleted.
+
+Messages are not part of `HealthSnapshot`, so `SnapshotBrief` cannot send them to
+the assistant. Nothing queries them by sender or counts them per person, and
+nothing ingestion produces is attached to one.
 
 ---
 
@@ -219,3 +319,6 @@ The shape:
 - `projects`, `squads` and `signals` are **read-only to clients** — they are
   written by ingestion, never by the app
 - `settings` is the one thing a team may write, so weights can be tuned
+- `directory`, `conversations` and `messages` are written by people, as
+  themselves. Group creation, adding and removing follow the role ranking and
+  are enforced in the rules; see the conversations section above

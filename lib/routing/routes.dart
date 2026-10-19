@@ -6,6 +6,11 @@ abstract final class Routes {
   static const projectDetail = '/project';
   static const signalThread = '/signal';
   static const settings = '/settings';
+  static const messages = '/messages';
+  static const newMessage = '/messages/new';
+  static const newGroup = '/messages/new-group';
+  static const conversation = '/messages/conversation';
+  static const groupMembers = '/messages/members';
   static const scoringWeights = '/settings/weights';
   static const ingestionSources = '/settings/sources';
   static const connectSource = '/onboarding/connect';

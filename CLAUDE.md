@@ -190,6 +190,30 @@ weights and writes them back through `SettingsRepository`. An edit in progress
 is never overwritten by a teammate's save, and a refused save keeps the draft
 so nobody loses work to a permission they could not see.
 
+**Messaging.** Direct messages and groups, reached from an icon in the app
+bar rather than from a tab: the six sections are what the app measures, and a
+conversation is not a measurement.
+
+Anybody may message anybody directly. Only a lead or manager creates a group
+or adds to one; anybody may leave; removing somebody else needs a strictly
+higher role, so a lead cannot remove another lead. Messages cannot be edited
+or deleted by anyone, which is what makes a conversation a record rather than
+a draft. `MessagingRules` holds this and `firestore.rules` repeats it, with
+roles always read from `users` and never from the directory.
+
+**The directory** is how one person finds another: a display name and a role,
+written by each person about themselves on sign-in. It carries no squad, no
+project, no email and no activity, and that absence is the point. A directory
+with a squad on it would be a squad member list, and a squad member list beside
+published squad metrics is individual performance data about named people —
+which is what `Anonymiser.minimumContributors` exists to prevent. The same
+reasoning is why a separate member-management feature was turned down.
+
+It does mean an organisation's names and roles are listable by its members,
+which was not previously possible. That is a real change and worth stating
+plainly: squad membership is still not derivable, which is the property
+constraint 1 actually protects.
+
 **Ingestion sources are managed in the app.** Settings → Connected sources
 lists them with when each last synced, and a lead or manager can add, pause
 or remove one. Pausing keeps the source so a tracker silenced for a fortnight
@@ -277,7 +301,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 132 tests and they all pass; a failure is
+Both must be clean. There are 179 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -342,9 +366,18 @@ In rough order of value to the research:
    sounds like surveillance was ruled out, for the reasons in section 1 above.
 4. **An API key for the assistant**, if the team wants it live.
 
-Deliberately *not* built: general messaging. It duplicates the WhatsApp the
-team already uses and answers none of the research questions. Comments scoped
-to a single signal would be defensible; a chat tab would not.
+**Messaging was excluded and then included.** The original position was that
+general messaging duplicates the WhatsApp the team already uses and answers
+none of the research questions. The team revisited that on 19 October 2026
+and decided to keep it. The proposal needs to say so too — an app that ships a
+feature its own documentation calls deliberately absent is worse than either
+choice made cleanly.
+
+What held across the reversal is the reason the exclusion existed: messaging
+must not become a second, unmonitored place where project data accumulates
+outside the model. It did not. Conversations carry no project, squad, score or
+signal, nothing in `HealthSnapshot` touches them, and the assistant cannot see
+them for the same structural reason it cannot see comments.
 
 ---
 
@@ -370,8 +403,13 @@ against constraints 3 and 4. It also cannot work: the same archive's
 `allow write: if false` and every save would be refused. If the team ever
 wants this, the research position has to change first, not the code.
 
-**Not merged: member management.** `Member` carried a name, an email, a
-`squadId` and a list of `projectIds`. That is a squad member list, which
+**Not merged: member management.** The team confirmed on 19 October 2026 that
+the need behind it was knowing who is in the organisation, which the messaging
+directory already serves — one directory, not two.
+
+The implementation could not have been kept regardless. `Member` carried a
+name, an email, a `squadId` and a list of `projectIds`. That is a squad member
+list, which
 constraint 1 rules out by name. The submitted doc comment argued it is safe
 because a member has no metric attached, which is true on its own and misses
 the combination: a member list is harmless, squad metrics are harmless, and
@@ -380,14 +418,16 @@ together they re-identify. "Platform squad: two people, here they are" beside
 named people — exactly what `Anonymiser.minimumContributors` exists to
 prevent, reached from a direction the anonymiser cannot see.
 
-**Waiting on the team: messaging.** Careful work — forked from current main,
-thorough security rules, roles read from `users` rather than from the
-directory it adds, messages immutable. Its directory carries a name and a role
-and deliberately no squad, so constraint 1 holds. It conflicts only with the
-scope decision above, which is the team's to revisit. One correction if it is
-ever merged: its rules comment claims the `users` rule "still stops anybody
-listing the organisation", which stopped being true the moment the directory
-became readable org-wide.
+**Merged on the team's decision: messaging.** Careful work — forked from
+current main, thorough security rules, roles read from `users` rather than
+from the directory it adds, messages immutable. Its directory carries a name
+and a role and deliberately no squad, so constraint 1 holds. The team chose
+on 19 October 2026 to keep it and amend the proposal to match.
+
+One correction made while merging: its rules comment claimed the `users` rule
+"still stops anybody listing the organisation", which stopped being true the
+moment the directory became readable org-wide. The directory is the lighter
+exposure of the two, but it is an exposure.
 
 ---
 

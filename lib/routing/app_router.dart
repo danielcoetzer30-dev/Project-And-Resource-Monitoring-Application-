@@ -7,6 +7,12 @@ import '../models/squad.dart';
 import '../screens/auth/auth_gate.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/onboarding/connect_source_screen.dart';
+import '../models/messaging_rules.dart';
+import '../screens/messaging/conversation_screen.dart';
+import '../screens/messaging/group_members_screen.dart';
+import '../screens/messaging/messages_screen.dart';
+import '../screens/messaging/new_group_screen.dart';
+import '../screens/messaging/new_message_screen.dart';
 import '../screens/project_detail_screen.dart';
 import '../screens/settings/about_screen.dart';
 import '../screens/settings/accessibility_screen.dart';
@@ -35,6 +41,16 @@ class SignalThreadArgs {
 
   final Signal signal;
   final String projectName;
+}
+
+/// Arguments for the conversation and group member routes.
+///
+/// Just the id: the screens watch the conversation themselves, so a change to
+/// its members shows up on screen without being passed down again.
+class ConversationArgs {
+  const ConversationArgs({required this.conversationId});
+
+  final String conversationId;
 }
 
 /// Builds routes by name.
@@ -69,6 +85,46 @@ abstract final class AppRouter {
             signal: args.signal,
             projectName: args.projectName,
           ),
+          settings,
+        );
+
+      case Routes.messages:
+        return _page(const MessagesScreen(), settings);
+
+      case Routes.newMessage:
+        return _page(const NewMessageScreen(), settings);
+
+      case Routes.newGroup:
+        // Developers cannot create groups, so the route is gated here rather
+        // than only hidden in the UI. The security rules refuse it as well.
+        return _guardedPage(
+          settings: settings,
+          builder: (ref) {
+            final user = ref.watch(currentUserProvider);
+            if (user != null && MessagingRules.canCreateGroup(user.role)) {
+              return const NewGroupScreen();
+            }
+            return const _NotPermitted(
+              message:
+                  'Only leads and managers can create groups. You can still '
+                  'message anybody directly.',
+            );
+          },
+        );
+
+      case Routes.conversation:
+        final args = settings.arguments;
+        if (args is! ConversationArgs) return _missingConversation(settings);
+        return _page(
+          ConversationScreen(conversationId: args.conversationId),
+          settings,
+        );
+
+      case Routes.groupMembers:
+        final args = settings.arguments;
+        if (args is! ConversationArgs) return _missingConversation(settings);
+        return _page(
+          GroupMembersScreen(conversationId: args.conversationId),
           settings,
         );
 
@@ -130,6 +186,26 @@ abstract final class AppRouter {
       settings: settings,
       builder: (context) =>
           Consumer(builder: (context, ref, _) => builder(ref)),
+    );
+  }
+
+  /// A messaging route reached without a conversation to show.
+  static MaterialPageRoute<dynamic> _missingConversation(RouteSettings s) {
+    return MaterialPageRoute<dynamic>(
+      settings: s,
+      builder: (context) => Scaffold(
+        appBar: AppBar(title: const Text('Not available')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(Tokens.space5),
+            child: Text(
+              'That screen was opened without a conversation to show. '
+              'Go back and pick one from your messages.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
     );
   }
 

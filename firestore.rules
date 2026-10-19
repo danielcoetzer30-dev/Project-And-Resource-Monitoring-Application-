@@ -16,6 +16,9 @@ rules_version = '2';
 //     tuned from the app.
 //   - Comments on a signal are written by people, as themselves, and are
 //     locked down to four fields so they cannot carry anything else.
+//   - Messaging (direct messages and groups) is written by people too. Group
+//     permissions follow the role ranking and are enforced here, not just in
+//     the client. See the Messaging section below.
 //
 // This matters more here than in most projects: google-services.json is
 // committed, so the Firebase config is available to anyone with repository
@@ -48,6 +51,12 @@ service cloud.firestore {
     // self-assigned.
     function callerRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // The caller's display name, as stored on their own user document. Used to
+    // stop a directory entry carrying somebody else's name.
+    function callerName() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName;
     }
 
     function belongsToOrg(orgId) {
@@ -169,6 +178,198 @@ service cloud.firestore {
       match /settings/{settingId} {
         allow read: if belongsToOrg(orgId);
         allow write: if belongsToOrg(orgId) && callerRole() != 'developer';
+      }
+
+      // -------------------------------------------------------------------
+      // Messaging — direct messages and groups.
+      // -------------------------------------------------------------------
+      //
+      // Roles rank developer < lead < manager, and the rules below are the
+      // ones in lib/models/messaging_rules.dart:
+      //
+      //   - Anybody in the organisation can message anybody else directly,
+      //     whether or not they share a group.
+      //   - Only a lead or a manager creates a group or adds somebody to one.
+      //   - Anybody can leave a group. Removing somebody else needs a strictly
+      //     higher role than theirs, so a manager can remove a lead or a
+      //     developer, a lead can remove a developer, and nobody can remove
+      //     their own rank or above.
+      //   - Only members read a conversation or its messages. Removing
+      //     somebody takes their access away at once.
+      //   - Messages cannot be edited or deleted by anybody.
+      //
+      // Roles are always read from the real `users` documents, never from the
+      // directory, which is a display copy a person writes about themselves.
+      //
+      // The `users` rule above is unchanged: it still stops anybody listing
+      // the organisation. The directory is how people find each other to
+      // message, and it carries a name and a role and nothing else.
+
+      match /directory/{userId} {
+        allow read: if belongsToOrg(orgId);
+
+        // You write only your own entry, with exactly two fields. The role
+        // and the name must match your real user document, so an entry cannot
+        // claim a higher role or borrow somebody else's name.
+        allow create, update: if isSelf(userId)
+          && belongsToOrg(orgId)
+          && request.resource.data.keys().hasOnly(['displayName', 'role'])
+          && request.resource.data.keys().hasAll(['displayName', 'role'])
+          && request.resource.data.role == callerRole()
+          && request.resource.data.displayName == callerName()
+          && request.resource.data.displayName.size() > 0;
+
+        allow delete: if false;
+      }
+
+      match /conversations/{conversationId} {
+
+        function roleOf(userId) {
+          return get(/databases/$(database)/documents/users/$(userId)).data.role;
+        }
+
+        // 2 manager, 1 lead, 0 anything else.
+        function rankOf(role) {
+          return role == 'manager' ? 2 : (role == 'lead' ? 1 : 0);
+        }
+
+        function inThisOrg(userId) {
+          return get(/databases/$(database)/documents/users/$(userId)).data.orgId == orgId;
+        }
+
+        function isLeadOrManager() {
+          return callerRole() in ['lead', 'manager'];
+        }
+
+        // Whether somebody is in a conversation, read from the conversation
+        // itself. Also used by the messages below.
+        function isMemberOf(id) {
+          return request.auth.uid in get(/databases/$(database)/documents/organisations/$(orgId)/conversations/$(id)).data.memberIds;
+        }
+
+        // Leaving is always allowed. Removing somebody else needs a strictly
+        // higher rank, so equal ranks cannot remove each other.
+        function mayRemove(targetId) {
+          return targetId == request.auth.uid
+            || rankOf(callerRole()) > rankOf(roleOf(targetId));
+        }
+
+        // A direct conversation between the caller and one other person in
+        // the same organisation. The id is the two uids joined by an
+        // underscore, so the same pair cannot end up with two conversations
+        // through the app.
+        function isNewDirect() {
+          let data = request.resource.data;
+          return data.keys().hasOnly(['kind', 'memberIds', 'createdBy', 'createdAt', 'lastMessageAt'])
+            && data.keys().hasAll(['kind', 'memberIds', 'createdBy', 'createdAt', 'lastMessageAt'])
+            && data.kind == 'direct'
+            && data.createdBy == request.auth.uid
+            && data.memberIds.size() == 2
+            && data.memberIds[0] != data.memberIds[1]
+            && request.auth.uid in data.memberIds
+            && (conversationId == data.memberIds[0] + '_' + data.memberIds[1]
+                || conversationId == data.memberIds[1] + '_' + data.memberIds[0])
+            && inThisOrg(data.memberIds[0] == request.auth.uid ? data.memberIds[1] : data.memberIds[0])
+            && data.createdAt == request.time
+            && data.lastMessageAt == request.time;
+        }
+
+        // A group, made by a lead or a manager, with the creator as its only
+        // member. Everybody else is added one at a time afterwards, because a
+        // rule can check one person's organisation per write and cannot loop
+        // over a list.
+        //
+        // maxLength here repeats MessagingRules.maxGroupNameLength in
+        // lib/models/messaging_rules.dart. Change one, change both.
+        function isNewGroup() {
+          let data = request.resource.data;
+          return data.keys().hasOnly(['kind', 'name', 'memberIds', 'createdBy', 'createdAt', 'lastMessageAt'])
+            && data.keys().hasAll(['kind', 'name', 'memberIds', 'createdBy', 'createdAt', 'lastMessageAt'])
+            && data.kind == 'group'
+            && isLeadOrManager()
+            && data.createdBy == request.auth.uid
+            && data.memberIds == [request.auth.uid]
+            && data.name is string
+            && data.name.size() > 0
+            && data.name.size() <= 60
+            && data.createdAt == request.time
+            && data.lastMessageAt == request.time;
+        }
+
+        // Any member bumping the last-activity time, which is what sending a
+        // message does. Nothing else about the conversation may change.
+        function isTouch() {
+          return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt'])
+            && request.resource.data.lastMessageAt == request.time;
+        }
+
+        // A lead or a manager adding exactly one person, appended to the end,
+        // who must belong to this organisation and not already be in.
+        //
+        // The 50 repeats MessagingRules.maxGroupSize.
+        function isAddition() {
+          let before = resource.data.memberIds;
+          let after = request.resource.data.memberIds;
+          return resource.data.kind == 'group'
+            && isLeadOrManager()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+            && after.size() == before.size() + 1
+            && after.size() <= 50
+            && after[0:before.size()] == before
+            && !(after[before.size()] in before)
+            && inThisOrg(after[before.size()]);
+        }
+
+        // Exactly one person leaving or being removed, allowed only under
+        // mayRemove above.
+        function isRemoval() {
+          let before = resource.data.memberIds;
+          let after = request.resource.data.memberIds;
+          return resource.data.kind == 'group'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+            && after.size() == before.size() - 1
+            && before.hasAll(after)
+            && mayRemove(before.removeAll(after)[0]);
+        }
+
+        // Members only. Reading a conversation that does not exist is allowed
+        // so the app can ask whether a direct conversation is there yet; it
+        // returns nothing, so it reveals nothing.
+        allow read: if belongsToOrg(orgId)
+          && (resource == null || request.auth.uid in resource.data.memberIds);
+
+        allow create: if belongsToOrg(orgId) && (isNewDirect() || isNewGroup());
+
+        allow update: if belongsToOrg(orgId)
+          && request.auth.uid in resource.data.memberIds
+          && (isTouch() || isAddition() || isRemoval());
+
+        // A conversation is a record, so it is never deleted.
+        allow delete: if false;
+
+        // Four fields only, written as yourself, never edited. Anything else,
+        // such as a squad id or a score, is refused outright, so a message can
+        // never become a side channel for individual data.
+        //
+        // maxLength here repeats MessagingRules.maxMessageLength in
+        // lib/models/messaging_rules.dart. Change one, change both.
+        match /messages/{messageId} {
+          allow read: if belongsToOrg(orgId) && isMemberOf(conversationId);
+
+          allow create: if belongsToOrg(orgId)
+            && isMemberOf(conversationId)
+            && request.resource.data.keys().hasOnly(['body', 'senderId', 'senderName', 'createdAt'])
+            && request.resource.data.keys().hasAll(['body', 'senderId', 'senderName', 'createdAt'])
+            && request.resource.data.senderId == request.auth.uid
+            && request.resource.data.body is string
+            && request.resource.data.body.size() > 0
+            && request.resource.data.body.size() <= 2000
+            && request.resource.data.senderName is string
+            && request.resource.data.senderName.size() <= 80
+            && request.resource.data.createdAt == request.time;
+
+          allow update, delete: if false;
+        }
       }
     }
   }

@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../core/constants/app_constants.dart';
 import '../core/errors/exceptions.dart';
 import '../models/app_user.dart';
 import 'auth_repository.dart';
+import 'dto/directory_dto.dart';
 
 /// Firebase Auth implementation of [AuthRepository].
 ///
@@ -88,6 +90,7 @@ class FirebaseAuthRepository implements AuthRepository {
         'role': user.role.name,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      _publishToDirectory(user);
 
       _currentUser = user;
       return user;
@@ -113,12 +116,41 @@ class FirebaseAuthRepository implements AuthRepository {
       throw const AuthException('Your account is not set up yet.');
     }
 
-    return AppUser(
+    final user = AppUser(
       id: uid,
       email: data['email'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
       orgId: data['orgId'] as String? ?? '',
       role: UserRole.fromName(data['role'] as String? ?? 'developer'),
+    );
+    _publishToDirectory(user);
+    return user;
+  }
+
+  /// Lists [user] in their organisation's messaging directory, so teammates can
+  /// find them to message.
+  ///
+  /// Done on every sign-in rather than only at registration, which keeps the
+  /// entry in step when a role is raised in the console and covers people who
+  /// registered before messaging existed. The entry holds a name and a role and
+  /// nothing else, and `firestore.rules` refuses one whose role differs from
+  /// the role on the person's `users` document.
+  ///
+  /// Not awaited, and a failure is only logged: offline, the write waits for a
+  /// connection, and being unlisted must never stop somebody signing in.
+  void _publishToDirectory(AppUser user) {
+    if (user.orgId.isEmpty || user.displayName.isEmpty) return;
+
+    unawaited(
+      _firestore
+          .collection(AppConstants.organisationsCollection)
+          .doc(user.orgId)
+          .collection(AppConstants.directoryCollection)
+          .doc(user.id)
+          .set(DirectoryDto.toMap(user))
+          .catchError((Object error) {
+            debugPrint('Could not update the messaging directory: $error');
+          }),
     );
   }
 

@@ -21,6 +21,13 @@ abstract final class AppConstants {
   static const sourcesCollection = 'sources';
   static const settingsCollection = 'settings';
 
+  /// Who can be messaged: display name and role, nothing else.
+  static const directoryCollection = 'directory';
+  static const conversationsCollection = 'conversations';
+
+  /// Subcollection of a conversation.
+  static const messagesCollection = 'messages';
+
   /// Document id for the single settings document per organisation.
 
   static const scoringWeightsDoc = 'scoringweights';
@@ -28,6 +35,9 @@ abstract final class AppConstants {
   /// Most recent comments a thread loads. Bounds the reads for one signal, so a
   /// long argument cannot quietly become an expensive screen to open.
   static const commentsShown = 100;
+
+  /// Most recent messages a conversation loads, for the same reason.
+  static const messagesShown = 200;
 
   ///Ingestion
   ///how often does ingestion polls its sources when device is online

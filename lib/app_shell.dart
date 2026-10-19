@@ -150,6 +150,15 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
           ],
+          // Messaging is reached from here rather than from a tab: the six
+          // sections are what the app measures, and a conversation is not a
+          // measurement.
+          if (user != null)
+            IconButton(
+              onPressed: () => Navigator.of(context).pushNamed(Routes.messages),
+              icon: const Icon(Icons.chat_bubble_outline),
+              tooltip: 'Messages',
+            ),
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
             icon: const Icon(Icons.settings_outlined),
