@@ -225,6 +225,7 @@ class IngestionRunner {
           remoteId: entry.value['remoteId'] as String? ?? '',
           orgId: orgId,
           isEnabled: entry.value['isEnabled'] as bool? ?? true,
+          squadId: entry.value['squadId'] as String? ?? '',
         ),
     ];
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/failure.dart';
 import '../../models/ingestion_source.dart';
+import '../../models/squad.dart';
 import '../../state/providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
@@ -28,6 +29,7 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
   final _remoteId = TextEditingController();
 
   SourceType _type = SourceType.github;
+  String _squadId = '';
   bool _busy = false;
 
   /// Why the last attempt was refused, or null if it was not.
@@ -64,6 +66,7 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
       remoteId: _remoteId.text.trim(),
       orgId: '',
       isEnabled: true,
+      squadId: _squadId,
     );
 
     try {
@@ -78,6 +81,10 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // A source has to belong to a squad, so the squads have to be on screen.
+    final squads =
+        ref.watch(healthSnapshotProvider).value?.squads ?? const <Squad>[];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Connect a source')),
       body: ListView(
@@ -141,6 +148,41 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
                 ),
             ],
           ),
+          const SizedBox(height: Tokens.space4),
+          Text('SQUAD', style: AppType.label),
+          const SizedBox(height: Tokens.space1),
+          Text(
+            'Whose work this source represents. Everything it reports counts '
+            'towards this squad, which is how activity is aggregated without '
+            'anybody being named.',
+            style: AppType.bodyMuted,
+          ),
+          const SizedBox(height: Tokens.space2),
+          if (squads.isEmpty)
+            Text(
+              'No squads yet. A source needs one, because activity that '
+              'belongs to no squad cannot be aggregated into anything.',
+              style: AppType.body.copyWith(color: Tokens.brass),
+            )
+          else
+            Wrap(
+              spacing: Tokens.space2,
+              runSpacing: Tokens.space2,
+              children: [
+                for (final squad in squads)
+                  ChoiceChip(
+                    label: Text(squad.name),
+                    selected: _squadId == squad.id,
+                    onSelected: (_) => setState(() => _squadId = squad.id),
+                    labelStyle: AppType.body.copyWith(
+                      color: _squadId == squad.id ? Tokens.shaft : Tokens.chalk,
+                    ),
+                    selectedColor: Tokens.beacon,
+                    backgroundColor: Tokens.seam,
+                    side: const BorderSide(color: Tokens.rule),
+                  ),
+              ],
+            ),
           const SizedBox(height: Tokens.space4),
           Form(
             key: _formKey,

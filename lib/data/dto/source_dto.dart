@@ -27,6 +27,7 @@ abstract final class SourceDto {
       // Absent means on. A source somebody added before this field existed
       // should keep being read, not silently stop.
       isEnabled: data['isEnabled'] as bool? ?? true,
+      squadId: data['squadId'] as String? ?? '',
       lastSyncedAt: (data['lastSyncedAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -37,6 +38,7 @@ abstract final class SourceDto {
       'label': source.label,
       'remoteId': source.remoteId,
       'isEnabled': source.isEnabled,
+      'squadId': source.squadId,
     };
   }
 }
@@ -86,6 +88,11 @@ abstract final class SourceRules {
   /// The first thing wrong with [source], or null when it can be saved.
   static String? problemWith(IngestionSource source) {
     return labelProblem(source.label) ??
-        remoteIdProblem(source.type, source.remoteId);
+        remoteIdProblem(source.type, source.remoteId) ??
+        // Without a squad nothing can be aggregated, so the source would be
+        // read on every run and thrown away. Better to refuse it here.
+        (source.squadId.isEmpty
+            ? 'Choose the squad that works on this.'
+            : null);
   }
 }

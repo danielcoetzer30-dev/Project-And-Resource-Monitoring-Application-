@@ -1,4 +1,5 @@
 import '../../models/activity_event.dart';
+import '../../models/ingestion_source.dart';
 import '../../models/squad_activity.dart';
 
 /// Strips individual identity from ingested activity.
@@ -23,14 +24,31 @@ import '../../models/squad_activity.dart';
 /// cost is that a genuinely tiny squad produces no metrics; the alternative is
 /// per-person surveillance that happens to be spelled "squad".
 class Anonymiser {
-  const Anonymiser({required this.squadOfAuthor, this.minimumContributors = 2});
+  const Anonymiser({
+    this.squadOfAuthor = const {},
+    this.squadOfSource = const {},
+    this.minimumContributors = 2,
+  });
 
   /// Maps a source's author key to a squad id.
   ///
   /// Held in memory for the duration of one ingestion run and never persisted.
   /// The mapping itself is identifying, so it lives in configuration owned by
   /// the team, not in the monitoring database.
+  ///
+  /// Needed only when one source feeds several squads. Where a repository
+  /// belongs to a single squad — which is the common case — [squadOfSource]
+  /// does the same job without naming anybody, and is preferred for that
+  /// reason: it is one fewer place a person's identity has to be written down.
   final Map<String, String> squadOfAuthor;
+
+  /// Maps a source id to the squad that works on it.
+  ///
+  /// The whole of a repository's activity belongs to one squad, so nobody has
+  /// to be listed for the aggregate to be built. Contributors are still
+  /// counted, in memory, from the events themselves — the threshold below
+  /// does not weaken because the configuration got simpler.
+  final Map<String, String> squadOfSource;
 
   /// Below this many distinct contributors, an aggregate is not anonymous.
   final int minimumContributors;
@@ -64,7 +82,7 @@ class Anonymiser {
         continue;
       }
 
-      final squadId = squadOfAuthor[event.authorKey];
+      final squadId = _squadFor(event);
       if (squadId == null) continue;
 
       // The author key is used here and nowhere else. It goes into a set only
@@ -118,6 +136,29 @@ class Anonymiser {
     return results;
   }
 
+  /// This anonymiser, plus the squad each of [sources] belongs to.
+  ///
+  /// Called by [IngestionService] on every run, so the mapping comes from the
+  /// source documents a team maintains rather than from configuration that
+  /// has to be kept in step with them by hand.
+  Anonymiser forSources(List<IngestionSource> sources) {
+    return Anonymiser(
+      squadOfAuthor: squadOfAuthor,
+      squadOfSource: {
+        for (final source in sources)
+          if (source.squadId.isNotEmpty) source.id: source.squadId,
+      },
+      minimumContributors: minimumContributors,
+    );
+  }
+
+  /// Which squad an event belongs to, or null when nothing says.
+  ///
+  /// A per-person mapping wins where one exists, so a shared repository can
+  /// still be split between squads. Otherwise the source decides.
+  String? _squadFor(RawActivityEvent event) =>
+      squadOfAuthor[event.authorKey] ?? squadOfSource[event.sourceId];
+
   /// An hour, as a string, in UTC.
   ///
   /// UTC rather than local so a squad spread across a timezone boundary, or a
@@ -145,7 +186,7 @@ class Anonymiser {
           event.occurredAt.isAfter(windowEnd)) {
         continue;
       }
-      final squadId = squadOfAuthor[event.authorKey];
+      final squadId = _squadFor(event);
       if (squadId == null) continue;
       contributors.putIfAbsent(squadId, () => <String>{}).add(event.authorKey);
     }

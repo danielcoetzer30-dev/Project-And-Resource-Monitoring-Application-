@@ -136,6 +136,72 @@ void main() {
     });
   });
 
+  group('a source can stand in for naming people', () {
+    const bySource = Anonymiser(squadOfSource: {'src1': 's1'});
+
+    test('every contributor to a source counts towards its squad', () {
+      final result = bySource.anonymise(
+        events: [
+          event(author: 'nobody-has-listed-me.com'),
+          event(author: 'nor-me.com'),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      // Neither author appears in any configuration, and the aggregate is
+      // still built. That is the point: one fewer place identity is written
+      // down, with no loss of what the scoring needs.
+      expect(result.single.squadId, 's1');
+      expect(result.single.contributorCount, 2);
+    });
+
+    test('the threshold still holds when nobody is named', () {
+      // The protection must not weaken because the configuration got
+      // simpler. Contributors are counted from the events themselves.
+      final result = bySource.anonymise(
+        events: [event(author: 'alone.com')],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      expect(result, isEmpty);
+    });
+
+    test('a per-person mapping still wins where one exists', () {
+      // A shared repository can be split between squads: the author mapping
+      // is consulted first, the source only decides what it does not cover.
+      const split = Anonymiser(
+        squadOfAuthor: {'diego@example.com': 's2', 'daniele@example.com': 's2'},
+        squadOfSource: {'src1': 's1'},
+      );
+
+      final result = split.anonymise(
+        events: [
+          event(author: 'diego@example.com'),
+          event(author: 'daniele@example.com'),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      expect(result.single.squadId, 's2');
+    });
+
+    test('an event from an unmapped source is discarded', () {
+      final result = const Anonymiser().anonymise(
+        events: [
+          event(author: 'a@example.com'),
+          event(author: 'b@example.com'),
+        ],
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      expect(result, isEmpty);
+    });
+  });
+
   group('active person-hours', () {
     test('counts an hour once per person, however busy they were', () {
       // Three commits from one person inside the same hour is one hour of

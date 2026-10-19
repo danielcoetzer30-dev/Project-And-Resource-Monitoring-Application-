@@ -32,6 +32,7 @@ void main() {
     String remoteId = 'rrousselGit/riverpod',
     SourceType type = SourceType.github,
     bool isEnabled = true,
+    String squadId = 's1',
   }) {
     return IngestionSource(
       id: id,
@@ -40,6 +41,7 @@ void main() {
       remoteId: remoteId,
       orgId: 'demo-org',
       isEnabled: isEnabled,
+      squadId: squadId,
     );
   }
 
@@ -78,10 +80,16 @@ void main() {
   });
 
   group('a credential never reaches the document', () {
-    test('toMap writes four fields and none of them is a token', () {
+    test('toMap writes what ingestion needs and no credential', () {
       final map = SourceDto.toMap(source(id: 'src-1'));
 
-      expect(map.keys.toSet(), {'type', 'label', 'remoteId', 'isEnabled'});
+      expect(map.keys.toSet(), {
+        'type',
+        'label',
+        'remoteId',
+        'isEnabled',
+        'squadId',
+      });
 
       // firestore.rules refuses a source document carrying any of these, so a
       // write that included one would fail rather than quietly store a secret.
@@ -140,6 +148,16 @@ void main() {
     test('a source needs a name somebody will recognise', () {
       expect(SourceRules.labelProblem('   '), isNotNull);
       expect(SourceRules.labelProblem('Ledger repo'), isNull);
+    });
+
+    test('a source with no squad is refused rather than read and dropped', () {
+      // The squad is what lets the anonymiser aggregate without anybody being
+      // named. Without one the source would be fetched on every run and its
+      // every event discarded, which looks exactly like a repository with no
+      // activity in it.
+      final problem = SourceRules.problemWith(source(squadId: ''));
+
+      expect(problem, contains('squad'));
     });
   });
 

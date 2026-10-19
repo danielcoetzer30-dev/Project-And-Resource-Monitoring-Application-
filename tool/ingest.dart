@@ -7,17 +7,20 @@
 // credential or a mapping that must not be committed:
 //
 //   FIREBASE_SERVICE_ACCOUNT  the whole service-account JSON key
-//   KEEL_SQUAD_OF_AUTHOR      {"github-username": "squadId", ...}
+//   KEEL_SQUAD_OF_AUTHOR      {"github-username": "squadId", ...}, optional
 //   KEEL_SOURCE_TOKENS        {"sourceId": "token", ...}
 //   KEEL_ORG_ID               defaults to demo-org
 //   KEEL_WINDOW_HOURS         defaults to 168 (seven days). See the note on
 //                             the cron in .github/workflows/ingest.yml
 //
-// KEEL_SQUAD_OF_AUTHOR is the one genuinely identifying piece of
-// configuration in this system. It maps a person to a squad, which is exactly
-// the link the rest of the design exists to sever. It lives in a secret, is
-// held in memory for the length of one run, and is never written anywhere —
-// see the doc comment on Anonymiser.squadOfAuthor.
+// KEEL_SQUAD_OF_AUTHOR is usually not needed and is better left unset. A
+// source document carries the squad it belongs to, so every contributor to a
+// repository counts towards that squad without anybody being named.
+//
+// Set it only where one source feeds several squads. It maps a person to a
+// squad, which is exactly the link the rest of the design exists to sever, so
+// the fewer places it exists the better: it lives in a secret, is held in
+// memory for one run, and is never written anywhere.
 //
 // --dry-run reads and scores but writes nothing, which is how to try this
 // against real data without touching it.
@@ -48,15 +51,6 @@ Future<void> main(List<String> arguments) async {
   final orgId = Platform.environment['KEEL_ORG_ID'] ?? 'demo-org';
   final windowHours =
       int.tryParse(Platform.environment['KEEL_WINDOW_HOURS'] ?? '') ?? 168;
-
-  if (squadOfAuthor.isEmpty) {
-    // Not an error worth failing on, but worth saying loudly: with no
-    // mapping, every event is discarded and the run quietly does nothing.
-    print(
-      'WARNING: KEEL_SQUAD_OF_AUTHOR is empty, so no event can be attributed '
-      'to a squad and nothing will be scored.',
-    );
-  }
 
   final firestore = await FirestoreRest.connect(
     keyJson: keyJson,

@@ -81,13 +81,17 @@ class IngestionService {
       }
     }
 
-    final activity = anonymiser.anonymise(
+    // Resolved per run, so a source added this morning is attributed to its
+    // squad this afternoon without a configuration change.
+    final resolver = anonymiser.forSources(sources);
+
+    final activity = resolver.anonymise(
       events: rawEvents,
       windowStart: windowStart,
       windowEnd: windowEnd,
     );
 
-    final suppressed = anonymiser.suppressedSquads(
+    final suppressed = resolver.suppressedSquads(
       events: rawEvents,
       windowStart: windowStart,
       windowEnd: windowEnd,

@@ -30,6 +30,7 @@ class IngestionSource {
     required this.remoteId,
     required this.orgId,
     required this.isEnabled,
+    this.squadId = '',
     this.lastSyncedAt,
   });
 
@@ -44,6 +45,17 @@ class IngestionSource {
 
   final String orgId;
   final bool isEnabled;
+
+  /// The squad whose work this source represents.
+  ///
+  /// This is what lets ingestion aggregate without anybody being named: every
+  /// contributor to the repository counts towards this squad, and the
+  /// anonymiser never has to be told who they are. The contributor threshold
+  /// is unaffected — they are still counted, from the events themselves.
+  ///
+  /// Empty means the source is read and then discarded, because activity that
+  /// belongs to no squad cannot be aggregated into anything.
+  final String squadId;
 
   /// Null until the first successful sync.
   final DateTime? lastSyncedAt;
