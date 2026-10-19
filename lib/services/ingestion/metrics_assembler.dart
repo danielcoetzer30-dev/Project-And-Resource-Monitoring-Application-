@@ -17,18 +17,11 @@ import '../../models/squad_activity.dart';
 class MetricsAssembler {
   const MetricsAssembler();
 
-  /// Windows of history used to work out what normal looks like for a squad.
+  /// How many past windows to keep.
   ///
-  /// Four weeks at the default poll interval is enough to smooth a quiet week
-  /// without reaching back to a different phase of the project.
-  static const historyWindows = 4;
-
-  /// The period utilisation is measured over. See the note in [assemble].
-  static const utilisationDays = 7;
-
-  /// Stored windows needed to cover [utilisationDays] at the default poll
-  /// interval, so a week of utilisation can actually be summed.
-  static const retainedWindows = 28;
+  /// Only the one before this is read, but a few spares mean a run skipped
+  /// for an outage or a failed job still has something to compare against.
+  static const retainedWindows = 14;
 
   /// Assembles metrics for one project.
   ///
@@ -44,42 +37,47 @@ class MetricsAssembler {
     required List<OutageWindow> outages,
     required DateTime now,
   }) {
-    final commitsBaseline = baselineOf(
-      history.map((window) => window.commitCount.toDouble()),
-      fallback: activity.commitCount.toDouble(),
-    );
-
-    final tasksBaseline = baselineOf(
-      history.map((window) => window.tasksCompleted.toDouble()),
-      fallback: activity.tasksCompleted.toDouble(),
-    );
-
-    // Utilisation is measured over a rolling week, not over the poll window.
+    // Compared against the equivalent window a window-length earlier, not
+    // against a mean of the stored ones.
     //
-    // Scaling a roster down to six hours assumes a team rostered around the
-    // clock. They are not: an overnight run would find no activity against a
-    // sixth of a week's capacity and report the squad as idle, four times a
-    // day, for the entirely normal act of being asleep.
-    //
-    // A week is the shortest period over which "what did they do with the
-    // time they had" has an honest answer, and it matches the period the
-    // project document already reports outage hours over.
-    final weekStart = now.subtract(const Duration(days: utilisationDays));
+    // Runs overlap: a seven-day window read every day shares six days with
+    // yesterday's. Averaging those would compare this week against itself and
+    // report "steady" through almost anything. Week against the week before
+    // is both honest and the question a team actually asks.
+    final previous = windowBefore(activity: activity, history: history);
 
-    final availableHours = plan.weeklyHours;
+    final commitsBaseline =
+        previous?.commitCount.toDouble() ?? activity.commitCount.toDouble();
+
+    final tasksBaseline =
+        previous?.tasksCompleted.toDouble() ??
+        activity.tasksCompleted.toDouble();
+
+    // Everything below is scaled to the activity window, which is also the
+    // period utilisation is measured over.
+    //
+    // That used to be two different periods, and summing stored windows to
+    // reach a week was right when a run covered six hours. It is wrong now: a
+    // seven-day window read daily would sum seven overlapping weeks and
+    // report roughly seven times the work actually done.
+    final windowMinutes = activity.windowEnd
+        .difference(activity.windowStart)
+        .inMinutes;
+
+    const weekMinutes = Duration.minutesPerHour * Duration.hoursPerDay * 7;
+
+    final availableHours = windowMinutes <= 0
+        ? 0.0
+        : plan.weeklyHours * (windowMinutes / weekMinutes);
 
     final outageHours = outageHoursIn(
       outages: outages,
       squadId: activity.squadId,
-      windowStart: weekStart,
-      windowEnd: now,
+      windowStart: activity.windowStart,
+      windowEnd: activity.windowEnd,
     );
 
-    // This window, plus every stored window still inside the week.
-    final activePersonHours = [
-      activity,
-      ...history.where((window) => window.windowEnd.isAfter(weekStart)),
-    ].fold<int>(0, (sum, window) => sum + window.activePersonHours);
+    final activePersonHours = activity.activePersonHours;
 
     return ProjectMetrics(
       projectId: projectId,
@@ -103,19 +101,34 @@ class MetricsAssembler {
     );
   }
 
-  /// The mean of up to [historyWindows] past windows.
+  /// The stored window covering the period immediately before [activity].
   ///
-  /// Public because squad velocity is derived from the same history, and two
-  /// implementations of "what normal looks like" would eventually disagree.
+  /// Only windows that ended before this one opened are eligible. Runs
+  /// overlap — a seven-day window read daily shares six days with
+  /// yesterday's — and comparing a week against six of its own days would
+  /// report "steady" through almost anything.
   ///
-  /// Falls back to the current window when there is no history, which makes
-  /// the first run score as no change rather than as a sudden drop to zero.
-  double baselineOf(Iterable<double> past, {required double fallback}) {
-    final windows = past.take(historyWindows).toList();
-    if (windows.isEmpty) return fallback;
+  /// Of those, the most recent wins, so a skipped run compares against the
+  /// closest week there is rather than against nothing.
+  ///
+  /// Null when there is no such window, which makes a squad's first run its
+  /// own baseline: no change, rather than a sudden drop to zero.
+  ///
+  /// Public because squad velocity is derived from the same comparison, and
+  /// two implementations of "what normal looks like" would eventually
+  /// disagree.
+  SquadActivity? windowBefore({
+    required SquadActivity activity,
+    required List<SquadActivity> history,
+  }) {
+    final candidates = history
+        .where((window) => !window.windowEnd.isAfter(activity.windowStart))
+        .toList();
 
-    final total = windows.reduce((a, b) => a + b);
-    return total / windows.length;
+    if (candidates.isEmpty) return null;
+
+    candidates.sort((a, b) => b.windowEnd.compareTo(a.windowEnd));
+    return candidates.first;
   }
 
   /// Outage hours overlapping a window for a squad.

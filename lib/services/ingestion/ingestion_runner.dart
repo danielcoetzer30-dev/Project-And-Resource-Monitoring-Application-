@@ -87,7 +87,7 @@ class IngestionRunner {
   Future<RunReport> run({
     required Map<String, String> tokensBySourceId,
     required DateTime now,
-    Duration window = const Duration(hours: 6),
+    Duration window = const Duration(days: 7),
   }) async {
     final windowStart = now.subtract(window);
 
@@ -167,9 +167,9 @@ class IngestionRunner {
         metrics: metrics,
         plan: plan,
         openSignals: signals.length,
-        // Reported over the week, not the poll window: the Week tab adds
-        // these up and calls the total "hours lost this week", and a
-        // six-hour slice under that heading would be wrong.
+        // Always a week, whatever the run window is. The Week tab adds these
+        // up under the heading "hours lost this week", so a figure measured
+        // over anything else would be a different claim.
         outageHoursThisWeek: assembler.outageHoursIn(
           outages: outages,
           squadId: squadId,
@@ -394,10 +394,15 @@ class IngestionRunner {
       if (squad == null) continue;
 
       final history = await historyFor(squadId);
-      final baseline = assembler.baselineOf(
-        history.map((window) => window.tasksCompleted.toDouble()),
-        fallback: activity.tasksCompleted.toDouble(),
+
+      // The same week-on-week comparison the score uses, so the Squads tab
+      // and the factor breakdown cannot disagree about whether a squad is
+      // slowing down.
+      final previous = assembler.windowBefore(
+        activity: activity,
+        history: history,
       );
+      final baseline = previous?.tasksCompleted.toDouble() ?? 0;
 
       final squadProjects = [
         for (final project in projects.entries)

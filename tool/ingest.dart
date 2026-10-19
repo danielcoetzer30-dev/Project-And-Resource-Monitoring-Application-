@@ -10,7 +10,8 @@
 //   KEEL_SQUAD_OF_AUTHOR      {"github-username": "squadId", ...}
 //   KEEL_SOURCE_TOKENS        {"sourceId": "token", ...}
 //   KEEL_ORG_ID               defaults to demo-org
-//   KEEL_WINDOW_HOURS         defaults to 6, and should match the cron
+//   KEEL_WINDOW_HOURS         defaults to 168 (seven days). See the note on
+//                             the cron in .github/workflows/ingest.yml
 //
 // KEEL_SQUAD_OF_AUTHOR is the one genuinely identifying piece of
 // configuration in this system. It maps a person to a squad, which is exactly
@@ -46,7 +47,7 @@ Future<void> main(List<String> arguments) async {
 
   final orgId = Platform.environment['KEEL_ORG_ID'] ?? 'demo-org';
   final windowHours =
-      int.tryParse(Platform.environment['KEEL_WINDOW_HOURS'] ?? '') ?? 6;
+      int.tryParse(Platform.environment['KEEL_WINDOW_HOURS'] ?? '') ?? 168;
 
   if (squadOfAuthor.isEmpty) {
     // Not an error worth failing on, but worth saying loudly: with no

@@ -23,14 +23,20 @@ on:
   # fails teaches everyone to ignore it — including on the day it fails for a
   # real reason.
   #
-  # To switch it on, uncomment the two lines below. The interval has to match
-  # KEEL_WINDOW_HOURS, or a run either re-reads events it has already counted
-  # or misses some. That interval is still an open decision: the team commits
-  # a few times a week, so a six-hour window would be suppressed by the
-  # anonymiser almost every time.
+  # To switch it on, uncomment the two lines below.
+  #
+  # Daily, over a seven-day window. The two do not have to match and
+  # deliberately do not: each run looks back a week, so consecutive runs
+  # overlap by six days. That is what suits the users this is built for.
+  # A small team commits a few times a week, and a window short enough not to
+  # overlap would have one contributor or none in it, which the anonymiser
+  # suppresses — correctly, and to an empty dashboard.
+  #
+  # A week of activity, re-read every morning. Scores move daily; each one is
+  # built from enough activity to mean something.
   #
   # schedule:
-  #   - cron: '0 */6 * * *'
+  #   - cron: '0 4 * * *'   # 06:00 SAST, before the working day
 
   # Manual runs still work, and default to a dry run.
   workflow_dispatch:
@@ -87,7 +93,7 @@ jobs:
           KEEL_SQUAD_OF_AUTHOR: ${{ secrets.KEEL_SQUAD_OF_AUTHOR }}
 
           KEEL_ORG_ID: demo-org
-          KEEL_WINDOW_HOURS: '6'
+          KEEL_WINDOW_HOURS: '168'
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             dart run tool/ingest.dart --dry-run

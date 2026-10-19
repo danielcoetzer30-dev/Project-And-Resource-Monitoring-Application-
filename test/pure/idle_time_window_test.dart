@@ -6,21 +6,19 @@ import 'package:keel/models/squad_activity.dart';
 import 'package:keel/services/health_scoring/factor_calculators/idle_time_calculator.dart';
 import 'package:keel/services/ingestion/metrics_assembler.dart';
 
-/// Idle time is measured over a rolling week rather than over the poll window.
+/// Idle time asks "what did they do with the time they had", so the hours
+/// worked and the hours available must cover the same period.
 ///
-/// The reason is the whole point of this file. Ingestion runs every six hours,
-/// which means most runs happen while the team is asleep. Measured over the
-/// window, an overnight run finds no activity against a sixth of a week's
-/// roster and reports a squad as idle — four times a day, for the entirely
-/// normal act of not working at 3am.
-///
-/// A score that drops overnight and recovers by lunchtime is noise, and noise
-/// in an early-warning system is how people learn to ignore it.
+/// They have not always. Scoring a six-hour window against a sixth of a week's
+/// roster reported a squad as idle overnight, four times a day, for the
+/// entirely normal act of being asleep. The window is a week now, which fixes
+/// that by construction — and introduces the opposite trap, which these tests
+/// are mostly here to hold shut.
 void main() {
   const assembler = MetricsAssembler();
   const calculator = IdleTimeCalculator();
 
-  final now = DateTime.utc(2026, 10, 14, 3); // an overnight run
+  final now = DateTime.utc(2026, 10, 19, 6);
 
   const plan = ProjectPlan(
     projectId: 'p1',
@@ -29,72 +27,102 @@ void main() {
     weeklyHours: 120,
   );
 
-  SquadActivity window({
+  /// A seven-day window ending at [end].
+  SquadActivity week({
     required DateTime end,
     required int activePersonHours,
-    int tasks = 2,
+    int tasks = 10,
   }) {
     return SquadActivity(
       squadId: 's1',
-      windowStart: end.subtract(const Duration(hours: 6)),
+      windowStart: end.subtract(const Duration(days: 7)),
       windowEnd: end,
       commitCount: activePersonHours,
       tasksCompleted: tasks,
-      tasksOpened: 0,
+      tasksOpened: 2,
       closedIssueWeight: tasks.toDouble(),
-      openIssueWeight: 4,
-      contributorCount: 2,
+      openIssueWeight: 20,
+      contributorCount: 3,
       activePersonHours: activePersonHours,
     );
   }
 
-  test('a quiet overnight window does not read as an idle squad', () {
-    // Nothing happened in the last six hours, because it is 3am. But the week
-    // behind it holds 90 person-hours of work.
+  test('a week of work is measured against a week of roster', () {
+    final metrics = assembler.assemble(
+      projectId: 'p1',
+      activity: week(end: now, activePersonHours: 60),
+      plan: plan,
+      history: const [],
+      outages: const [],
+      now: now,
+    );
+
+    expect(metrics.availableHours, closeTo(120, 0.001));
+    expect(metrics.activeHours, closeTo(60, 0.001));
+    expect(calculator.calculate(metrics).detail, contains('50%'));
+  });
+
+  test('overlapping stored windows are never added together', () {
+    // The trap. Runs are daily and each covers seven days, so yesterday's
+    // stored window shares six of them with today's. Summing the ones inside
+    // the last week — which is what this did when a run covered six hours —
+    // would report about seven times the work actually done, and every squad
+    // would look fully utilised forever.
     final history = [
-      for (var i = 1; i <= 20; i++)
-        window(
-          end: now.subtract(Duration(hours: 6 * i)),
-          activePersonHours: i <= 18 ? 5 : 0,
-        ),
+      for (var day = 1; day <= 10; day++)
+        week(end: now.subtract(Duration(days: day)), activePersonHours: 60),
     ];
 
     final metrics = assembler.assemble(
       projectId: 'p1',
-      activity: window(end: now, activePersonHours: 0),
+      activity: week(end: now, activePersonHours: 60),
       plan: plan,
       history: history,
       outages: const [],
       now: now,
     );
 
-    final result = calculator.calculate(metrics);
-
-    expect(metrics.activeHours, greaterThan(0));
     expect(
-      result.value,
-      greaterThan(50),
-      reason: 'a sleeping team is not an idle one',
+      metrics.activeHours,
+      closeTo(60, 0.001),
+      reason: 'only this window counts, not the overlapping ones behind it',
     );
   });
 
-  test('a genuinely idle week does read as idle', () {
-    // The guard above must not swallow the signal it exists to protect. A
-    // week with almost no activity should still score badly.
-    final history = [
-      for (var i = 1; i <= 20; i++)
-        window(
-          end: now.subtract(Duration(hours: 6 * i)),
-          activePersonHours: 0,
-          tasks: 0,
-        ),
-    ];
-
+  test('a short window scales the roster down with it', () {
+    // A half-week window has half a week of capacity. Otherwise a run with a
+    // shorter window reads as a team that stopped working.
     final metrics = assembler.assemble(
       projectId: 'p1',
-      activity: window(end: now, activePersonHours: 1, tasks: 0),
+      activity: SquadActivity(
+        squadId: 's1',
+        windowStart: now.subtract(const Duration(days: 3, hours: 12)),
+        windowEnd: now,
+        commitCount: 30,
+        tasksCompleted: 5,
+        tasksOpened: 1,
+        closedIssueWeight: 5,
+        openIssueWeight: 20,
+        contributorCount: 3,
+        activePersonHours: 30,
+      ),
       plan: plan,
-      history: history,
+      history: const [],
+      outages: const [],
+      now: now,
+    );
+
+    expect(metrics.availableHours, closeTo(60, 0.001));
+    expect(calculator.calculate(metrics).detail, contains('50%'));
+  });
+
+  test('a genuinely idle week still reads as idle', () {
+    // The guard above must not swallow the signal it exists to protect.
+    final metrics = assembler.assemble(
+      projectId: 'p1',
+      activity: week(end: now, activePersonHours: 2, tasks: 0),
+      plan: plan,
+      history: const [],
       outages: const [],
       now: now,
     );
@@ -102,49 +130,23 @@ void main() {
     expect(calculator.calculate(metrics).value, lessThan(40));
   });
 
-  test('windows older than the week are not counted', () {
-    // Two weeks of solid work, but only the last week is the question being
-    // asked. Counting it all would let a good fortnight hide a bad week.
-    final history = [
-      for (var i = 1; i <= 50; i++)
-        window(end: now.subtract(Duration(hours: 6 * i)), activePersonHours: 5),
-    ];
+  test('outage hours come out of the denominator, not off the score', () {
+    final activity = week(end: now, activePersonHours: 60);
 
-    final metrics = assembler.assemble(
+    final clear = assembler.assemble(
       projectId: 'p1',
-      activity: window(end: now, activePersonHours: 5),
+      activity: activity,
       plan: plan,
-      history: history,
+      history: const [],
       outages: const [],
       now: now,
     );
 
-    // 28 windows of 5 would be 140, past the 120-hour roster. Capped at the
-    // workable hours, because a roster overrun is Squad.capacityUsed's
-    // business, not this indicator's.
-    expect(metrics.activeHours, lessThanOrEqualTo(metrics.workableHours));
-  });
-
-  test('outage hours still come out of the denominator, not the score', () {
-    final history = [
-      for (var i = 1; i <= 20; i++)
-        window(end: now.subtract(Duration(hours: 6 * i)), activePersonHours: 3),
-    ];
-
-    final withoutOutage = assembler.assemble(
+    final shed = assembler.assemble(
       projectId: 'p1',
-      activity: window(end: now, activePersonHours: 3),
+      activity: activity,
       plan: plan,
-      history: history,
-      outages: const [],
-      now: now,
-    );
-
-    final withOutage = assembler.assemble(
-      projectId: 'p1',
-      activity: window(end: now, activePersonHours: 3),
-      plan: plan,
-      history: history,
+      history: const [],
       outages: [
         OutageWindow(
           id: 'out-1',
@@ -157,12 +159,37 @@ void main() {
       now: now,
     );
 
-    // Constraint 2: the hours are removed from what the team had, so the
-    // same work over fewer workable hours scores better, never worse.
-    expect(withOutage.workableHours, lessThan(withoutOutage.workableHours));
+    // Constraint 2: the hours are taken off what the team had, so the same
+    // work over fewer workable hours scores better and never worse.
+    expect(shed.outageHours, closeTo(8, 0.001));
+    expect(shed.workableHours, lessThan(clear.workableHours));
     expect(
-      calculator.calculate(withOutage).value,
-      greaterThanOrEqualTo(calculator.calculate(withoutOutage).value),
+      calculator.calculate(shed).value,
+      greaterThan(calculator.calculate(clear).value),
     );
+  });
+
+  test('a week lost entirely to outages is not scored at all', () {
+    final metrics = assembler.assemble(
+      projectId: 'p1',
+      activity: week(end: now, activePersonHours: 0, tasks: 0),
+      plan: plan,
+      history: const [],
+      outages: [
+        OutageWindow(
+          id: 'out-1',
+          stage: 6,
+          start: now.subtract(const Duration(days: 7)),
+          end: now,
+          affectedSquadIds: const ['s1'],
+        ),
+      ],
+      now: now,
+    );
+
+    // A blackout is not a failing team, so this reports the neutral middle
+    // rather than zero.
+    expect(metrics.workableHours, 0);
+    expect(calculator.calculate(metrics).value, 60);
   });
 }
