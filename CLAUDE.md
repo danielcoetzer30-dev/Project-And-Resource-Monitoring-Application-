@@ -301,7 +301,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 179 tests and they all pass; a failure is
+Both must be clean. There are 180 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -417,6 +417,29 @@ together they re-identify. "Platform squad: two people, here they are" beside
 "Platform squad, velocity down 31%" is individual performance data about two
 named people — exactly what `Anonymiser.minimumContributors` exists to
 prevent, reached from a direction the anonymiser cannot see.
+
+**Mostly not merged: a navigation dropdown and a split calendar.** A fourth
+archive arrived the same day, forked from before the Week fold. It restored
+Grid and Calendar as separate tabs, taking the bottom bar back to seven, and
+added an app-bar popup menu to navigate between them.
+
+The dropdown is a reasonable answer to too many sections — it is just a
+different answer to the one the team had already chosen, and its
+implementation hardcoded colours, listed five of the seven destinations, and
+duplicated the `_sections` list that exists so a section is named and iconed
+in one place.
+
+`calendar_screen.dart` turned out to be the pre-fold `timeline_screen.dart`
+with a `StreamBuilder` wrapped round it, taking a repository as a constructor
+argument. That is a second, independent subscription to the project stream
+alongside `healthSnapshotProvider`, and it reintroduced the hardcoded palette
+that the Week rewrite removed. The shell already hands every data tab a
+snapshot; that is the integration.
+
+One thing was kept: its Grid screen stated the load-shedding stage in the
+status badge rather than only that shedding was on. Stage 2 and stage 6 are
+different days, and the number is the first thing a team here asks, so the
+badge moved into `week_screen.dart` with a test.
 
 **Merged on the team's decision: messaging.** Careful work — forked from
 current main, thorough security rules, roles read from `users` rather than

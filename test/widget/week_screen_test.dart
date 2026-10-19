@@ -76,6 +76,18 @@ void main() {
     expect(promise, findsOneWidget);
   });
 
+  testWidgets('names the load-shedding stage, not just that it is on', (
+    tester,
+  ) async {
+    final snapshot = await seeded();
+    await pumpWeek(tester, snapshot);
+
+    // Stage 2 and stage 6 are different days, and the number is the first
+    // thing a team here asks. "SHEDDING" alone does not answer it.
+    expect(snapshot.grid.isShedding, isTrue, reason: 'the seed sheds');
+    expect(find.text('STAGE ${snapshot.grid.stage} SHEDDING'), findsOneWidget);
+  });
+
   testWidgets('does not present a future day as outage-free', (tester) async {
     final snapshot = await seeded();
     await pumpWeek(tester, snapshot);

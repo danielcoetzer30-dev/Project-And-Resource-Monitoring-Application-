@@ -283,6 +283,37 @@ class _ProjectBar extends StatelessWidget {
   }
 }
 
+/// Today's grid state, as a badge.
+///
+/// Carries the stage rather than only "shedding", because stage 2 and stage 6
+/// are different days and the number is the first thing a team here asks.
+class _GridBadge extends StatelessWidget {
+  const _GridBadge({required this.grid});
+
+  final GridStatus grid;
+
+  @override
+  Widget build(BuildContext context) {
+    final shedding = grid.isShedding;
+    final colour = shedding ? Tokens.brass : Tokens.jade;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Tokens.space2,
+        vertical: Tokens.space1,
+      ),
+      decoration: BoxDecoration(
+        color: colour.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(Tokens.radiusSm),
+      ),
+      child: Text(
+        shedding ? 'STAGE ${grid.stage} SHEDDING' : 'GRID STABLE',
+        style: AppType.label.copyWith(color: colour),
+      ),
+    );
+  }
+}
+
 /// The chosen day, and what the grid has taken from the week.
 ///
 /// The hours panel is the point of the screen: it states the loss in full and
@@ -322,14 +353,7 @@ class _DayDetails extends StatelessWidget {
             title: 'The grid',
             // Only stated for today. A schedule that changes daily cannot
             // honestly be labelled for Thursday.
-            trailing: isToday
-                ? Text(
-                    grid.isShedding ? 'SHEDDING' : 'STABLE',
-                    style: AppType.label.copyWith(
-                      color: grid.isShedding ? Tokens.brass : Tokens.jade,
-                    ),
-                  )
-                : null,
+            trailing: isToday ? _GridBadge(grid: grid) : null,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
