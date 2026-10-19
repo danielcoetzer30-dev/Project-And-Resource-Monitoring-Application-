@@ -25,15 +25,22 @@ on:
   #
   # To switch it on, uncomment the two lines below.
   #
-  # Daily, over a seven-day window. The two do not have to match and
-  # deliberately do not: each run looks back a week, so consecutive runs
-  # overlap by six days. That is what suits the users this is built for.
-  # A small team commits a few times a week, and a window short enough not to
-  # overlap would have one contributor or none in it, which the anonymiser
-  # suppresses — correctly, and to an empty dashboard.
+  # Daily, over a fourteen-day window. The two do not have to match and
+  # deliberately do not: each run looks back a fortnight, so consecutive runs
+  # overlap by thirteen days. Scores move every morning; each one is built
+  # from enough activity to mean something.
   #
-  # A week of activity, re-read every morning. Scores move daily; each one is
-  # built from enough activity to mean something.
+  # Fourteen rather than seven, measured rather than guessed. The anonymiser
+  # needs two contributors in a window or it suppresses the squad, and a week
+  # does not reliably contain two — even in active projects. Sampled on
+  # 19 October 2026:
+  #
+  #   rrousselGit/riverpod    7d:  2 commits /  1 author    14d: 10 /  2
+  #   directus/directus       7d:  0 commits /  0 authors   14d: 17 / 13
+  #   excalidraw/excalidraw   7d:  3 commits /  2 authors   14d: 11 /  3
+  #
+  # A busy project had a silent week. For the small teams this is built for,
+  # a fortnight is the shortest period that holds a signal rather than noise.
   #
   # schedule:
   #   - cron: '0 4 * * *'   # 06:00 SAST, before the working day
@@ -93,7 +100,7 @@ jobs:
           KEEL_SQUAD_OF_AUTHOR: ${{ secrets.KEEL_SQUAD_OF_AUTHOR }}
 
           KEEL_ORG_ID: demo-org
-          KEEL_WINDOW_HOURS: '168'
+          KEEL_WINDOW_HOURS: '336'
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             dart run tool/ingest.dart --dry-run

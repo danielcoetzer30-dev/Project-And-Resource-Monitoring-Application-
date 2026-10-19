@@ -87,7 +87,7 @@ class IngestionRunner {
   Future<RunReport> run({
     required Map<String, String> tokensBySourceId,
     required DateTime now,
-    Duration window = const Duration(days: 7),
+    Duration window = const Duration(days: 14),
   }) async {
     final windowStart = now.subtract(window);
 

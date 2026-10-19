@@ -10,7 +10,7 @@
 //   KEEL_SQUAD_OF_AUTHOR      {"github-username": "squadId", ...}, optional
 //   KEEL_SOURCE_TOKENS        {"sourceId": "token", ...}
 //   KEEL_ORG_ID               defaults to demo-org
-//   KEEL_WINDOW_HOURS         defaults to 168 (seven days). See the note on
+//   KEEL_WINDOW_HOURS         defaults to 336 (fourteen days). See the note on
 //                             the cron in .github/workflows/ingest.yml
 //
 // KEEL_SQUAD_OF_AUTHOR is usually not needed and is better left unset. A
@@ -50,7 +50,7 @@ Future<void> main(List<String> arguments) async {
 
   final orgId = Platform.environment['KEEL_ORG_ID'] ?? 'demo-org';
   final windowHours =
-      int.tryParse(Platform.environment['KEEL_WINDOW_HOURS'] ?? '') ?? 168;
+      int.tryParse(Platform.environment['KEEL_WINDOW_HOURS'] ?? '') ?? 336;
 
   final firestore = await FirestoreRest.connect(
     keyJson: keyJson,

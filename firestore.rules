@@ -175,6 +175,23 @@ service cloud.firestore {
       // inspectable by the people it scores. Only a lead or a manager changes
       // them. The client checks this too, so it can say why it refused — this
       // is what makes that check more than a courtesy.
+      // A project's stated figures, as opposed to its measured ones: budget,
+      // dates, rostered hours. Ingestion reads these and cannot invent them —
+      // a commit log does not know what a project costs.
+      //
+      // Separate from projects/ on purpose. That collection is ingestion's
+      // output and unwritable by every client, which is what stops a team
+      // editing its own scores. Keeping the plan in the same document would
+      // open that door; keeping it here does not.
+      //
+      // Nothing here flatters a score. Spending more of a budget always makes
+      // the score worse, and a longer schedule lowers the burn rate but
+      // lengthens the delivery forecast.
+      match /projectPlans/{projectId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if belongsToOrg(orgId) && callerRole() != 'developer';
+      }
+
       match /settings/{settingId} {
         allow read: if belongsToOrg(orgId);
         allow write: if belongsToOrg(orgId) && callerRole() != 'developer';

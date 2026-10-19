@@ -44,7 +44,12 @@ class GitMetadataAdapter implements IngestionAdapter {
         uri,
         headers: {
           'Accept': 'application/vnd.github+json',
-          'Authorization': 'Bearer $token',
+          // Omitted when there is no token. A public repository's commit
+          // metadata is readable without one, which is how this can be
+          // demonstrated against a real repository with no credential
+          // anywhere. A private repository without a token gets a 404 from
+          // GitHub, reported below as a source that could not be read.
+          if (token.isNotEmpty) 'Authorization': 'Bearer $token',
         },
       );
     } catch (error) {

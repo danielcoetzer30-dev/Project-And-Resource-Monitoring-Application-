@@ -61,18 +61,16 @@ class IngestionService {
       }
 
       final token = tokensBySourceId[source.id];
-      if (token == null || token.isEmpty) {
-        failures[source.id] = AuthFailure(
-          'No access token configured for ${source.label}.',
-        );
-        continue;
-      }
+      // An absent token is not refused here. A public repository is readable
+      // without one, and refusing would mean a credential had to exist before
+      // anything could be demonstrated at all. An adapter that does need one
+      // says so itself, with the name of the source that needs it.
 
       try {
         final events = await adapter.fetchEvents(
           source: source,
           since: windowStart,
-          token: token,
+          token: token ?? '',
         );
         rawEvents.addAll(events);
       } catch (error) {
