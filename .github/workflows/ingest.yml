@@ -15,16 +15,6 @@
 name: Ingest project activity
 
 on:
-  # The schedule is off until there is a source worth reading.
-  #
-  # Nothing is configured yet: KEEL_SQUAD_OF_AUTHOR and KEEL_SOURCE_TOKENS do
-  # not exist, and the sources in Firestore still point at the fictional repo
-  # the seed script invented. Every run would fail, and a job that always
-  # fails teaches everyone to ignore it — including on the day it fails for a
-  # real reason.
-  #
-  # To switch it on, uncomment the two lines below.
-  #
   # Daily, over a fourteen-day window. The two do not have to match and
   # deliberately do not: each run looks back a fortnight, so consecutive runs
   # overlap by thirteen days. Scores move every morning; each one is built
@@ -41,9 +31,8 @@ on:
   #
   # A busy project had a silent week. For the small teams this is built for,
   # a fortnight is the shortest period that holds a signal rather than noise.
-  #
-  # schedule:
-  #   - cron: '0 4 * * *'   # 06:00 SAST, before the working day
+  schedule:
+    - cron: '0 4 * * *' # 06:00 SAST, before the working day
 
   # Manual runs still work, and default to a dry run.
   workflow_dispatch:

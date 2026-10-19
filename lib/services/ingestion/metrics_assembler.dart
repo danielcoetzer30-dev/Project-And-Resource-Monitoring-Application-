@@ -19,9 +19,12 @@ class MetricsAssembler {
 
   /// How many past windows to keep.
   ///
-  /// Only the one before this is read, but a few spares mean a run skipped
-  /// for an outage or a failed job still has something to compare against.
-  static const retainedWindows = 14;
+  /// Only the one before this is read, but the margin matters. Runs are daily
+  /// over a fortnight, so the window this one is compared against is the one
+  /// stored fourteen runs ago — retaining exactly fourteen would put that
+  /// lookup on the boundary, and a single skipped run would drop the baseline
+  /// and report "not enough history" to a team that has plenty.
+  static const retainedWindows = 21;
 
   /// Assembles metrics for one project.
   ///
