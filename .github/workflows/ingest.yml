@@ -48,7 +48,11 @@ on:
 
 jobs:
   ingest:
-    runs-on: ubuntu-latest
+    # Pinned for the same reason Flutter is below. GitHub migrates the
+    # ubuntu-latest label — to Ubuntu 26 from 19 October 2026 — and a job
+    # whose whole point is that scores move only when activity moves should
+    # not have its operating system change underneath it mid-study.
+    runs-on: ubuntu-24.04
 
     # A stuck HTTP call should not hold a runner for six hours and collide
     # with the next scheduled run.
@@ -60,7 +64,9 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      # v5 rather than v4: v4 runs on Node 20, which GitHub has deprecated
+      # and is already force-running on Node 24.
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
