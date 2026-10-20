@@ -262,9 +262,9 @@ It authenticates as a service account, which is not subject to
 `firestore.rules` — that is the point: `projects`, `squads` and `signals` stay
 unwritable by every client and this is the only identity that can change them.
 
-`.github/workflows/ingest.yml` runs it daily. **The cron is commented out**
-until the team is ready; manual runs work and default to a dry run, which
-reads and scores and writes nothing.
+`.github/workflows/ingest.yml` runs it daily at 04:00 UTC, which is 06:00
+SAST. Manual runs work too and default to a dry run, which reads and scores
+and writes nothing.
 
 **The window is fourteen days, measured rather than guessed.** The anonymiser
 needs two contributors in a window or it suppresses the squad, and a week does
@@ -383,10 +383,11 @@ the Firebase console, written by ingestion, read-only to the app. Adding a
 
 In rough order of value to the research:
 
-1. **Turn the ingestion cron on.** Everything works; the schedule is
-   commented out in `.github/workflows/ingest.yml` pending the team's word.
-   Nothing else is needed — the demonstration source is configured, the
-   service account is in a secret, and public repositories need no token.
+1. **Confirm the scheduled run actually fires.** The cron was switched on on
+   19 October 2026 and the first scheduled run wrote nothing — GitHub delays
+   scheduled workflows, sometimes by hours, and a job that has never run in
+   Actions has never had its environment tested. Check the Actions tab before
+   trusting the dashboard's timestamps.
 2. **Onboard the remaining teammates** — only two of five have working
    environments.
 3. **A decision on the app name.** `keel` is the package name and the display
