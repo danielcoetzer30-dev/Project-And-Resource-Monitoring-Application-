@@ -294,6 +294,7 @@ void main() {
     documents['organisations/demo-org/squads/squad-platform'] = {
       'name': 'Platform squad',
       'headcount': 4,
+      'weeklyHours': 160.0,
       'capacityUsed': 0.5,
       'activeProjectCount': 0,
       'velocityTrend': 0.0,
@@ -314,12 +315,41 @@ void main() {
     expect(squad['activeProjectCount'], 1);
     expect(squad['velocityTrend'], closeTo(0, 0.0001));
 
-    // 120 planned hours against four people at a 40-hour week.
+    // 120 committed hours against the 160 the squad says it has.
     expect(squad['capacityUsed'], closeTo(120 / 160, 0.0001));
 
-    // A headcount is not something a commit log knows.
+    // Neither a headcount nor a squad's hours is something a commit log
+    // knows, so neither is overwritten.
     expect(squad['name'], 'Platform squad');
     expect(squad['headcount'], 4);
+    expect(squad['weeklyHours'], 160.0);
+  });
+
+  test('a squad that has not stated its hours gets no capacity', () async {
+    // The bug this replaced: capacity was committed hours over a headcount
+    // times a forty-hour week. That assumed everybody is full-time on this
+    // work, and a part-time squad read as permanently idle — eleven per cent
+    // from four people against eighteen committed hours. A number about the
+    // assumption, not about the team. With no stated hours there is no
+    // answer, so none is written.
+    final documents = seedDocuments();
+    documents['organisations/demo-org/squads/squad-platform'] = {
+      'name': 'Platform squad',
+      'headcount': 4,
+      'capacityUsed': 0.88,
+    };
+
+    final store = FakeStore(documents);
+
+    await runnerOver(
+      store,
+    ).run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+
+    final squad =
+        store.documents['organisations/demo-org/squads/squad-platform']!;
+
+    expect(squad['capacityUsed'], 0.88, reason: 'the stated value stands');
+    expect(squad['activeProjectCount'], 1, reason: 'this is measurable');
   });
 
   test('a squad with no plan hours keeps its stated capacity', () async {

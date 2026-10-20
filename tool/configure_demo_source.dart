@@ -70,6 +70,18 @@ const _plan = {
   'weeklyHours': 9.0,
 };
 
+/// What the squad has in a week, across everything it works on.
+///
+/// Stated by the team, the same way a headcount is, and for the same reason
+/// it cannot be measured: a commit log knows that somebody worked, not how
+/// many hours they had. Capacity is the committed hours over this.
+///
+/// It used to be a headcount times a forty-hour week, which assumed everybody
+/// is full-time on this work and made a part-time squad read as permanently
+/// idle. Twenty hours is what this one looks like: a handful of people on an
+/// open-source project around other commitments.
+const _squadWeeklyHours = 20.0;
+
 Future<void> main(List<String> arguments) async {
   if (arguments.isEmpty) {
     print(
@@ -121,6 +133,10 @@ Future<void> main(List<String> arguments) async {
     for (final entry in onSquad) {
       print('Would set projectPlans/${entry.key} -> $_plan');
     }
+    print(
+      'Would set squads/${_source['squadId']} '
+      'weeklyHours -> $_squadWeeklyHours',
+    );
 
     if (!apply) return;
 
@@ -155,6 +171,14 @@ Future<void> main(List<String> arguments) async {
       });
       print('Set projectPlans/${entry.key}');
     }
+
+    // Merged, so the name and headcount the team stated are left alone.
+    await store.write(
+      '$_org/squads/${_source['squadId']}',
+      {'weeklyHours': _squadWeeklyHours},
+      mergeFields: const ['weeklyHours'],
+    );
+    print('Set squads/${_source['squadId']} weeklyHours');
 
     print('');
     print('Done. Run tool/ingest.dart --dry-run to see what it would score.');

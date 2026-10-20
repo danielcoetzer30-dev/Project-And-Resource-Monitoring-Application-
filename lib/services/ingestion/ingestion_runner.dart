@@ -483,13 +483,22 @@ class IngestionRunner {
           .map((id) => _planFrom(id, plans[id]).weeklyHours)
           .fold<double>(0, (sum, hours) => sum + hours);
 
-      final headcount = (squad['headcount'] as num?)?.toInt() ?? 0;
+      // The squad's own stated weekly hours, not a headcount multiplied by a
+      // full working week.
+      //
+      // That multiplication was here and it was a guess wearing a number. It
+      // assumed everybody on a squad is full-time on this work, which made a
+      // part-time squad read as permanently idle — eleven per cent, from four
+      // people against eighteen committed hours. The same mistake as a roster
+      // figure that does not match the source: a fact about the assumption
+      // rather than about the team.
+      final available = (squad['weeklyHours'] as num?)?.toDouble() ?? 0;
 
-      // Hours committed across the squad's projects against the hours the
-      // squad has. Written only when both are known: a capacity of zero
-      // would render as an idle team rather than as an unanswered question.
-      if (committed > 0 && headcount > 0) {
-        fields['capacityUsed'] = committed / (headcount * _hoursPerWeek);
+      // Written only when both are known. A capacity of zero renders as an
+      // idle team rather than as an unanswered question, and a squad that has
+      // not stated its hours has not answered.
+      if (committed > 0 && available > 0) {
+        fields['capacityUsed'] = committed / available;
       }
 
       await firestore.write(
@@ -499,9 +508,6 @@ class IngestionRunner {
       );
     }
   }
-
-  /// A full working week per person, for turning a headcount into capacity.
-  static const _hoursPerWeek = 40.0;
 
   /// Adds today's state to the project's history strip.
   ///

@@ -117,7 +117,8 @@ a team editing its own scores.
 |---|---|---|
 | `name` | string | |
 | `headcount` | number | How many people. **Not who.** |
-| `capacityUsed` | number | Fraction; above 1 is over-allocation |
+| `weeklyHours` | number | Hours the squad has in a week, across everything. Stated by the team, like the headcount — a commit log knows somebody worked, not how many hours they had. Absent means capacity is not computed rather than guessed. |
+| `capacityUsed` | number | Committed hours over `weeklyHours`; above 1 is over-allocation |
 | `activeProjectCount` | number | |
 | `velocityTrend` | number | Fraction against own baseline; negative is slowing |
 | `updatedAt` | timestamp | |

@@ -296,6 +296,12 @@ six person-hours a fortnight read 7% utilisation; five hours against eleven
 pegged it at 100%. Nine reads 61%. The figure is a fact about the roster
 until it matches the work.
 
+A squad states its own `weeklyHours`, and capacity is the committed hours
+over that. It used to be a headcount times a forty-hour week, which assumed
+everybody is full-time on this work and made a part-time squad read as
+permanently idle at 11%. A squad that has stated nothing gets no capacity
+written rather than a guess.
+
 `tool/backfill_history.dart` gave the source the history it had but had not
 been asked about. Velocity and commit volume compare a window against the one
 before it, so a source connected today abstains for a fortnight — avoidably,
@@ -342,7 +348,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 195 tests and they all pass; a failure is
+Both must be clean. There are 196 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
