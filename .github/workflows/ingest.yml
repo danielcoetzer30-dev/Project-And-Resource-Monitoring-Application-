@@ -32,7 +32,11 @@ on:
   # A busy project had a silent week. For the small teams this is built for,
   # a fortnight is the shortest period that holds a signal rather than noise.
   schedule:
-    - cron: '0 4 * * *' # 06:00 SAST, before the working day
+    # Deliberately not on the hour. GitHub runs scheduled workflows on a
+    # best-effort queue, and the top of the hour is where everybody puts
+    # theirs, so a job scheduled at :00 can be delayed by hours or skipped
+    # entirely under load. :17 is quieter.
+    - cron: '17 4 * * *' # 06:17 SAST, before the working day
 
   # Manual runs still work, and default to a dry run.
   workflow_dispatch:
