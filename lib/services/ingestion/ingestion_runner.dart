@@ -84,6 +84,63 @@ class IngestionRunner {
   /// is drawn from. No client has a rule granting access to it.
   static const activityHistoryCollection = 'activityHistory';
 
+  /// Reads past windows and stores them as history, scoring nothing.
+  ///
+  /// A source connected today has no baseline, so velocity and commit volume
+  /// abstain with "not enough history yet" until enough runs have accumulated
+  /// — a fortnight of daily runs before the first non-overlapping comparison
+  /// exists. That is correct and it is also avoidable: the past fortnights
+  /// already happened, and the source can still be asked about them.
+  ///
+  /// This is not invented data. It is the same adapters, the same anonymiser
+  /// and the same contributor threshold, run over windows that have closed.
+  ///
+  /// Writes only history. Scores are not backdated, because a score is a
+  /// statement about a project now and the seam should show when the app
+  /// started watching rather than imply it was there all along.
+  ///
+  /// Oldest window first, so the stored list ends up newest-first like any
+  /// other run would leave it.
+  Future<List<String>> backfillHistory({
+    required Map<String, String> tokensBySourceId,
+    required DateTime now,
+    required int windows,
+    Duration window = const Duration(days: 14),
+  }) async {
+    final sources = await _readSources();
+    final written = <String>[];
+
+    for (var step = windows; step >= 1; step--) {
+      final windowEnd = now.subtract(window * step);
+      final windowStart = windowEnd.subtract(window);
+
+      final result = await service.run(
+        sources: sources,
+        tokensBySourceId: tokensBySourceId,
+        windowStart: windowStart,
+        windowEnd: windowEnd,
+      );
+
+      for (final activity in result.activity) {
+        await _appendHistory(activity);
+        written.add(
+          '${activity.squadId}: ${windowStart.toIso8601String().split('T').first}'
+          ' to ${windowEnd.toIso8601String().split('T').first} — '
+          '${activity.commitCount} commits, ${activity.tasksCompleted} done, '
+          '${activity.contributorCount} contributors',
+        );
+      }
+
+      for (final squadId in result.suppressedSquads) {
+        written.add(
+          '$squadId: suppressed for that window, too few contributors',
+        );
+      }
+    }
+
+    return written;
+  }
+
   Future<RunReport> run({
     required Map<String, String> tokensBySourceId,
     required DateTime now,

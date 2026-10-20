@@ -282,13 +282,27 @@ is read, and the anonymiser aggregates before anything is stored. The team's
 own repository is too quiet to demonstrate anything: five commits a week with
 one author per window is the privacy protection working, not the system.
 
-Two consequences worth knowing. A Git source gives commits and nothing else,
-so task velocity and issue complexity — 45% of the weight — report their
-honest "not enough history" and "no issues closed" rather than a number; a
-tracker source would fill them. And `weeklyHours` on the plan has to match the
-source: the first run used 36 hours a week against contributors who logged
-five person-hours a fortnight and reported 7% utilisation, which was a fact
-about the roster rather than about anybody's work.
+**All five indicators are live**, from that one source. A Git source reads
+pull requests as well as commits: a merged pull request is work finished, an
+opened one is work arriving, and the ratio between them is what the
+complexity calculator reads. Issues are deliberately not read — riverpod has
+86 open and closed none in a fortnight, so weighing that stock against a
+fortnight's throughput would clamp the indicator to zero and say more about
+open-source culture than about a team.
+
+`weeklyHours` on the plan has to match what the source actually reports, and
+it has been wrong twice in both directions. Thirty-six hours a week against
+six person-hours a fortnight read 7% utilisation; five hours against eleven
+pegged it at 100%. Nine reads 61%. The figure is a fact about the roster
+until it matches the work.
+
+`tool/backfill_history.dart` gave the source the history it had but had not
+been asked about. Velocity and commit volume compare a window against the one
+before it, so a source connected today abstains for a fortnight — avoidably,
+since those fortnights already happened. Same adapters, same anonymiser, same
+contributor threshold, over windows that have closed. Scores are not
+backdated: a score is a statement about a project now, and the seam should
+show when the app started watching.
 
 **Firebase project:** `project-health-monitor-436da`. Demo data lives under
 `organisations/demo-org`. Register with organisation code `demo-org` or you
@@ -328,7 +342,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 187 tests and they all pass; a failure is
+Both must be clean. There are 195 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an

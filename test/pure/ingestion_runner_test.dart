@@ -346,6 +346,58 @@ void main() {
     expect(squad['activeProjectCount'], 1);
   });
 
+  test('backfill stores past windows without backdating any score', () async {
+    final store = FakeStore(seedDocuments());
+
+    final lines = await runnerOver(store).backfillHistory(
+      tokensBySourceId: const {'src-1': 'token'},
+      now: now,
+      windows: 3,
+    );
+
+    expect(lines, hasLength(3));
+
+    const path =
+        'organisations/demo-org/'
+        '${IngestionRunner.activityHistoryCollection}/squad-platform';
+
+    expect((store.documents[path]!['windows'] as List), hasLength(3));
+
+    // A score is a statement about a project now. Backdating one would put a
+    // verdict on the seam for a day nobody was watching.
+    final project = store.documents['organisations/demo-org/projects/proj-1']!;
+    expect(project.containsKey('updatedAt'), isFalse);
+    expect(project['score'], 50.0, reason: 'the seeded score is untouched');
+  });
+
+  test('backfilled windows do not overlap each other', () async {
+    final store = FakeStore(seedDocuments());
+
+    await runnerOver(store).backfillHistory(
+      tokensBySourceId: const {'src-1': 'token'},
+      now: now,
+      windows: 3,
+    );
+
+    const path =
+        'organisations/demo-org/'
+        '${IngestionRunner.activityHistoryCollection}/squad-platform';
+
+    final windows = (store.documents[path]!['windows'] as List)
+        .cast<Map<String, dynamic>>();
+
+    // Newest first, and each one ends exactly where the next begins. An
+    // overlap here would be a baseline comparing a fortnight against part of
+    // itself, which reports "steady" through anything.
+    for (var i = 0; i < windows.length - 1; i++) {
+      expect(
+        windows[i]['windowStart'],
+        windows[i + 1]['windowEnd'],
+        reason: 'window $i overlaps the one before it',
+      );
+    }
+  });
+
   test('the squad history it writes carries no identity', () async {
     final store = FakeStore(seedDocuments());
 
