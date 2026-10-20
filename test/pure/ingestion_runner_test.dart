@@ -256,24 +256,27 @@ void main() {
   test('writes the fields the forecast and the Week tab depend on', () async {
     final documents = seedDocuments();
 
-    // An outage inside the reported week, overlapping it only partly: the
-    // hours before the window opened were never this squad's to lose.
+    // A fortnight apart, so the first run's window has closed before the
+    // second one opens. Runs closer together overlap, and an overlapping
+    // window is not a baseline — it is thirteen-fourteenths of the same days.
+    final second = now.add(const Duration(days: 15));
+
+    // An outage inside the week the second run reports, overlapping it only
+    // partly: the hours before that week opened were never this squad's to
+    // lose. Positioned against the second run rather than the first, because
+    // the project document always reports the most recent week.
     documents['organisations/demo-org/outages/out-1'] = {
       'stage': 4,
-      'start': now.subtract(const Duration(days: 2, hours: 1)),
-      'end': now.subtract(const Duration(days: 2)),
+      'start': second.subtract(const Duration(days: 2, hours: 1)),
+      'end': second.subtract(const Duration(days: 2)),
       'affectedSquadIds': ['squad-platform'],
     };
 
     final store = FakeStore(documents);
     final runner = runnerOver(store);
 
-    // Twice, so the second run has a baseline and can report a velocity.
     await runner.run(tokensBySourceId: const {'src-1': 'token'}, now: now);
-    await runner.run(
-      tokensBySourceId: const {'src-1': 'token'},
-      now: now.add(const Duration(hours: 6)),
-    );
+    await runner.run(tokensBySourceId: const {'src-1': 'token'}, now: second);
 
     final written = store.documents['organisations/demo-org/projects/proj-1']!;
 

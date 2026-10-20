@@ -29,9 +29,8 @@ class MetricsAssembler {
   /// Assembles metrics for one project.
   ///
   /// [history] is previous windows for the same squad, most recent first, and
-  /// may be empty — a project in its first window has no baseline, so the
-  /// current window becomes its own, which scores as "no change" rather than
-  /// as a collapse.
+  /// may be empty — a project in its first window has no baseline, and the
+  /// calculators say so rather than inventing one.
   ProjectMetrics assemble({
     required String projectId,
     required SquadActivity activity,
@@ -49,12 +48,17 @@ class MetricsAssembler {
     // is both honest and the question a team actually asks.
     final previous = windowBefore(activity: activity, history: history);
 
-    final commitsBaseline =
-        previous?.commitCount.toDouble() ?? activity.commitCount.toDouble();
-
-    final tasksBaseline =
-        previous?.tasksCompleted.toDouble() ??
-        activity.tasksCompleted.toDouble();
+    // Zero when there is nothing to compare against, never the current
+    // window standing in for its own baseline.
+    //
+    // That substitution was here and it was wrong: it produced a ratio of
+    // exactly 1, and the calculators reported "steady against this squad's
+    // own baseline" from a run that had no baseline at all. Zero takes the
+    // guard clause each calculator already has, which says "not enough
+    // history yet" and scores the neutral middle. There was never a collapse
+    // to protect against — a zero baseline has always returned 60, not 0.
+    final commitsBaseline = previous?.commitCount.toDouble() ?? 0;
+    final tasksBaseline = previous?.tasksCompleted.toDouble() ?? 0;
 
     // Everything below is scaled to the activity window, which is also the
     // period utilisation is measured over.

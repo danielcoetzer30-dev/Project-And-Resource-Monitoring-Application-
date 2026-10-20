@@ -49,10 +49,17 @@ const _disable = 'src2';
 /// contributors logged five person-hours a fortnight, and reported 7%
 /// utilisation — a number about the roster, not about the team.
 ///
-/// Five hours a week is what this source actually looks like. It is an
-/// open-source project people work on around other things, not an agency
-/// billing a client, and a demonstration that pretends otherwise is
-/// demonstrating the wrong thing.
+/// Nine hours a week is what this source actually looks like: an open-source
+/// project people work on around other things, not an agency billing a
+/// client, and a demonstration that pretends otherwise demonstrates the wrong
+/// thing.
+///
+/// It has been recalibrated once. Five hours was right when a Git source gave
+/// commits alone and the squad logged six person-hours a fortnight. Reading
+/// pull requests as well took that to eleven, which against a ten-hour roster
+/// pegged utilisation at 100% — a fact about the roster again, in the
+/// opposite direction. The figure has to follow what the source actually
+/// reports.
 ///
 /// For a real team this comes from what they committed to, not from what
 /// makes the number look good. Spending more of a budget always lowers the
@@ -60,7 +67,7 @@ const _disable = 'src2';
 const _plan = {
   'budgetTotal': 180000.0,
   'budgetSpent': 94000.0,
-  'weeklyHours': 5.0,
+  'weeklyHours': 9.0,
 };
 
 Future<void> main(List<String> arguments) async {
