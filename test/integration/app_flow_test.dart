@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:keel/app_shell.dart';
 import 'package:keel/data/mock_comment_repository.dart';
 import 'package:keel/data/mock_project_repository.dart';
+import 'package:keel/data/mock_project_plan_repository.dart';
 import 'package:keel/data/mock_settings_repository.dart';
 import 'package:keel/data/mock_source_repository.dart';
 import 'package:keel/models/preferences.dart';
@@ -39,6 +40,13 @@ void main() {
         }),
         commentRepositoryProvider.overrideWith((ref) {
           final repository = MockCommentRepository(
+            author: FakeAuthRepository.demoUser,
+          );
+          ref.onDispose(repository.dispose);
+          return repository;
+        }),
+        projectPlanRepositoryProvider.overrideWith((ref) {
+          final repository = MockProjectPlanRepository(
             author: FakeAuthRepository.demoUser,
           );
           ref.onDispose(repository.dispose);

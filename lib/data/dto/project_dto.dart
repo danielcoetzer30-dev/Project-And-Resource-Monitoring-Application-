@@ -33,6 +33,7 @@ abstract final class ProjectDto {
       // these existed produces no forecast instead of a wrong one.
       scheduleTotalDays: (data['scheduleTotalDays'] as num?)?.toInt() ?? 0,
       velocityRatio: (data['velocityRatio'] as num?)?.toDouble() ?? 1,
+      isArchived: data['isArchived'] as bool? ?? false,
     );
   }
 
@@ -50,6 +51,7 @@ abstract final class ProjectDto {
       'loadSheddingHoursLost': project.loadSheddingHoursLost,
       'scheduleTotalDays': project.scheduleTotalDays,
       'velocityRatio': project.velocityRatio,
+      'isArchived': project.isArchived,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

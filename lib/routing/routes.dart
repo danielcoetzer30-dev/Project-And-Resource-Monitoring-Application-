@@ -13,6 +13,8 @@ abstract final class Routes {
   static const groupMembers = '/messages/members';
   static const scoringWeights = '/settings/weights';
   static const ingestionSources = '/settings/sources';
+  static const projects = '/settings/projects';
+  static const editProject = '/settings/projects/edit';
   static const connectSource = '/onboarding/connect';
   static const apiKey = '/settings/api-key';
   static const customisations = '/settings/customisations';

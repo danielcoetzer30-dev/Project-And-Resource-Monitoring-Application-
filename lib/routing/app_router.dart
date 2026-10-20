@@ -18,7 +18,9 @@ import '../screens/settings/about_screen.dart';
 import '../screens/settings/accessibility_screen.dart';
 import '../screens/settings/api_key_screen.dart';
 import '../screens/settings/customisations_screen.dart';
+import '../screens/settings/edit_project_screen.dart';
 import '../screens/settings/ingestion_sources_screen.dart';
+import '../screens/settings/projects_screen.dart';
 import '../screens/settings/scoring_weights_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/signal_thread_screen.dart';
@@ -133,6 +135,31 @@ abstract final class AppRouter {
 
       case Routes.scoringWeights:
         return _page(const ScoringWeightsScreen(), settings);
+
+      case Routes.projects:
+        return _page(const ProjectsScreen(), settings);
+
+      case Routes.editProject:
+        // Adding a project changes what the organisation is measured on, so
+        // it is gated here as well as hidden in the UI. The rules refuse it
+        // too, and the repository says why.
+        return _guardedPage(
+          settings: settings,
+          builder: (ref) {
+            final user = ref.watch(currentUserProvider);
+            if (!(user?.canChangeSettings ?? false)) {
+              return const _NotPermitted(
+                message:
+                    'Only leads and managers can add or change a project. '
+                    'Everyone can see them.',
+              );
+            }
+
+            // Null means adding. An id means editing that one.
+            final id = settings.arguments;
+            return EditProjectScreen(projectId: id is String ? id : null);
+          },
+        );
 
       case Routes.ingestionSources:
         return _page(const IngestionSourcesScreen(), settings);

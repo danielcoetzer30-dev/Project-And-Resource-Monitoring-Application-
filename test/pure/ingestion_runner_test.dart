@@ -428,6 +428,110 @@ void main() {
     }
   });
 
+  group('a plan is how a project comes into existence', () {
+    test('a plan with no project yet gets one built from it', () async {
+      final documents = seedDocuments();
+      documents.remove('organisations/demo-org/projects/proj-1');
+      documents['organisations/demo-org/projectPlans/proj-1'] = {
+        'name': 'Ledger rebuild',
+        'client': 'Northbank',
+        'squadId': 'squad-platform',
+        'budgetTotal': 400000.0,
+        'budgetSpent': 376000.0,
+        'startDate': DateTime.utc(2026, 8, 1),
+        'endDate': DateTime.utc(2026, 10, 30),
+        'weeklyHours': 120.0,
+      };
+
+      final store = FakeStore(documents);
+
+      final report = await runnerOver(
+        store,
+      ).run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+
+      expect(report.projectsCreated, 1);
+
+      final project =
+          store.documents['organisations/demo-org/projects/proj-1']!;
+
+      // Identity comes from the plan; the score comes from this run. That
+      // split is the whole reason the app can offer project setup while
+      // `projects` stays unwritable by every client.
+      expect(project['name'], 'Ledger rebuild');
+      expect(project['client'], 'Northbank');
+      expect(project['squadId'], 'squad-platform');
+      expect(project['score'], isNot(50.0), reason: 'it was scored too');
+    });
+
+    test('renaming a project in its plan renames it everywhere', () async {
+      final documents = seedDocuments();
+      documents['organisations/demo-org/projectPlans/proj-1'] = {
+        'name': 'Ledger rebuild II',
+        'client': 'Northbank',
+        'squadId': 'squad-platform',
+      };
+
+      final store = FakeStore(documents);
+
+      await runnerOver(
+        store,
+      ).run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+
+      expect(
+        store.documents['organisations/demo-org/projects/proj-1']!['name'],
+        'Ledger rebuild II',
+      );
+    });
+
+    test('an archived plan stops its project being scored', () async {
+      final documents = seedDocuments();
+      documents['organisations/demo-org/projectPlans/proj-1'] = {
+        'name': 'Ledger rebuild',
+        'squadId': 'squad-platform',
+        'isArchived': true,
+      };
+
+      final store = FakeStore(documents);
+
+      final report = await runnerOver(
+        store,
+      ).run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+
+      final project =
+          store.documents['organisations/demo-org/projects/proj-1']!;
+
+      expect(report.projectsScored, 0);
+      expect(project['isArchived'], isTrue);
+
+      // Marked, not deleted. The history and the seam are the research
+      // record, and a project that went wrong is the one most worth keeping.
+      expect(project['score'], 50.0, reason: 'the previous score stands');
+      expect(project.containsKey('updatedAt'), isFalse);
+    });
+
+    test('the squad on the plan wins over the one on the project', () async {
+      // The plan is what the team stated; the project document is this job's
+      // own output. Moving a project to another squad has to work.
+      final documents = seedDocuments();
+      documents['organisations/demo-org/projects/proj-1'] = {
+        ...documents['organisations/demo-org/projects/proj-1']!,
+        'squadId': 'squad-gone',
+      };
+      documents['organisations/demo-org/projectPlans/proj-1'] = {
+        'name': 'Ledger rebuild',
+        'squadId': 'squad-platform',
+      };
+
+      final store = FakeStore(documents);
+
+      final report = await runnerOver(
+        store,
+      ).run(tokensBySourceId: const {'src-1': 'token'}, now: now);
+
+      expect(report.projectsScored, 1);
+    });
+  });
+
   test('the squad history it writes carries no identity', () async {
     final store = FakeStore(seedDocuments());
 

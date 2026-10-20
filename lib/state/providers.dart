@@ -6,11 +6,13 @@ import '../data/claude_assistant_repository.dart';
 import '../data/comment_repository.dart';
 import '../data/firebase_auth_repository.dart';
 import '../data/firestore_comment_repository.dart';
+import '../data/firestore_project_plan_repository.dart';
 import '../data/firestore_project_repository.dart';
 import '../data/firestore_messaging_repository.dart';
 import '../data/firestore_settings_repository.dart';
 import '../data/messaging_repository.dart';
 import '../data/preferences_store.dart';
+import '../data/project_plan_repository.dart';
 import '../data/project_repository.dart';
 import '../data/settings_repository.dart';
 import '../data/firestore_source_repository.dart';
@@ -21,6 +23,7 @@ import '../models/ingestion_source.dart';
 import '../models/conversation.dart';
 import '../models/directory_entry.dart';
 import '../models/message.dart';
+import '../models/project_plan.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
@@ -249,4 +252,27 @@ final conversationMessagesProvider = StreamProvider.autoDispose
     .family<List<Message>, String>(
       (ref, conversationId) =>
           ref.watch(messagingRepositoryProvider).watchMessages(conversationId),
+    );
+
+/// The projects a team has told the app about.
+///
+/// Separate from [projectRepositoryProvider] on purpose: that one reads
+/// ingestion's output and cannot write, this one writes what people state.
+/// A plan says what a project is; `projects/` says how it is going.
+final projectPlanRepositoryProvider = Provider<ProjectPlanRepository>((ref) {
+  final user = ref.watch(currentUserProvider);
+
+  return FirestoreProjectPlanRepository(orgId: user?.orgId ?? '', author: user);
+});
+
+/// Every plan, active first then archived, each alphabetical.
+final projectPlansProvider = StreamProvider<List<ProjectPlan>>(
+  (ref) => ref.watch(projectPlanRepositoryProvider).watch(),
+);
+
+/// One plan, watched while its editor is open.
+final projectPlanProvider = StreamProvider.autoDispose
+    .family<ProjectPlan?, String>(
+      (ref, projectId) =>
+          ref.watch(projectPlanRepositoryProvider).watchOne(projectId),
     );

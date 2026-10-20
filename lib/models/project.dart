@@ -43,12 +43,22 @@ class Project {
     required this.loadSheddingHoursLost,
     this.scheduleTotalDays = 0,
     this.velocityRatio = 1,
+    this.isArchived = false,
   });
 
   final String id;
   final String name;
   final String client;
   final String squadId;
+
+  /// Archived projects are filtered out before they reach the app, so every
+  /// screen is unaffected by them existing. Set by ingestion from the plan,
+  /// never by a client — archiving is a decision about the plan, and this is
+  /// the consequence of it.
+  ///
+  /// Not deleted: the history and the seam are the research record, and a
+  /// project that went wrong is the one most worth being able to look at.
+  final bool isArchived;
 
   // Deliberately no lead or owner field. See "Per-project ownership" in
   // CLAUDE.md: assigning one needs a member directory the privacy rules

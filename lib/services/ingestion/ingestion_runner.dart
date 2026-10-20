@@ -17,12 +17,16 @@ import 'metrics_assembler.dart';
 /// What one scheduled run did, for the job log.
 class RunReport {
   const RunReport({
+    required this.projectsCreated,
     required this.projectsScored,
     required this.signalsRaised,
     required this.suppressedSquads,
     required this.failures,
     required this.skipped,
   });
+
+  /// Projects that appeared from a plan this run and had no document before.
+  final int projectsCreated;
 
   final int projectsScored;
   final int signalsRaised;
@@ -166,6 +170,12 @@ class IngestionRunner {
     final plans = await firestore.list('$_org/projectPlans');
     final outages = await _readOutages();
 
+    // Before anything is scored: whatever the team has stated becomes a
+    // project document. This is the only path by which a project is created,
+    // which is what lets the app offer project setup without any client ever
+    // writing to a collection it must not write to.
+    final created = await _reconcileProjects(plans: plans, projects: projects);
+
     var scored = 0;
     var raised = 0;
     final skipped = <String, String>{};
@@ -182,7 +192,21 @@ class IngestionRunner {
       final projectId = entry.key;
       final document = entry.value;
 
-      final squadId = document['squadId'] as String? ?? '';
+      final plan = _planFrom(projectId, plans[projectId]);
+
+      if (plan.isArchived) {
+        // Archived on purpose. Not an error and not worth a line in the log
+        // every run, so it is counted rather than listed.
+        continue;
+      }
+
+      // The plan is authoritative where one exists: it is what the team
+      // stated, and the project document is this job's own output. A project
+      // seeded before plans existed still falls back to its own field.
+      final squadId = plan.squadId.isNotEmpty
+          ? plan.squadId
+          : document['squadId'] as String? ?? '';
+
       final activity = activityBySquad[squadId];
 
       if (activity == null) {
@@ -196,7 +220,6 @@ class IngestionRunner {
         continue;
       }
 
-      final plan = _planFrom(projectId, plans[projectId]);
       final history = await historyFor(squadId);
 
       final metrics = assembler.assemble(
@@ -257,6 +280,7 @@ class IngestionRunner {
     }
 
     return RunReport(
+      projectsCreated: created,
       projectsScored: scored,
       signalsRaised: raised,
       suppressedSquads: result.suppressedSquads,
@@ -323,12 +347,78 @@ class IngestionRunner {
 
     return ProjectPlan(
       projectId: projectId,
+      name: document['name'] as String? ?? '',
+      client: document['client'] as String? ?? '',
+      squadId: document['squadId'] as String? ?? '',
       budgetTotal: (document['budgetTotal'] as num?)?.toDouble() ?? 0,
       budgetSpent: (document['budgetSpent'] as num?)?.toDouble() ?? 0,
       startDate: document['startDate'] as DateTime?,
       endDate: document['endDate'] as DateTime?,
       weeklyHours: (document['weeklyHours'] as num?)?.toDouble() ?? 0,
+      isArchived: document['isArchived'] as bool? ?? false,
     );
+  }
+
+  /// Brings `projects/` into line with what the team has stated.
+  ///
+  /// This is how a project comes into existence. A lead saves a plan and the
+  /// project document appears on the next run, carrying only its identity —
+  /// no score, because nothing has been read about it yet. The scoring loop
+  /// picks it up from there, which is why a new project shows on the
+  /// dashboard before it shows a number.
+  ///
+  /// Only ever writes the three identity fields and the archive flag, as a
+  /// merge. Score, factors and seam belong to ingestion and are never touched
+  /// from here.
+  ///
+  /// Nothing is deleted. An archived plan marks its project archived, which
+  /// takes it out of everything the app reads while leaving the history where
+  /// a post-mortem could still find it.
+  Future<int> _reconcileProjects({
+    required Map<String, Map<String, dynamic>> plans,
+    required Map<String, Map<String, dynamic>> projects,
+  }) async {
+    var created = 0;
+
+    for (final entry in plans.entries) {
+      final plan = _planFrom(entry.key, entry.value);
+      if (plan.name.isEmpty) continue;
+
+      final existing = projects[entry.key];
+
+      final fields = <String, dynamic>{
+        'name': plan.name,
+        'client': plan.client,
+        'squadId': plan.squadId,
+        'isArchived': plan.isArchived,
+      };
+
+      // A project nobody has scored yet still needs the shape the app reads,
+      // or it renders as a project with a zero score rather than as one
+      // nothing is known about.
+      if (existing == null) {
+        fields.addAll({
+          'score': 50.0,
+          'factors': <dynamic>[],
+          'seam': <dynamic>[],
+          'openSignals': 0,
+          'budgetBurn': 0.0,
+          'scheduleDaysRemaining': 0,
+          'loadSheddingHoursLost': 0.0,
+        });
+        created++;
+      }
+
+      await firestore.write(
+        '$_org/projects/${entry.key}',
+        fields,
+        mergeFields: fields.keys.toList(),
+      );
+
+      projects[entry.key] = {...?existing, ...fields};
+    }
+
+    return created;
   }
 
   Future<List<SquadActivity>> _readHistory(String squadId) async {

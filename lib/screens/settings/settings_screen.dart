@@ -43,6 +43,15 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 _Row(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Projects',
+                  subtitle: canChangeSettings
+                      ? 'What you are tracking, and what it is budgeted for'
+                      : 'What you are tracking (read-only)',
+                  onTap: () => Navigator.of(context).pushNamed(Routes.projects),
+                ),
+                const Divider(height: 1),
+                _Row(
                   icon: Icons.link,
                   title: 'Connected sources',
                   subtitle: 'Repositories and trackers read automatically',

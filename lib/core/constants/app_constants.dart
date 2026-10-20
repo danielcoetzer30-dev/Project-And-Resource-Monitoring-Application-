@@ -19,6 +19,10 @@ abstract final class AppConstants {
   /// Repositories and trackers ingestion reads from. One of the three things
   /// a client may write, and gated to leads and managers.
   static const sourcesCollection = 'sources';
+
+  /// What a team states about a project: name, client, squad, budget, dates
+  /// and rostered hours. Ingestion creates the `projects` document from it.
+  static const projectPlansCollection = 'projectPlans';
   static const settingsCollection = 'settings';
 
   /// Who can be messaged: display name and role, nothing else.

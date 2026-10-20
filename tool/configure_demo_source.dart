@@ -166,6 +166,14 @@ Future<void> main(List<String> arguments) async {
     for (final entry in onSquad) {
       await store.write('$_org/projectPlans/${entry.key}', {
         ..._plan,
+        // Identity too, so the plan is the whole statement of what this
+        // project is. Ingestion builds the projects document from it, which
+        // is what makes these demonstration projects indistinguishable from
+        // ones a lead added in the app.
+        'name': entry.value['name'] ?? entry.key,
+        'client': entry.value['client'] ?? '',
+        'squadId': _source['squadId'],
+        'isArchived': false,
         'startDate': now.subtract(const Duration(days: 54)),
         'endDate': now.add(const Duration(days: 36)),
       });

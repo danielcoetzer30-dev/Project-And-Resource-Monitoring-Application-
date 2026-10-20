@@ -214,6 +214,29 @@ which was not previously possible. That is a real change and worth stating
 plainly: squad membership is still not derivable, which is the property
 constraint 1 actually protects.
 
+**Projects are added in the app, and still written by ingestion.** Settings →
+Projects is where a lead states what a project is: name, client, squad,
+budget, schedule and weekly hours. None of it says how the work is going, so
+constraint 4 holds — it is setup, like connecting a source.
+
+The trick is which collection it writes. A plan goes to `projectPlans`, which
+clients may write; ingestion reads it and builds the `projects` document from
+it on the next run. So `projects` stays `allow write: if false` and a project
+can still be created from the app. A new project appears on the dashboard
+after a run rather than instantly, which is honest: until something has been
+read there is nothing to say about its health.
+
+The rules accept exactly nine fields on a plan. One that could carry a score,
+a factor list or a seam would be the read-only rule defeated by the back
+door.
+
+**There is no delete, only archive.** Removing a failing project is the
+simplest possible way to make it stop looking bad, which is the behaviour the
+anti-gaming argument exists to resist. Archiving marks the plan, ingestion
+marks the project, and `FirestoreProjectRepository` filters archived projects
+out once so every screen is unaffected. The history and the seam stay where a
+post-mortem could still find them.
+
 **Ingestion sources are managed in the app.** Settings → Connected sources
 lists them with when each last synced, and a lead or manager can add, pause
 or remove one. Pausing keeps the source so a tracker silenced for a fortnight
@@ -348,7 +371,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 196 tests and they all pass; a failure is
+Both must be clean. There are 214 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -445,12 +468,17 @@ explaining why it had been removed, and stripped the stale-sync highlighting
 from the sources screen for the second time. The idea was kept and the
 regressions were not.
 
-**Not merged: creating and editing projects from the app.** It adds
-`createProject`, `updateProject` and `deleteProject` to `ProjectRepository`,
-against constraints 3 and 4. It also cannot work: the same archive's
-`firestore.rules` is byte-identical to this one, so `projects` is still
-`allow write: if false` and every save would be refused. If the team ever
-wants this, the research position has to change first, not the code.
+**Rebuilt rather than merged: creating and editing projects from the app.**
+The submitted version added `createProject`, `updateProject` and
+`deleteProject` to `ProjectRepository`, against constraints 3 and 4, and it
+could not have worked: that archive's own `firestore.rules` was
+byte-identical to this one, so `projects` was still `allow write: if false`
+and every save would have been refused.
+
+The need behind it was real, and was built on 20 October 2026. A plan is
+written to `projectPlans`, ingestion builds the `projects` document from it,
+and the read-only rule stays intact. See "Projects are added in the app"
+above. Delete became archive, for the reason given there.
 
 **Not merged: member management.** The team confirmed on 19 October 2026 that
 the need behind it was knowing who is in the organisation, which the messaging

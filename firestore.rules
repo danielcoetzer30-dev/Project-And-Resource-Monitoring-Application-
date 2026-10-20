@@ -187,9 +187,42 @@ service cloud.firestore {
       // Nothing here flatters a score. Spending more of a budget always makes
       // the score worse, and a longer schedule lowers the burn rate but
       // lengthens the delivery forecast.
+      // This is how a project comes into existence. Ingestion reads a plan
+      // and produces the `projects` document from it, which is what lets the
+      // app offer project setup while `projects` stays unwritable above.
+      //
+      // Exactly these fields, and no more. A plan that could carry a score, a
+      // factor list or a seam would be the read-only rule above defeated by
+      // the back door.
+      //
+      // maxName and maxClient repeat ProjectPlanRules in
+      // lib/models/project_plan.dart. Change one, change both.
       match /projectPlans/{projectId} {
         allow read: if belongsToOrg(orgId);
-        allow write: if belongsToOrg(orgId) && callerRole() != 'developer';
+
+        allow write: if belongsToOrg(orgId)
+          && callerRole() != 'developer'
+          && request.resource.data.keys().hasOnly([
+               'name', 'client', 'squadId',
+               'budgetTotal', 'budgetSpent',
+               'startDate', 'endDate',
+               'weeklyHours', 'isArchived'
+             ])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 80
+          && request.resource.data.client.size() <= 80
+          && request.resource.data.squadId is string
+          // Money and hours cannot be negative. A negative spend would make a
+          // burn rate read as a team being paid to work.
+          && request.resource.data.budgetTotal >= 0
+          && request.resource.data.budgetSpent >= 0
+          && request.resource.data.weeklyHours >= 0;
+
+        // Archiving is the removal. Deleting the plan would orphan the
+        // project document ingestion built from it, and the history is the
+        // research record.
+        allow delete: if false;
       }
 
       match /settings/{settingId} {

@@ -60,7 +60,15 @@ class FirestoreProjectRepository implements ProjectRepository {
       org.collection(AppConstants.projectsCollection).snapshots().listen((
         query,
       ) {
-        _projects = query.docs.map(ProjectDto.fromDoc).toList();
+        // Archived projects are dropped here, once, rather than in each
+        // screen. A project the team archived should be absent everywhere —
+        // the dashboard, the Week bars, the squad counts, the assistant —
+        // and filtering at the seam is what makes that true without every
+        // widget having to remember.
+        _projects = query.docs
+            .map(ProjectDto.fromDoc)
+            .where((project) => !project.isArchived)
+            .toList();
         _emit();
       }, onError: _controller.addError),
     );
