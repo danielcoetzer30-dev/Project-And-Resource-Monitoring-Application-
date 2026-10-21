@@ -49,18 +49,32 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   /// Everything the user can open from Home. The navigation bar is built from
   /// this same list, so a section is named and iconed in exactly one place.
+  ///
+  /// Each title names what the tab is for rather than what it is about.
+  /// "Health" and "Week" were both renamed on 21 October 2026, because
+  /// neither said what you would find: one is the project list and now also
+  /// where projects are set up, the other is the week laid out against the
+  /// hours load-shedding took. "Signals" stayed — it is the deliberate word,
+  /// milder than an alert and stronger than a note, and the copy voice in
+  /// `docs/DESIGN.md` rests on it.
+  ///
+  /// [StartTab] in `lib/models/preferences.dart` is indexed straight into
+  /// this list, so its labels have to match these titles. Its enum *names*
+  /// are what gets stored on the device and must not be renamed, or every
+  /// saved start-tab preference stops resolving.
   static const _sections = [
     HomeDestination(
-      title: 'Health',
+      title: 'Projects',
       description:
-          'How each project is doing, worst first, with the trend behind '
-          'every score.',
-      icon: Icons.monitor_heart_outlined,
-      selectedIcon: Icons.monitor_heart,
+          'How each project is doing, worst first, and where you set one up.',
+      icon: Icons.inventory_2_outlined,
+      selectedIcon: Icons.inventory_2,
     ),
     HomeDestination(
-      title: 'Squads',
-      description: 'Capacity and velocity for each squad.',
+      title: 'Capacity',
+      description:
+          'What each squad has committed against the hours it has, and who '
+          'is on it.',
       icon: Icons.group_work_outlined,
       selectedIcon: Icons.group_work,
     ),
@@ -73,10 +87,10 @@ class _AppShellState extends ConsumerState<AppShell> {
       selectedIcon: Icons.notifications,
     ),
     HomeDestination(
-      title: 'Week',
+      title: 'Schedule',
       description:
-          'What is scheduled, and what load-shedding has taken from the '
-          'week so far.',
+          'What is scheduled this week, and what load-shedding has taken '
+          'from it so far.',
       icon: Icons.calendar_month_outlined,
       selectedIcon: Icons.calendar_month,
     ),
@@ -199,6 +213,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                         squad: _squadFor(s, project.squadId),
                       ),
                     ),
+                    // Project setup lives on this tab rather than in
+                    // Settings: a project is the thing the tab is about, and
+                    // somebody looking at a project that is missing a budget
+                    // should not have to go looking in a different part of
+                    // the app to add one.
+                    onManageProjects: () =>
+                        Navigator.of(context).pushNamed(Routes.projects),
                   ),
                 ),
                 withData((s) => SquadsScreen(snapshot: s)),

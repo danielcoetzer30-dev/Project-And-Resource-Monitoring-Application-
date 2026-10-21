@@ -19,8 +19,10 @@ organisations/{orgId}
   ├── signals/{signalId}
   ├── outages/{outageId}
   ├── sources/{sourceId}
+  ├── projectPlans/{projectId}
   ├── settings/scoringweights
   ├── directory/{uid}
+  ├── squadMembers/{uid}
   └── conversations/{conversationId}
         └── messages/{messageId}
 ```
@@ -123,10 +125,15 @@ a team editing its own scores.
 | `velocityTrend` | number | Fraction against own baseline; negative is slowing |
 | `updatedAt` | timestamp | |
 
-**There is deliberately no member list, and there must never be one.** The
-research protocol commits to aggregation at squad level; a field holding
-identities here would break that commitment at the database layer no matter
-what the app does.
+**There is deliberately no member list on this document**, and there must
+never be one: a squad's own record stays a set of totals, so every query that
+reads a score reads no identity with it.
+
+Membership is held separately, in `squadMembers/{uid}` below. That collection
+was added on 21 October 2026 and it does mean squad membership is now
+derivable — see constraint 1 in `CLAUDE.md` for what that cost and what was
+kept. No metric moved with it: nothing on a squad, a project or a signal
+resolves to a person.
 
 ---
 
@@ -173,6 +180,37 @@ be readable by every member of the organisation.
 
 ---
 
+## `organisations/{orgId}/projectPlans/{projectId}`
+
+What a team states a project *is*, as against what ingestion measures about
+it. The document id is shared with the `projects` document ingestion builds
+from it.
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | Required, 1–80 characters |
+| `client` | string | May be empty, up to 80 characters |
+| `squadId` | string | Which squad does the work. Required, or the project is never scored |
+| `budgetTotal` | number | Cannot be negative |
+| `budgetSpent` | number | Cannot be negative. May exceed the total — an overrun is the thing worth reporting |
+| `startDate` | timestamp or null | Null is written rather than omitted, so a date cleared on purpose reaches the document |
+| `endDate` | timestamp or null | Must be after `startDate` |
+| `weeklyHours` | number | Hours rostered to this project. Idle time is measured against it |
+| `isArchived` | boolean | Absent means active |
+
+**Written by:** a lead or manager, from project setup on the Projects tab.
+**Read by:** ingestion, which creates or updates `projects/{projectId}` from
+it on the next run — which is what lets the app offer project setup while
+`projects` stays unwritable by every client.
+
+**Exactly these nine fields**, enforced with `hasOnly` in the rules. One that
+could carry a score, a factor list or a seam would be the read-only rule
+defeated by the back door. There is no delete: archiving is the removal,
+because deleting a failing project is the simplest way to make it stop
+looking bad.
+
+---
+
 ## `organisations/{orgId}/settings/scoringweights`
 
 The document id is all lower case, matching `AppConstants.scoringWeightsDoc`.
@@ -210,13 +248,53 @@ registered before messaging existed.
 
 **Why it exists:** `users` is readable only by its owner, so nothing else lets
 one person find another. The directory is the deliberate, narrow exception: a
-name and a role, nothing else. No email, no squad, no activity, and nothing
-links an entry to a squad or a project. Squads still have a `headcount` and
-never a member list.
+name and a role, nothing else. No email, no squad, no activity. It is also the
+only readable copy of anybody's role, which is why both messaging and the
+squad roster read a role from here rather than inventing one.
 
 **The role here is a display copy.** The rules refuse an entry whose role
 differs from the one on the person's real `users` document, and they never read
 this collection when deciding who may remove whom. They read `users`.
+
+---
+
+## `organisations/{orgId}/squadMembers/{uid}`
+
+Document id is the Firebase Auth uid. Who is on which squad.
+
+| Field | Type | Notes |
+|---|---|---|
+| `squadId` | string | The squad they are on. Empty means in the organisation and on no squad |
+
+**One field, and the rules refuse any document with another key.** The name
+and role a roster shows are joined from the directory, so this is not a second
+place a person's details accumulate — and if this document ever grew a field,
+every write would start being rejected rather than quietly succeeding.
+
+**Written by:** somebody who **strictly outranks** the person being placed. A
+manager places leads and developers, a lead places developers, and nobody
+places a manager — not even themselves. Same ladder as group removal in
+messaging, and roles are read from `users`, never from the directory.
+
+**Read by:** every member of the organisation. A roster only management could
+see would be worse than one everybody can see: people are entitled to know
+which aggregate their work is counted in.
+
+**No delete.** Taking somebody off a squad writes an empty `squadId`, so a
+placement stays a record of a decision somebody made.
+
+**Somebody is on one squad at a time.** Hours committed to two squads at once
+would be counted twice.
+
+**What this cost.** This collection, added 21 October 2026, makes squad
+membership derivable, and a roster beside a squad's published metrics narrows
+those metrics to the people named. That is a real reduction in the privacy
+property the rest of this schema is built around, taken knowingly by the team.
+Constraint 1 in `CLAUDE.md` and the doc comment on
+`lib/models/squad_member.dart` set out the full reasoning. Ingestion does not
+read this collection: capacity is still committed hours over the hours a squad
+stated, so placing somebody changes who is accounted for and not what anything
+scores.
 
 ---
 
@@ -289,8 +367,14 @@ nothing ingestion produces is attached to one.
 
 ## What is deliberately absent
 
-No collection anywhere holds per-developer activity. There is no
-`users/{uid}/commits`, no `contributions`, no `activity` keyed by person.
+No collection anywhere holds per-developer **activity**. There is no
+`users/{uid}/commits`, no `contributions`, no `activity` keyed by person, and
+no field on any document that resolves a number to a name.
+
+`squadMembers` holds identity without measurement, and is the one place a
+person is attached to anything the app reports on. The line this schema still
+holds is between knowing who somebody works with and knowing what they
+produced.
 
 `RawActivityEvent` — the only type in the codebase carrying an author — exists
 in memory inside the ingestion layer and is never serialised. The anonymiser
@@ -319,7 +403,11 @@ The shape:
   against `users/{uid}.orgId`
 - `projects`, `squads` and `signals` are **read-only to clients** — they are
   written by ingestion, never by the app
-- `settings` is the one thing a team may write, so weights can be tuned
+- `settings` is writable by a lead or manager, so weights can be tuned
+- `projectPlans` is writable by a lead or manager, nine fields exactly, and is
+  how a project comes into existence without `projects` becoming writable
+- `squadMembers` is writable only by somebody who strictly outranks the person
+  being placed, one field exactly
 - `directory`, `conversations` and `messages` are written by people, as
   themselves. Group creation, adding and removing follow the role ranking and
   are enforced in the rules; see the conversations section above

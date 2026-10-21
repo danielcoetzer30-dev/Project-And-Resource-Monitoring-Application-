@@ -27,7 +27,7 @@ losing four hours to load-shedding.
 
 ## Non-negotiable constraints
 
-### 1. No individual-level data. Ever.
+### 1. No individual-level *measurement*. Ever.
 
 The research protocol commits to a system "deliberately built without any
 individual identity", aggregating to squad level, with management barred from
@@ -35,16 +35,55 @@ granular developer analytics.
 
 In practice:
 
-- `Squad` has a `headcount`, never a member list. Do not add one.
 - `RawActivityEvent` is the only type carrying an author. It lives in memory
   inside `lib/services/ingestion/` and is never serialised, cached or stored.
 - `Anonymiser` converts it to squad totals before anything reaches Firestore.
 - Squads with fewer than two contributors are **dropped entirely**, because a
   one-person "squad total" is that person's data with a different label.
 - `test/unit/anonymiser_test.dart` asserts this. If it fails, stop.
+- There is no per-person field on any stored document and no metric anywhere
+  that resolves to a person. A change that adds one is wrong regardless of how
+  useful it is.
 
-If a change would let a person's activity be identified, it is wrong regardless
-of how useful it is.
+**This constraint was narrowed on 21 October 2026, and the heading above used
+to read "No individual-level data".** It was weakened deliberately, by the
+team, and the honest version is this:
+
+`Squad` still has a `headcount` and never a member list — but
+`squadMembers/{uid}` now says who is on which squad, and the Capacity tab
+shows each squad's roster by name. A roster beside published squad metrics
+re-identifies: "Platform squad: these two people" next to "Platform squad,
+velocity down 31%" is individual performance data about two named people,
+reached from a direction `Anonymiser.minimumContributors` cannot see.
+Suppressing a one-contributor squad does nothing for a squad of two with its
+members listed.
+
+That is the same objection that turned down a teammate's member-management
+feature on 19 October 2026, recorded further down this file. It has not
+stopped being true. The team decided on 21 October 2026 that being able to see
+and change who is on a squad was worth it, and the proposal's ethics section
+has to say so — an app whose documentation calls a capability a breach while
+shipping it is worse than either choice made cleanly.
+
+What was kept, and is what the constraint now protects:
+
+- Membership, not measurement. A placement is **one field**, `squadId`. The
+  name and role on screen come from the messaging directory, so this is not a
+  second place a person's details accumulate, and `firestore.rules` refuses a
+  placement document carrying any other key.
+- Placement is an act of management: only somebody who **strictly outranks**
+  you may move you, so a developer places nobody and nobody places a manager —
+  not even themselves. There is no self-service route onto a squad, because
+  which aggregate your work counts in is not the individual's to choose.
+- The roster is readable by every member, not only by management. A roster
+  only managers could see would be worse: people are entitled to know which
+  aggregate they are counted in.
+- Nothing reconciles the roster against `headcount` silently. They can
+  disagree, and the screen says so.
+
+`lib/models/squad_member.dart` carries this reasoning in full, and
+`test/unit/squad_roster_test.dart` and `test/widget/squads_screen_test.dart`
+pin the parts that were kept.
 
 ### 2. Load-shedding hours are reported, never deducted
 
@@ -59,10 +98,12 @@ this lives, and two tests in `health_score_engine_test.dart` protect it.
 Enforced in `firestore.rules`. This is what stops a team editing its own health
 scores, and it is half the anti-gaming argument.
 
-A client may write exactly three things, each with its own rule: `sources`,
-`settings`, and `comments` under a signal. Nothing else. If you find yourself
-adding a write method to `FirestoreProjectRepository`, that is the constraint
-telling you the work belongs in ingestion.
+A client may write `sources`, `settings`, `comments` under a signal,
+`projectPlans` and `squadMembers`, each with its own rule, and nothing else.
+Every one of those says what something *is*; none of them says how work is
+*going*. If you find yourself adding a write method to
+`FirestoreProjectRepository`, that is the constraint telling you the work
+belongs in ingestion.
 
 ### 4. No manual status entry
 
@@ -159,9 +200,18 @@ security rules open per collection and verified denying anonymous access;
 offline cache so it stays usable during an outage.
 
 Six tabs: **Home** (a neutral landing that needs no data, so it renders with
-no connection), Health, Squads, Signals, **Week** and **Ask**.
+no connection), Projects, Capacity, Signals, **Schedule** and **Ask**.
 
-**Week** is the screen no competing tool has. It lays the week out as a bar
+**The tabs were renamed on 21 October 2026** to say what each is for rather
+than what it is about: Health became Projects, which is also where projects
+are now set up; Squads became Capacity, which is the figure that screen
+reports; Week became Schedule. Signals stayed, because it is the deliberate
+word — milder than an alert, stronger than a note — and the copy voice rests
+on it. `StartTab` in `preferences.dart` changed its labels only: the enum
+*names* are what gets stored on the device, so renaming one of those
+identifiers would invalidate every saved start-tab preference.
+
+**Schedule** is the screen no competing tool has. It lays the week out as a bar
 per project, then states what load-shedding has taken from it and that those
 hours are excluded from every score. Grid and Calendar used to be separate
 tabs; Calendar's grid panel and squad list only repeated what Grid and Squads
@@ -203,21 +253,38 @@ roles always read from `users` and never from the directory.
 
 **The directory** is how one person finds another: a display name and a role,
 written by each person about themselves on sign-in. It carries no squad, no
-project, no email and no activity, and that absence is the point. A directory
-with a squad on it would be a squad member list, and a squad member list beside
-published squad metrics is individual performance data about named people —
-which is what `Anonymiser.minimumContributors` exists to prevent. The same
-reasoning is why a separate member-management feature was turned down.
+project, no email and no activity. It is also the only readable copy of
+anybody's role, because `users` is readable only by its owner, which is why
+both messaging and the squad roster read a role from here rather than
+inventing one.
 
-It does mean an organisation's names and roles are listable by its members,
-which was not previously possible. That is a real change and worth stating
-plainly: squad membership is still not derivable, which is the property
-constraint 1 actually protects.
+It means an organisation's names and roles are listable by its members, which
+was not previously possible before 19 October 2026.
 
-**Projects are added in the app, and still written by ingestion.** Settings →
-Projects is where a lead states what a project is: name, client, squad,
-budget, schedule and weekly hours. None of it says how the work is going, so
-constraint 4 holds — it is setup, like connecting a source.
+**Squad rosters.** The Capacity tab lists who is on each squad, and a lead or
+manager moves people between them. Membership lives in `squadMembers/{uid}`,
+one field wide, and the names shown are joined from the directory.
+
+This is the exposure the directory was carefully built to avoid, added on
+purpose a fortnight later. Read constraint 1 above and
+`lib/models/squad_member.dart` before changing any of it: the short version is
+that squad membership *is* now derivable, that it narrows every squad metric
+to the people named beside it, and that the team chose this knowingly. The
+rank rule, the single field and the absence of any per-person figure are what
+is left holding, and they are each pinned by a test.
+
+A squad's stated `headcount` and its roster can disagree, and the card says so
+rather than reconciling them. Ingestion does not read the roster: capacity is
+still the committed hours over the hours the squad stated, so placing somebody
+changes who is accounted for and not what anything scores.
+
+**Projects are added in the app, and still written by ingestion.** Project
+setup sits at the top of the Projects tab — it was a row under Settings until
+21 October 2026, which meant reading a score flagged "budget, dates or hours
+missing" and then going somewhere else to fix it. A lead states what a project
+is: name, client, squad, budget, schedule and weekly hours. None of it says
+how the work is going, so constraint 4 holds — it is setup, like connecting a
+source. A developer opens the same screen and changes nothing on it.
 
 The trick is which collection it writes. A plan goes to `projectPlans`, which
 clients may write; ingestion reads it and builds the `projects` document from
@@ -371,7 +438,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 214 tests and they all pass; a failure is
+Both must be clean. There are 245 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -393,8 +460,9 @@ unformatted file shows up as noise in every later diff.
 | `lib/services/ingestion/anonymiser.dart` | The ethics commitment in code |
 | `lib/services/assistant/snapshot_brief.dart` | Everything the assistant is told |
 | `lib/models/comment.dart` | Why attribution is allowed here and nowhere else |
+| `lib/models/squad_member.dart` | The one place a person is tied to a squad, and what that cost |
 | `firestore.rules` | The only thing actually enforcing any of it |
-| `lib/screens/week_screen.dart` | Outage loss stated, then excluded |
+| `lib/screens/week_screen.dart` | The Schedule tab: outage loss stated, then excluded |
 | `lib/models/preferences.dart` | On-device display choices, and their defaults |
 | `lib/widgets/health_seam.dart` | The signature component |
 
@@ -406,19 +474,27 @@ There is deliberately no project owner or lead field, and no
 `canManageProject`. Both existed briefly and were removed because the feature
 they implied cannot be built as things stand.
 
-To assign a lead you have to pick a person. Picking a person needs a list of
-the organisation's members, and `users` is readable only by its own owner —
-that rule is in `firestore.rules` precisely so a squad's membership cannot be
-enumerated, which is constraint 1 doing its job. Relaxing it to add an
-assignment screen would trade a commitment from the ethics section for a
-feature nothing in the app currently needs.
+The original reason was structural: assigning a lead means picking a person,
+picking a person needs a list of the organisation's members, and there was no
+such list to pick from.
 
-There is also nothing on a project a client may write, so even a correctly
-assigned lead would have no permission to act on it.
+**That reason is gone, and it is worth being straight about it.** The
+messaging directory names everybody, `squadMembers` says who is on which
+squad, and `projectPlans` is a collection a client may write — so a `leadId`
+on a plan is now perfectly buildable, and the rules could gate it to a lead or
+manager the same way they gate everything else there.
 
-If the team does want it later, it belongs where roles already live: set in
-the Firebase console, written by ingestion, read-only to the app. Adding a
-`leadId` the app can write is the version to refuse.
+What is left is a choice rather than an impossibility. The argument against
+it is the one in constraint 1: a project with a named lead, beside that
+project's score and its squad's roster, is the narrowest attribution in the
+app — one score, one name. The squad roster at least aggregates to a handful
+of people. If the team wants per-project ownership, that is the sentence the
+proposal has to answer, not a technical obstacle.
+
+Note also that `Project` has carried and lost a `leadId` twice already, both
+times arriving in a teammate's archive. Removing it again is not a rejection
+of the idea; it is that the field keeps appearing without the decision behind
+it.
 
 ---
 
@@ -426,17 +502,25 @@ the Firebase console, written by ingestion, read-only to the app. Adding a
 
 In rough order of value to the research:
 
-1. **Confirm the scheduled run actually fires.** The cron was switched on on
+1. **Amend the proposal's ethics section for the squad roster.** This is now
+   the most important outstanding item, ahead of anything technical. The
+   protocol says the system is "deliberately built without any individual
+   identity"; since 21 October 2026 it names who is on which squad and lets
+   management move them. The code says so, this file says so, and the
+   submitted document does not. An ethics section that describes a system
+   other than the one shipped is the one defect a marker will certainly find.
+   Messaging needs the same amendment, below.
+2. **Confirm the scheduled run actually fires.** The cron was switched on on
    19 October 2026 and the first scheduled run wrote nothing — GitHub delays
    scheduled workflows, sometimes by hours, and a job that has never run in
    Actions has never had its environment tested. Check the Actions tab before
    trusting the dashboard's timestamps.
-2. **Onboard the remaining teammates** — only two of five have working
+3. **Onboard the remaining teammates** — only two of five have working
    environments.
-3. **A decision on the app name.** `keel` is the package name and the display
+4. **A decision on the app name.** `keel` is the package name and the display
    name; the shortlist was Keel, Sightline, Plumb and Trim. Anything that
    sounds like surveillance was ruled out, for the reasons in section 1 above.
-4. **An API key for the assistant**, if the team wants it live.
+5. **An API key for the assistant**, if the team wants it live.
 
 **Messaging was excluded and then included.** The original position was that
 general messaging duplicates the WhatsApp the team already uses and answers
@@ -480,20 +564,37 @@ written to `projectPlans`, ingestion builds the `projects` document from it,
 and the read-only rule stays intact. See "Projects are added in the app"
 above. Delete became archive, for the reason given there.
 
-**Not merged: member management.** The team confirmed on 19 October 2026 that
-the need behind it was knowing who is in the organisation, which the messaging
-directory already serves — one directory, not two.
+**Not merged, then largely conceded: member management.** The team confirmed
+on 19 October 2026 that the need behind it was knowing who is in the
+organisation, which the messaging directory already serves — one directory,
+not two.
 
-The implementation could not have been kept regardless. `Member` carried a
-name, an email, a `squadId` and a list of `projectIds`. That is a squad member
-list, which
-constraint 1 rules out by name. The submitted doc comment argued it is safe
-because a member has no metric attached, which is true on its own and misses
-the combination: a member list is harmless, squad metrics are harmless, and
-together they re-identify. "Platform squad: two people, here they are" beside
-"Platform squad, velocity down 31%" is individual performance data about two
-named people — exactly what `Anonymiser.minimumContributors` exists to
-prevent, reached from a direction the anonymiser cannot see.
+The implementation was refused on more than that. `Member` carried a name, an
+email, a `squadId` and a list of `projectIds`. That is a squad member list,
+which constraint 1 ruled out by name. The submitted doc comment argued it is
+safe because a member has no metric attached, which is true on its own and
+misses the combination: a member list is harmless, squad metrics are harmless,
+and together they re-identify. "Platform squad: two people, here they are"
+beside "Platform squad, velocity down 31%" is individual performance data
+about two named people — exactly what `Anonymiser.minimumContributors` exists
+to prevent, reached from a direction the anonymiser cannot see.
+
+**On 21 October 2026 the team overruled that, and the squad roster was
+built.** Whoever wrote the original is owed the plain version: the objection
+above was not wrong, and it was not withdrawn — the capability was judged
+worth the cost anyway. What the rebuild changed is the shape, not the
+principle:
+
+- Membership is one field in its own collection, not a `Member` record. No
+  email, no `projectIds`, and the name comes from the directory.
+- Moving somebody needs a role strictly above theirs, so it is an act of
+  management rather than self-service.
+- Nothing per-person is measured, stored or scored, which is the half of
+  constraint 1 that survived.
+
+So the honest summary is that the idea was right, the first implementation
+would still be refused today, and the position it ran into has since moved.
+See constraint 1 and `lib/models/squad_member.dart`.
 
 **Mostly not merged: a navigation dropdown and a split calendar.** A fourth
 archive arrived the same day, forked from before the Week fold. It restored

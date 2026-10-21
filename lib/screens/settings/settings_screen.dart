@@ -42,15 +42,11 @@ class SettingsScreen extends ConsumerWidget {
                       Navigator.of(context).pushNamed(Routes.scoringWeights),
                 ),
                 const Divider(height: 1),
-                _Row(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Projects',
-                  subtitle: canChangeSettings
-                      ? 'What you are tracking, and what it is budgeted for'
-                      : 'What you are tracking (read-only)',
-                  onTap: () => Navigator.of(context).pushNamed(Routes.projects),
-                ),
-                const Divider(height: 1),
+                // Project setup used to be a row here. It moved to the top of
+                // the Projects tab on 21 October 2026, where the projects
+                // themselves are: looking at a score that says its budget is
+                // missing and then hunting through Settings to add one was
+                // two places for one thought.
                 _Row(
                   icon: Icons.link,
                   title: 'Connected sources',

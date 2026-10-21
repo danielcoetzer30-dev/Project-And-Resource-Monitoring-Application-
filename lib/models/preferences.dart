@@ -32,12 +32,20 @@ enum UiDensity { comfortable, compact }
 /// folded away there, change it here too — and note that the stored value is
 /// the enum's `name`, so a removed value falls back to Home rather than
 /// opening the wrong screen.
+/// Which tab the app opens on.
+///
+/// The enum *name* is what gets stored on the device, so renaming one of these
+/// identifiers silently invalidates every saved preference — which is why the
+/// tabs renamed on 21 October 2026 changed only their labels. `health` is the
+/// Projects tab, `squads` is Capacity and `week` is Schedule. The labels have
+/// to match the titles in `AppShell._sections`, because the index is used
+/// directly.
 enum StartTab {
   home('Home'),
-  health('Health'),
-  squads('Squads'),
+  health('Projects'),
+  squads('Capacity'),
   signals('Signals'),
-  week('Week'),
+  week('Schedule'),
   ask('Ask');
 
   const StartTab(this.label);

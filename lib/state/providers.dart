@@ -7,6 +7,7 @@ import '../data/comment_repository.dart';
 import '../data/firebase_auth_repository.dart';
 import '../data/firestore_comment_repository.dart';
 import '../data/firestore_project_plan_repository.dart';
+import '../data/firestore_squad_roster_repository.dart';
 import '../data/firestore_project_repository.dart';
 import '../data/firestore_messaging_repository.dart';
 import '../data/firestore_settings_repository.dart';
@@ -17,6 +18,7 @@ import '../data/project_repository.dart';
 import '../data/settings_repository.dart';
 import '../data/firestore_source_repository.dart';
 import '../data/source_repository.dart';
+import '../data/squad_roster_repository.dart';
 import '../models/comment.dart';
 import '../models/preferences.dart';
 import '../models/ingestion_source.dart';
@@ -24,6 +26,7 @@ import '../models/conversation.dart';
 import '../models/directory_entry.dart';
 import '../models/message.dart';
 import '../models/project_plan.dart';
+import '../models/squad_member.dart';
 import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
@@ -276,3 +279,37 @@ final projectPlanProvider = StreamProvider.autoDispose
       (ref, projectId) =>
           ref.watch(projectPlanRepositoryProvider).watchOne(projectId),
     );
+
+/// Who is on which squad.
+///
+/// Separate from [projectRepositoryProvider] for the same reason the plan
+/// repository is: a squad document is ingestion's output and unwritable, and a
+/// placement is something a manager states. Watches auth so moves are made as
+/// whoever is signed in, and the rank check decides whether they are allowed
+/// at all.
+final squadRosterRepositoryProvider = Provider<SquadRosterRepository>((ref) {
+  final user = ref.watch(currentUserProvider);
+
+  return FirestoreSquadRosterRepository(orgId: user?.orgId ?? '', author: user);
+});
+
+/// Every placement in the organisation.
+final squadPlacementsProvider =
+    StreamProvider.autoDispose<List<SquadPlacement>>(
+      (ref) => ref.watch(squadRosterRepositoryProvider).watch(),
+    );
+
+/// The roster as a screen needs it: each squad's members by name, plus the
+/// people on no squad.
+///
+/// Joined rather than stored. The names come from the directory, so a name
+/// corrected there is corrected here without a second write, and the roster
+/// collection stays one field wide.
+final squadRosterProvider = Provider.autoDispose<SquadRoster>((ref) {
+  final directory =
+      ref.watch(directoryProvider).value ?? const <DirectoryEntry>[];
+  final placements =
+      ref.watch(squadPlacementsProvider).value ?? const <SquadPlacement>[];
+
+  return SquadRoster.from(directory: directory, placements: placements);
+});

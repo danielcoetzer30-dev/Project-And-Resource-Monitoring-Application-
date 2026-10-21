@@ -5,10 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:keel/app_shell.dart';
 import 'package:keel/data/mock_comment_repository.dart';
+import 'package:keel/data/mock_messaging_repository.dart';
 import 'package:keel/data/mock_project_repository.dart';
 import 'package:keel/data/mock_project_plan_repository.dart';
 import 'package:keel/data/mock_settings_repository.dart';
 import 'package:keel/data/mock_source_repository.dart';
+import 'package:keel/data/mock_squad_roster_repository.dart';
+import 'package:keel/models/app_user.dart';
+import 'package:keel/models/directory_entry.dart';
 import 'package:keel/models/preferences.dart';
 import 'package:keel/routing/app_router.dart';
 import 'package:keel/routing/routes.dart';
@@ -25,6 +29,16 @@ import '../support/fake_auth_repository.dart';
 /// Runs against the mock repository, so it needs no Firebase, no network and
 /// no credentials — which is the same reason the prototype can be demonstrated
 /// on a phone with no signal.
+/// Who exists to be messaged and placed on a squad.
+const _directory = [
+  DirectoryEntry(id: 'test-uid', displayName: 'Tester', role: UserRole.lead),
+  DirectoryEntry(
+    id: 'other-uid',
+    displayName: 'Ada Pillay',
+    role: UserRole.developer,
+  ),
+];
+
 void main() {
   /// The app with Firebase swapped out: a signed-in fake auth repository and
   /// the seeded mock instead of Firestore. Exactly the two overrides the
@@ -66,6 +80,23 @@ void main() {
           ref.onDispose(repository.dispose);
           return repository;
         }),
+        // The Capacity tab reads the roster, and the roster reads names from
+        // the messaging directory. Both go through mocks here for the same
+        // reason everything else does: no Firebase, no network.
+        squadRosterRepositoryProvider.overrideWith((ref) {
+          final repository = MockSquadRosterRepository(
+            author: FakeAuthRepository.demoUser,
+            directory: _directory,
+          );
+          ref.onDispose(repository.dispose);
+          return repository;
+        }),
+        messagingRepositoryProvider.overrideWithValue(
+          MockMessagingRepository(
+            user: FakeAuthRepository.demoUser,
+            directory: _directory,
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'Keel',
@@ -120,7 +151,7 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pump();
 
-    await openSection(tester, 'Health');
+    await openSection(tester, 'Projects');
 
     expect(find.text('Ledger rebuild'), findsWidgets);
   });
@@ -130,10 +161,10 @@ void main() {
     await tester.pump();
 
     for (final label in [
-      'Health',
-      'Squads',
+      'Projects',
+      'Capacity',
       'Signals',
-      'Week',
+      'Schedule',
       'Ask',
       'Home',
     ]) {
@@ -146,7 +177,7 @@ void main() {
     await tester.pumpWidget(themedApp());
     await tester.pump();
 
-    await openSection(tester, 'Health');
+    await openSection(tester, 'Projects');
     await tester.tap(find.text('Ledger rebuild').first);
     await tester.pumpAndSettle();
 
@@ -191,6 +222,32 @@ void main() {
 
     expect(find.text('Escalated to the client.'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('reaches project setup from the Projects tab, not from '
+      'Settings', (tester) async {
+    // Setup used to be a row under Settings. It moved onto the tab the
+    // projects are on, so this is the path that has to work — and the old
+    // one has to be gone, or there are two doors to one room.
+    await tester.pumpWidget(themedApp());
+    await tester.pump();
+
+    await openSection(tester, 'Projects');
+    await tester.tap(find.text('Project setup'));
+    await tester.pumpAndSettle();
+
+    // Signed in as a lead, so the way to add one is offered. A developer
+    // reaches the same screen and is offered nothing.
+    expect(find.text('Add a project'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Projects'), findsNothing);
   });
 
   testWidgets('reaches settings and the scoring weights screen', (

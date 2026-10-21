@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/project_repository.dart';
 import '../models/health_state.dart';
 import '../models/project.dart';
+import '../state/auth_notifier.dart';
 import '../state/providers.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
@@ -43,6 +44,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
     required this.snapshot,
     this.onOpenProject,
     this.onConnectSource,
+    this.onManageProjects,
   });
 
   final HealthSnapshot snapshot;
@@ -52,6 +54,15 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
   /// Called from the empty state. Null hides the button.
   final VoidCallback? onConnectSource;
+
+  /// Opens project setup — budgets, schedules, squads, archiving.
+  ///
+  /// It lives on this tab rather than in Settings because a project is what
+  /// this tab is about: somebody reading a score flagged "budget, dates or
+  /// hours missing" should be one tap from filling them in. Still read-only
+  /// in substance for a developer, who sees every project's setup and changes
+  /// none of it. Null hides the row.
+  final VoidCallback? onManageProjects;
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -158,7 +169,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: Tokens.space4),
+            const SizedBox(height: Tokens.space3),
+            if (widget.onManageProjects != null) ...[
+              _SetupRow(
+                canEdit: ref.watch(canChangeSettingsProvider),
+                onTap: widget.onManageProjects!,
+              ),
+              const SizedBox(height: Tokens.space3),
+            ],
             if (banner != null) ...[
               SyncBanner(message: banner),
               const SizedBox(height: Tokens.space3),
@@ -194,6 +212,72 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
+/// The way in to project setup, at the top of the tab the projects are on.
+///
+/// Deliberately a quiet row rather than a floating button: it is setup, which
+/// somebody does rarely, and it should not sit on top of the scores somebody
+/// opened the tab to read.
+class _SetupRow extends StatelessWidget {
+  const _SetupRow({required this.canEdit, required this.onTap});
+
+  /// A developer opens the same screen and changes nothing there. Saying which
+  /// it will be beforehand is kinder than a form that refuses on save.
+  final bool canEdit;
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = canEdit
+        ? 'Add a project, or change a budget, schedule or squad'
+        : 'Budgets, schedules and squads (read-only)';
+
+    return Semantics(
+      button: true,
+      label: 'Project setup. $subtitle',
+      excludeSemantics: true,
+      child: Material(
+        color: Tokens.seam,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Tokens.radiusMd),
+          side: const BorderSide(color: Tokens.rule, width: Tokens.hairline),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(Tokens.space4),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.tune,
+                  size: 18,
+                  // Slate, not a signal colour: this row names a place, it
+                  // does not report a state.
+                  color: Tokens.slate,
+                ),
+                const SizedBox(width: Tokens.space3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Project setup', style: AppType.bodyStrong),
+                      const SizedBox(height: Tokens.space1),
+                      Text(subtitle, style: AppType.bodyMuted),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: Tokens.space3),
+                const Icon(Icons.chevron_right, size: 18, color: Tokens.beacon),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProjectsSection extends StatelessWidget {
   const _ProjectsSection({
     required this.all,
@@ -224,8 +308,9 @@ class _ProjectsSection extends StatelessWidget {
         icon: Icons.hub_outlined,
         title: 'No projects yet',
         body:
-            'Connect a repository or task tracker and your first health '
-            'score appears here, with nobody typing in an update.',
+            'Set a project up above, connect a repository or tracker to its '
+            'squad, and the first health score appears here on the next run '
+            'with nobody typing in an update.',
         actionLabel: onConnectSource == null ? null : 'Connect a source',
         onAction: onConnectSource,
       );

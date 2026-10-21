@@ -225,6 +225,65 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // Who is on which squad.
+      //
+      // The one collection in this app that attaches a person to a squad, and
+      // a deliberate reversal taken on 21 October 2026. The cost is written
+      // out in lib/models/squad_member.dart: a roster beside published squad
+      // metrics re-identifies, which is the objection that turned the same
+      // idea down a fortnight earlier. What these rules still hold on to:
+      //
+      //   - One field, `squadId`, and nothing else. A placement carrying a
+      //     name, an hours figure or an activity count is refused outright,
+      //     so this cannot become per-person measurement by the back door.
+      //     The name and role on screen are read from the directory.
+      //   - Only somebody who strictly outranks you may move you. A manager
+      //     places leads and developers, a lead places developers, and nobody
+      //     places a manager — not even themselves. A developer's rank is 0,
+      //     so the comparison alone refuses them; there is no separate check.
+      //   - Roles come from the real `users` documents, never from the
+      //     directory, which is a display copy a person writes about
+      //     themselves.
+      //   - The squad has to exist, or a typo would create a roster nothing
+      //     on the dashboard corresponds to.
+      //   - No delete. Taking somebody off a squad writes an empty squadId,
+      //     so a placement stays a record of a decision somebody made.
+      //
+      // This repeats SquadRosterRules in lib/models/squad_member.dart.
+      // Change one, change both.
+      match /squadMembers/{userId} {
+
+        function roleOf(id) {
+          return get(/databases/$(database)/documents/users/$(id)).data.role;
+        }
+
+        // 2 manager, 1 lead, 0 anything else. Same ladder as messaging.
+        function rankOf(role) {
+          return role == 'manager' ? 2 : (role == 'lead' ? 1 : 0);
+        }
+
+        function targetInThisOrg() {
+          return get(/databases/$(database)/documents/users/$(userId)).data.orgId == orgId;
+        }
+
+        function squadExists(squadId) {
+          return squadId == ''
+            || exists(/databases/$(database)/documents/organisations/$(orgId)/squads/$(squadId));
+        }
+
+        allow read: if belongsToOrg(orgId);
+
+        allow create, update: if belongsToOrg(orgId)
+          && targetInThisOrg()
+          && rankOf(callerRole()) > rankOf(roleOf(userId))
+          && request.resource.data.keys().hasOnly(['squadId'])
+          && request.resource.data.keys().hasAll(['squadId'])
+          && request.resource.data.squadId is string
+          && squadExists(request.resource.data.squadId);
+
+        allow delete: if false;
+      }
+
       match /settings/{settingId} {
         allow read: if belongsToOrg(orgId);
         allow write: if belongsToOrg(orgId) && callerRole() != 'developer';
