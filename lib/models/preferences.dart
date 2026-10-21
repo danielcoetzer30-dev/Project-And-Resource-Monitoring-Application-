@@ -82,6 +82,7 @@ class Preferences {
     this.startTab = StartTab.home,
     this.signalLimit = 5,
     this.showGridStrip = true,
+    this.notifyOnDecline = false,
   });
 
   /// The choices offered for how many signals the dashboard lists.
@@ -96,6 +97,14 @@ class Preferences {
   final int signalLimit;
   final bool showGridStrip;
 
+  /// Whether a project crossing into or out of a failing state raises a
+  /// notification on this device.
+  ///
+  /// Off by default, and deliberately. Notifications are the one thing this
+  /// app does that reaches somebody who did not open it, so it is a choice
+  /// rather than something that starts happening after an update.
+  final bool notifyOnDecline;
+
   /// True when nothing under Customisations has been changed, so its "Reset to
   /// defaults" can switch itself off. Accessibility choices are not counted.
   bool get displayIsDefault =>
@@ -104,7 +113,8 @@ class Preferences {
       density == UiDensity.comfortable &&
       startTab == StartTab.home &&
       signalLimit == 5 &&
-      showGridStrip;
+      showGridStrip &&
+      !notifyOnDecline;
 
   /// True when text size and bold text are both at their defaults.
   bool get accessibilityIsDefault => textSize == TextSize.standard && !boldText;
@@ -118,6 +128,7 @@ class Preferences {
     StartTab? startTab,
     int? signalLimit,
     bool? showGridStrip,
+    bool? notifyOnDecline,
   }) {
     return Preferences(
       dateStyle: dateStyle ?? this.dateStyle,
@@ -128,6 +139,7 @@ class Preferences {
       startTab: startTab ?? this.startTab,
       signalLimit: signalLimit ?? this.signalLimit,
       showGridStrip: showGridStrip ?? this.showGridStrip,
+      notifyOnDecline: notifyOnDecline ?? this.notifyOnDecline,
     );
   }
 
@@ -142,7 +154,8 @@ class Preferences {
           other.boldText == boldText &&
           other.startTab == startTab &&
           other.signalLimit == signalLimit &&
-          other.showGridStrip == showGridStrip;
+          other.showGridStrip == showGridStrip &&
+          other.notifyOnDecline == notifyOnDecline;
 
   @override
   int get hashCode => Object.hash(
@@ -154,5 +167,6 @@ class Preferences {
     startTab,
     signalLimit,
     showGridStrip,
+    notifyOnDecline,
   );
 }

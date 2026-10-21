@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Android 13 and later require this to be granted at runtime before any
+         notification is shown. The app asks for it when somebody turns
+         declining-project alerts on under Settings, not at launch: a
+         permission prompt before anybody knows what it is for gets refused. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:label="keel"
         android:name="${applicationName}"

@@ -149,8 +149,51 @@ class CustomisationsScreen extends ConsumerWidget {
               ),
               title: Text('Show on the dashboard', style: AppType.bodyStrong),
               subtitle: Text(
-                'The load-shedding strip at the top of the Health tab. The '
-                'Week tab still reports the hours either way.',
+                'The load-shedding strip at the top of the Projects tab. The '
+                'Schedule tab still reports the hours either way.',
+                style: AppType.bodyMuted,
+              ),
+            ),
+          ),
+          const SizedBox(height: Tokens.space4),
+          Panel(
+            title: 'Notifications',
+            padding: EdgeInsets.zero,
+            child: SwitchListTile(
+              value: prefs.notifyOnDecline,
+              // Routed through the alert notifier rather than straight to the
+              // preference: turning it on asks the platform for permission
+              // first, and a refusal has to leave the switch off rather than
+              // claiming to be on while nothing can be shown.
+              onChanged: (wanted) async {
+                final messenger = ScaffoldMessenger.of(context);
+                final granted = await ref
+                    .read(alertNotifierProvider.notifier)
+                    .setEnabled(wanted);
+
+                if (wanted && !granted) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Notifications are switched off for Keel in your '
+                        'phone settings. Turn them on there and try again.',
+                      ),
+                    ),
+                  );
+                }
+              },
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: Tokens.space4,
+              ),
+              title: Text(
+                'Tell me when a project declines',
+                style: AppType.bodyStrong,
+              ),
+              subtitle: Text(
+                'A notification when a project moves into at risk or '
+                'critical, and when one recovers. Once per change, never '
+                'once per day — and nothing about a person, only a '
+                'project.',
                 style: AppType.bodyMuted,
               ),
             ),

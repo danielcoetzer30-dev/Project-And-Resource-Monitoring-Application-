@@ -15,6 +15,16 @@ import 'providers.dart';
 class PreferencesNotifier extends Notifier<Preferences> {
   late final PreferencesStore _store = ref.read(preferencesStoreProvider);
 
+  /// True once somebody has changed a preference in this session.
+  ///
+  /// The saved values arrive a few milliseconds after launch, and anything
+  /// changed before they do used to be silently overwritten by them. That is
+  /// a narrow window, but it is exactly the window somebody toggling a switch
+  /// on the Customisations screen during a cold start falls into, and losing
+  /// a setting you just chose is the kind of bug nobody reports because it
+  /// looks like they mis-tapped.
+  bool _touched = false;
+
   @override
   Preferences build() {
     // The defaults show until the saved values arrive, which is a few
@@ -25,7 +35,13 @@ class PreferencesNotifier extends Notifier<Preferences> {
 
   Future<void> _loadSaved() async {
     final saved = await _store.load();
-    _apply(saved, persist: false);
+
+    // A choice made while this was in flight wins. The stored values are what
+    // the person wanted last time; what they just tapped is what they want
+    // now.
+    if (_touched) return;
+
+    _apply(saved, persist: false, touch: false);
   }
 
   void setDateStyle(DateStyle value) =>
@@ -43,6 +59,15 @@ class PreferencesNotifier extends Notifier<Preferences> {
   void setShowGridStrip(bool value) =>
       _apply(state.copyWith(showGridStrip: value));
 
+  /// Awaited, unlike its neighbours, because the caller needs to know the
+  /// value has been written before it reports what happened: turning
+  /// notifications on can be refused by the platform, and the switch has to
+  /// end up showing what is actually true.
+  Future<void> setNotifyOnDecline(bool value) async {
+    _apply(state.copyWith(notifyOnDecline: value), persist: false);
+    await _store.save(state);
+  }
+
   /// Puts date, time, density, start tab and the dashboard choices back.
   /// Accessibility is left alone, because it has its own reset — somebody who
   /// needs large text should not lose it by tidying up their date format.
@@ -54,13 +79,16 @@ class PreferencesNotifier extends Notifier<Preferences> {
       startTab: StartTab.home,
       signalLimit: 5,
       showGridStrip: true,
+      notifyOnDecline: false,
     ),
   );
 
   void setAccessibility({required TextSize textSize, required bool boldText}) =>
       _apply(state.copyWith(textSize: textSize, boldText: boldText));
 
-  void _apply(Preferences next, {bool persist = true}) {
+  void _apply(Preferences next, {bool persist = true, bool touch = true}) {
+    if (touch) _touched = true;
+
     DateFormatting.configure(
       dateStyle: next.dateStyle,
       timeStyle: next.timeStyle,

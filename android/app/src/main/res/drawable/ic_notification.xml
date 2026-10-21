@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The notification small icon: the keel mark, as a white silhouette.
+
+    Android masks this to a single colour and draws it at 24dp in the status
+    bar, so it has to read as a shape rather than as artwork. It is the same
+    two-element idea as the splash mark and the HealthSeam component: a
+    measured line that dips and recovers, over the baseline it is judged
+    against.
+
+    A vector rather than a set of PNGs, so there is one file instead of five
+    densities to keep in step.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+
+    <!-- The baseline. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2,20 L22,20 L22,21.6 L2,21.6 Z" />
+
+    <!-- The seam: down, then up past where it started. Drawn as a filled
+         outline rather than a stroke, because a stroked path with a tint is
+         rendered inconsistently across Android versions. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2.6,10.4 L8.0,15.6 L14.2,6.9 L21.4,2.4 L22.3,3.8 L15.4,8.1 L8.3,18.0 L1.5,11.5 Z" />
+</vector>

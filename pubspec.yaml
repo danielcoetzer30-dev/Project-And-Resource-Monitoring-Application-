@@ -49,6 +49,7 @@ dependencies:
   # Service-account auth for the ingestion job. Server-side only — the app
   # never imports it, so it is tree-shaken out of the APK.
   googleapis_auth: ^1.6.0
+  flutter_local_notifications: ^22.3.2
 
 dev_dependencies:
   # Plain Dart test runner, for the tests that must prove the scoring and

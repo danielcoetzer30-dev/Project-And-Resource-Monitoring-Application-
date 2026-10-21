@@ -16,6 +16,7 @@ import 'state/auth_notifier.dart';
 import 'state/providers.dart';
 import 'theme/tokens.dart';
 import 'theme/typography.dart';
+import 'widgets/alert_banner.dart';
 import 'widgets/offline_banner.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -120,6 +121,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     final snapshot = async.value;
     final syncState = ref.watch(syncStateProvider).value;
 
+    // Watched here rather than anywhere else because this is what keeps
+    // alerting alive: nothing feeds the notification service unless the
+    // notifier exists, and it exists for as long as the shell does.
+    final alert = ref.watch(alertNotifierProvider);
+
     // Drives the role chip. Null when signed out, which is the normal state
     // while the mock repository is in use.
     final user = ref.watch(currentUserProvider);
@@ -182,6 +188,23 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       body: Column(
         children: [
+          // Shown wherever the person happens to be, Home included: a project
+          // crossing into critical is worth interrupting a neutral screen for,
+          // which is the one thing Home makes an exception for.
+          if (alert != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Tokens.space4,
+                Tokens.space2,
+                Tokens.space4,
+                0,
+              ),
+              child: AlertBanner(
+                alert: alert,
+                onDismiss: () =>
+                    ref.read(alertNotifierProvider.notifier).dismiss(),
+              ),
+            ),
           // Hidden on Home, which shows no data and so cannot be stale.
           if (syncState != null && _index != 0)
             Padding(

@@ -31,8 +31,11 @@ import '../models/sync_state.dart';
 import '../services/health_scoring/health_score_engine.dart';
 import '../services/signal_engine.dart';
 import '../services/sync/connectivity_service.dart';
+import '../services/sync/alert_presenter.dart';
+import '../services/sync/local_alert_presenter.dart';
 import '../services/sync/notification_service.dart';
 import '../services/sync/sync_service.dart';
+import 'alert_notifier.dart';
 import 'assistant_notifier.dart';
 import 'auth_notifier.dart';
 import 'dashboard_notifier.dart';
@@ -155,11 +158,31 @@ final signalEngineProvider = Provider<SignalEngine>(
 );
 
 /// Raises an alert when a project crosses into a worse state.
+///
+/// Decides *whether* to say something. [alertPresenterProvider] decides how,
+/// and [alertNotifierProvider] is the wire between them and the snapshot.
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   final service = NotificationService();
   ref.onDispose(service.dispose);
   return service;
 });
+
+/// How an alert reaches somebody: a notification in the system tray.
+///
+/// Override with RecordingAlertPresenter in tests and in any build with no
+/// notification plugin. Nothing breaks when it does nothing — the in-app
+/// banner is driven from the alert stream rather than from here.
+final alertPresenterProvider = Provider<AlertPresenter>(
+  (ref) => LocalAlertPresenter(),
+);
+
+/// The most recent health alert, and the thing that keeps alerting running.
+///
+/// Watched by the shell so it stays alive for the life of the signed-in
+/// session: nothing feeds the notification service unless this exists.
+final alertNotifierProvider = NotifierProvider<AlertNotifier, HealthAlert?>(
+  AlertNotifier.new,
+);
 
 /// The assistant, behind its interface.
 ///

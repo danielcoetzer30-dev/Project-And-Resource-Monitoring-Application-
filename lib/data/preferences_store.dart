@@ -17,6 +17,7 @@ class PreferencesStore {
   static const _startTabKey = 'preferences.startTab';
   static const _signalLimitKey = 'preferences.signalLimit';
   static const _gridStripKey = 'preferences.showGridStrip';
+  static const _notifyKey = 'preferences.notifyOnDecline';
 
   Future<Preferences> load() async {
     try {
@@ -50,6 +51,9 @@ class PreferencesStore {
         ),
         signalLimit: _limit(prefs.getInt(_signalLimitKey)),
         showGridStrip: prefs.getBool(_gridStripKey) ?? true,
+        // Absent means off. Somebody who updates the app does not start
+        // getting notifications they never asked for.
+        notifyOnDecline: prefs.getBool(_notifyKey) ?? false,
       );
     } catch (_) {
       return const Preferences();
@@ -67,6 +71,7 @@ class PreferencesStore {
       await prefs.setString(_startTabKey, preferences.startTab.name);
       await prefs.setInt(_signalLimitKey, preferences.signalLimit);
       await prefs.setBool(_gridStripKey, preferences.showGridStrip);
+      await prefs.setBool(_notifyKey, preferences.notifyOnDecline);
     } catch (_) {
       // Not saving is acceptable; the choice still applies this session.
     }

@@ -332,9 +332,39 @@ and `firestore.rules` refuses any source document carrying one. A token box
 would take a secret, fail to store it, and leave somebody believing they had
 set it up.
 
+**Alerts.** A project crossing into at risk or critical raises one alert, and
+so does one recovering. `NotificationService` decides whether anything is
+worth saying, `AlertPresenter` decides how it is said, and `AlertNotifier` is
+the wire between them and the snapshot — which did not exist until 21 October
+2026, so the service was correct and unreachable for weeks. Nothing called
+`evaluate` and nothing listened to `alerts`.
+
+It fires on the **transition**, not the state: a project sitting at critical
+for a fortnight produces one alert, not one a day. An early warning system
+that cries wolf gets muted, and a muted warning system is worse than none.
+Recovery is announced too, so the tool does not read as purely punitive.
+
+Two halves. The in-app banner always shows, because it is a change on a screen
+somebody is already looking at. The tray notification is opt-in under Settings
+→ Customisations, off by default, and asks for the Android permission at the
+moment it is switched on rather than at launch — a prompt before anybody knows
+what it is for gets refused, and on Android a refusal is remembered. A refused
+permission leaves the switch off rather than claiming to be on while nothing
+can be shown.
+
+They are local notifications, not push. The alert is produced on the device
+from a snapshot the app has already read, so there is nothing for a server to
+send, and the Spark plan has no Cloud Functions to send it from. The honest
+consequence is that alerts are raised while the app is running; this is not a
+background service.
+
+An alert carries a project and never a person, and `alert_notifier_test.dart`
+asserts it.
+
 **Display preferences** live under Settings → Preferences: date and time
 format, density, which tab the app opens on, how many signals the dashboard
-lists, and whether the grid strip shows. Text size and bold text sit
+lists, whether the grid strip shows, and whether a declining project notifies
+you. Text size and bold text sit
 separately under Accessibility, and have their own reset — somebody who needs
 large text should not lose it by tidying up their date format.
 
@@ -475,7 +505,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 288 tests and they all pass; a failure is
+Both must be clean. There are 302 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -504,6 +534,7 @@ unformatted file shows up as noise in every later diff.
 | `lib/widgets/health_seam.dart` | The signature component |
 | `lib/widgets/labelled_field.dart` | The shared text field, used by all three forms |
 | `lib/widgets/confirm_dialog.dart` | How the app asks before something hard to undo |
+| `lib/state/alert_notifier.dart` | The wire from a snapshot to a notification |
 
 ---
 
