@@ -44,11 +44,21 @@ class FakeAuthRepository implements AuthRepository {
   /// the real notifier and gate rather than through a callback a test wrote.
   Object? signInError;
 
+  /// How long [signIn] takes before it answers.
+  ///
+  /// Not decoration. Firebase takes a few hundred milliseconds, so frames
+  /// render while the request is in flight and the gate rebuilds for the busy
+  /// state. A fake that answers instantly skips that entirely, which is how a
+  /// test suite can pass while every refused sign-in silently loses its error
+  /// message on a real phone.
+  Duration signInDelay = Duration.zero;
+
   @override
   Future<AppUser> signIn({
     required String email,
     required String password,
   }) async {
+    if (signInDelay > Duration.zero) await Future<void>.delayed(signInDelay);
     if (signInError != null) throw signInError!;
 
     _user = _signInAs;

@@ -12,7 +12,16 @@ import '../../widgets/labelled_field.dart';
 /// the first time will do both within a minute of each other and bouncing
 /// between two screens for that is friction with no purpose.
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, this.onSubmit});
+  const SignInScreen({super.key, this.onSubmit, this.initialError});
+
+  /// A failure from a previous attempt, handed in by the gate.
+  ///
+  /// Belt and braces alongside the screen's own error handling. The screen
+  /// catches what [onSubmit] throws, which works as long as it is still
+  /// mounted when the throw comes back — and it is only still mounted because
+  /// the gate deliberately keeps the form on screen while a request is in
+  /// flight. This covers the case where it is rebuilt anyway.
+  final String? initialError;
 
   /// Supplied by the caller so this screen stays testable without Firebase.
   final Future<void> Function({
@@ -38,6 +47,25 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isRegistering = false;
   bool _busy = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _error = widget.initialError;
+  }
+
+  @override
+  void didUpdateWidget(SignInScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // A new failure arriving from the gate. Only ever sets a message, never
+    // clears one: the screen's own catch is usually what put it there, and a
+    // rebuild carrying no error should not wipe it.
+    final arrived = widget.initialError;
+    if (arrived != null && arrived != oldWidget.initialError) {
+      setState(() => _error = arrived);
+    }
+  }
 
   @override
   void dispose() {

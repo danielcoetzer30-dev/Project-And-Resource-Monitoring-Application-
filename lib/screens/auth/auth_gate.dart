@@ -20,33 +20,49 @@ class AuthGate extends ConsumerWidget {
     final state = ref.watch(authNotifierProvider);
 
     return switch (state) {
-      // The splash covers both: restoring a session on launch, and the moment
-      // after credentials are submitted while the user document is read. They
-      // are the same wait from the person's point of view, so they look the
-      // same, and only the line underneath differs.
+      // Only the launch wait gets the splash: there is no form to preserve
+      // yet, and the session has to be restored before anything can be shown.
       AuthChecking() => const SplashScreen(),
-      AuthBusy() => const SplashScreen(message: 'Signing you in'),
-      SignedOut() => SignInScreen(
-        onSubmit:
-            ({
-              required bool isRegistering,
-              required String email,
-              required String password,
-              required String displayName,
-              required String orgId,
-            }) {
-              final notifier = ref.read(authNotifierProvider.notifier);
-              return isRegistering
-                  ? notifier.register(
-                      email: email,
-                      password: password,
-                      displayName: displayName,
-                      orgId: orgId,
-                    )
-                  : notifier.signIn(email: email, password: password);
-            },
-      ),
+
+      // Busy deliberately keeps the form on screen rather than replacing it
+      // with the splash. Swapping it out destroys the screen's State, and
+      // with it both what was typed and the error that was about to be
+      // shown — which is how every refused sign-in came back as an empty
+      // form and no message at all. The form has its own spinner in the
+      // button and disables itself while a request is in flight.
+      AuthBusy() => _form(ref),
+
+      SignedOut(:final failure) => _form(ref, error: failure?.message),
+
       SignedIn() => const AppShell(),
     };
+  }
+
+  /// The sign-in form, wired to the notifier.
+  ///
+  /// One builder for both states, so the widget is the same type in the same
+  /// position and Flutter keeps its State across the change.
+  Widget _form(WidgetRef ref, {String? error}) {
+    return SignInScreen(
+      initialError: error,
+      onSubmit:
+          ({
+            required bool isRegistering,
+            required String email,
+            required String password,
+            required String displayName,
+            required String orgId,
+          }) {
+            final notifier = ref.read(authNotifierProvider.notifier);
+            return isRegistering
+                ? notifier.register(
+                    email: email,
+                    password: password,
+                    displayName: displayName,
+                    orgId: orgId,
+                  )
+                : notifier.signIn(email: email, password: password);
+          },
+    );
   }
 }

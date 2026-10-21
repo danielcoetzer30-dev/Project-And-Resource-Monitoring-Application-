@@ -85,36 +85,48 @@ class FirestoreProjectRepository implements ProjectRepository {
         .doc(orgId);
 
     _subscriptions.add(
-      org.collection(AppConstants.projectsCollection).snapshots().listen((
-        query,
-      ) {
-        // Archived projects are dropped here, once, rather than in each
-        // screen. A project the team archived should be absent everywhere —
-        // the dashboard, the Week bars, the squad counts, the assistant —
-        // and filtering at the seam is what makes that true without every
-        // widget having to remember.
-        _projects = query.docs
-            .map(ProjectDto.fromDoc)
-            .where((project) => !project.isArchived)
-            .toList();
-        _noteSource(query);
-        _emit();
-      }, onError: _controller.addError),
+      // includeMetadataChanges, on all three listeners below, is what makes
+      // going offline and coming back visible at all. Without it Firestore
+      // only delivers a snapshot when a *document* changes, so switching
+      // between serving from cache and serving from the server — which is
+      // exactly the transition the banner reports — never reaches the app.
+      // Nothing changed in the database when the wifi dropped, so nothing
+      // was sent, so the badge kept saying Live; and nothing changed when it
+      // came back, so it then kept saying Cached.
+      org
+          .collection(AppConstants.projectsCollection)
+          .snapshots(includeMetadataChanges: true)
+          .listen((query) {
+            // Archived projects are dropped here, once, rather than in each
+            // screen. A project the team archived should be absent everywhere —
+            // the dashboard, the Week bars, the squad counts, the assistant —
+            // and filtering at the seam is what makes that true without every
+            // widget having to remember.
+            _projects = query.docs
+                .map(ProjectDto.fromDoc)
+                .where((project) => !project.isArchived)
+                .toList();
+            _noteSource(query);
+            _emit();
+          }, onError: _controller.addError),
     );
 
     _subscriptions.add(
-      org.collection(AppConstants.squadsCollection).snapshots().listen((query) {
-        _squads = query.docs.map(SquadDto.fromDoc).toList();
-        _noteSource(query);
-        _emit();
-      }, onError: _controller.addError),
+      org
+          .collection(AppConstants.squadsCollection)
+          .snapshots(includeMetadataChanges: true)
+          .listen((query) {
+            _squads = query.docs.map(SquadDto.fromDoc).toList();
+            _noteSource(query);
+            _emit();
+          }, onError: _controller.addError),
     );
 
     _subscriptions.add(
       org
           .collection(AppConstants.signalsCollection)
           .orderBy('raisedAt', descending: true)
-          .snapshots()
+          .snapshots(includeMetadataChanges: true)
           .listen((query) {
             _signals = query.docs.map(SignalDto.fromDoc).toList();
             _noteSource(query);

@@ -324,6 +324,45 @@ void main() {
       expect(find.textContaining('SocketException'), findsNothing);
     });
 
+    testWidgets('a slow refusal still shows its message, and keeps the '
+        'email', (tester) async {
+      // The test the earlier ones were missing. Firebase takes a few hundred
+      // milliseconds, so frames render while the request is in flight and the
+      // gate rebuilds for the busy state. If that rebuild replaces the form,
+      // the screen is unmounted before the error comes back and the message
+      // is dropped — which is exactly what happened on the phone while this
+      // file's other tests passed, because a fake that answers instantly
+      // never lets a frame through.
+      final auth = FakeAuthRepository(signedIn: false);
+      auth.signInError = const AuthException('Email or password is incorrect.');
+      auth.signInDelay = const Duration(milliseconds: 400);
+      addTearDown(auth.dispose);
+
+      await tester.pumpWidget(gated(auth));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'ada@b.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'wrong');
+      await tester.ensureVisible(find.byType(FilledButton));
+      await tester.pump();
+      await tester.tap(find.byType(FilledButton));
+
+      // Frames while the request is in flight: the form must still be here.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        find.byType(TextFormField),
+        findsWidgets,
+        reason: 'the form must not be replaced while signing in',
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Email or password is incorrect.'), findsOneWidget);
+      // And nobody should have to retype their address because the password
+      // was wrong.
+      expect(find.text('ada@b.com'), findsOneWidget);
+    });
+
     testWidgets('a good password gets into the app', (tester) async {
       final auth = FakeAuthRepository(signedIn: false);
       addTearDown(auth.dispose);
