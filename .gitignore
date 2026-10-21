@@ -56,3 +56,7 @@ ios/Flutter/Generated.xcconfig
 *-service-account*.json
 service-account*.json
 firebase-adminsdk*.json
+
+# Backups written by tool/remove_seed_projects.dart. Local records of what
+# was deleted, not something the repository needs.
+seed-removal-backup-*.json

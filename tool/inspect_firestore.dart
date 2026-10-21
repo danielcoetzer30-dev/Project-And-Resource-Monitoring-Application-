@@ -79,6 +79,9 @@ Future<void> main(List<String> arguments) async {
           'updatedAt',
           'displayName',
           'role',
+          'projectId',
+          'title',
+          'severity',
           'headcount',
           'weeklyHours',
         ]) {
