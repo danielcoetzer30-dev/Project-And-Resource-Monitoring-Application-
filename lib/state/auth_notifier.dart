@@ -87,6 +87,15 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// Asks for a reset email.
+  ///
+  /// Does not touch [state]: the session is unchanged by asking, and flipping
+  /// to [AuthBusy] would send the gate back to the spinner and take the reset
+  /// screen off the stack mid-request.
+  Future<void> sendPasswordReset({required String email}) {
+    return _repository.sendPasswordReset(email: email);
+  }
+
   Future<void> signOut() async {
     await _repository.signOut();
     state = const SignedOut();

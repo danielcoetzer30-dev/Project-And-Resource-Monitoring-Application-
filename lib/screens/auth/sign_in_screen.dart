@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../routing/routes.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
+import '../../widgets/labelled_field.dart';
 
 /// Sign in, or create an account.
 ///
@@ -91,7 +93,7 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Column(
                 children: [
                   if (_isRegistering) ...[
-                    _Field(
+                    LabelledField(
                       controller: _name,
                       label: 'Your name',
                       hint: 'Shown to your team',
@@ -100,7 +102,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           : null,
                     ),
                     const SizedBox(height: Tokens.space4),
-                    _Field(
+                    LabelledField(
                       controller: _org,
                       label: 'Organisation code',
                       hint: 'From whoever set up your team',
@@ -110,7 +112,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     const SizedBox(height: Tokens.space4),
                   ],
-                  _Field(
+                  LabelledField(
                     controller: _email,
                     label: 'Email',
                     keyboardType: TextInputType.emailAddress,
@@ -125,7 +127,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     },
                   ),
                   const SizedBox(height: Tokens.space4),
-                  _Field(
+                  LabelledField(
                     controller: _password,
                     label: 'Password',
                     obscure: true,
@@ -197,67 +199,27 @@ class _SignInScreenState extends State<SignInScreen> {
                 style: AppType.body.copyWith(color: Tokens.beacon),
               ),
             ),
+            // Only offered while signing in. On the registration form there is
+            // no account yet to reset, so the link would be an invitation to
+            // a dead end.
+            if (!_isRegistering)
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => Navigator.of(context).pushNamed(
+                        Routes.resetPassword,
+                        // Carries over whatever has been typed, so nobody
+                        // types their address twice.
+                        arguments: _email.text,
+                      ),
+                child: Text(
+                  'I have forgotten my password',
+                  style: AppType.body.copyWith(color: Tokens.slate),
+                ),
+              ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.controller,
-    required this.label,
-    this.hint,
-    this.obscure = false,
-    this.keyboardType,
-    this.validator,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String? hint;
-  final bool obscure;
-  final TextInputType? keyboardType;
-  final String? Function(String?)? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(), style: AppType.label),
-        const SizedBox(height: Tokens.space2),
-        TextFormField(
-          controller: controller,
-          obscureText: obscure,
-          keyboardType: keyboardType,
-          validator: validator,
-          style: AppType.body,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppType.bodyMuted,
-            filled: true,
-            fillColor: Tokens.seam,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: Tokens.space3,
-              vertical: Tokens.space3,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
-              borderSide: const BorderSide(color: Tokens.rule),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
-              borderSide: const BorderSide(color: Tokens.rule),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
-              borderSide: const BorderSide(color: Tokens.beacon, width: 1.5),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

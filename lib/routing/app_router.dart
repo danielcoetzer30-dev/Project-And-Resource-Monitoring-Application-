@@ -5,6 +5,7 @@ import '../models/project.dart';
 import '../models/signal.dart';
 import '../models/squad.dart';
 import '../screens/auth/auth_gate.dart';
+import '../screens/auth/reset_password_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/onboarding/connect_source_screen.dart';
 import '../models/messaging_rules.dart';
@@ -25,6 +26,7 @@ import '../screens/settings/scoring_weights_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/signal_thread_screen.dart';
 import '../state/auth_notifier.dart';
+import '../state/providers.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 import 'routes.dart';
@@ -70,6 +72,20 @@ abstract final class AppRouter {
 
       case Routes.signIn:
         return _page(const SignInScreen(), settings);
+
+      case Routes.resetPassword:
+        // Reachable while signed out, so it cannot read the session for an
+        // address. The sign-in screen passes whatever was already typed.
+        final typed = settings.arguments;
+        return _guardedPage(
+          settings: settings,
+          builder: (ref) => ResetPasswordScreen(
+            initialEmail: typed is String ? typed : '',
+            onSubmit: ({required String email}) => ref
+                .read(authNotifierProvider.notifier)
+                .sendPasswordReset(email: email),
+          ),
+        );
 
       case Routes.projectDetail:
         final args = settings.arguments;
@@ -165,20 +181,24 @@ abstract final class AppRouter {
         return _page(const IngestionSourcesScreen(), settings);
 
       case Routes.connectSource:
-        // Connecting a source changes what the whole organisation is measured
-        // on, so it is gated here rather than only hidden in the UI.
+        // Connecting or changing a source changes what the whole organisation
+        // is measured on, so it is gated here rather than only hidden in the
+        // UI. The rules refuse it again.
         return _guardedPage(
           settings: settings,
           builder: (ref) {
             final user = ref.watch(currentUserProvider);
-            if (user?.canChangeSettings ?? false) {
-              return const ConnectSourceScreen();
+            if (!(user?.canChangeSettings ?? false)) {
+              return const _NotPermitted(
+                message:
+                    'Only leads and managers can connect or change a data '
+                    'source. Ask whoever set up your organisation.',
+              );
             }
-            return const _NotPermitted(
-              message:
-                  'Only leads and managers can connect a data source. '
-                  'Ask whoever set up your organisation.',
-            );
+
+            // Null means adding. An id means editing that one.
+            final id = settings.arguments;
+            return ConnectSourceScreen(sourceId: id is String ? id : null);
           },
         );
 

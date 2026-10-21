@@ -3,6 +3,7 @@
 abstract final class Routes {
   static const shell = '/';
   static const signIn = '/sign-in';
+  static const resetPassword = '/reset-password';
   static const projectDetail = '/project';
   static const signalThread = '/signal';
   static const settings = '/settings';

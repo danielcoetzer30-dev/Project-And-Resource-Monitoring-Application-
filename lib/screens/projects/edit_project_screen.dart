@@ -8,6 +8,7 @@ import '../../models/squad.dart';
 import '../../state/providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
+import '../../widgets/confirm_dialog.dart';
 import '../../widgets/panel.dart';
 
 /// Add a project, or change one.
@@ -105,7 +106,21 @@ class _EditProjectScreenState extends ConsumerState<EditProjectScreen> {
 
     try {
       await ref.read(projectPlanRepositoryProvider).save(_asPlan());
-      if (mounted) Navigator.of(context).maybePop();
+      if (!mounted) return;
+      // Says what will happen next as well as that it worked: a project that
+      // does not appear on the dashboard straight away looks like a failed
+      // save unless somebody is told why.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.projectId == null
+                ? 'Project saved. It appears on the dashboard after the next '
+                      'ingestion run.'
+                : 'Changes saved.',
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
     } catch (error) {
       if (mounted) setState(() => _failure = failureFromException(error));
     } finally {
@@ -113,9 +128,32 @@ class _EditProjectScreenState extends ConsumerState<EditProjectScreen> {
     }
   }
 
+  /// Archives the project, or brings it back, after asking.
+  ///
+  /// Archiving is this module's delete: there is deliberately no permanent
+  /// one, because removing a failing project is the simplest way to make it
+  /// stop looking bad, and the history is the research record. It is still
+  /// hard to undo from the dashboard's point of view — the project disappears
+  /// from every screen and stops being scored — so it asks first.
+  ///
+  /// Bringing one back is not destructive and is not confirmed.
   Future<void> _setArchived(bool archived) async {
     final id = widget.projectId;
     if (id == null) return;
+
+    if (archived) {
+      final confirmed = await ConfirmDialog.show(
+        context,
+        title: 'Archive this project?',
+        body:
+            'It comes off the dashboard and stops being scored. Nothing is '
+            'deleted: the plan, the history and the signals are kept, and you '
+            'can bring it back from this screen at any time.',
+        confirmLabel: 'Archive',
+      );
+
+      if (!confirmed || !mounted) return;
+    }
 
     setState(() {
       _busy = true;
@@ -126,7 +164,15 @@ class _EditProjectScreenState extends ConsumerState<EditProjectScreen> {
       await ref
           .read(projectPlanRepositoryProvider)
           .setArchived(projectId: id, archived: archived);
-      if (mounted) Navigator.of(context).maybePop();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            archived ? 'Project archived.' : 'Project brought back.',
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
     } catch (error) {
       if (mounted) setState(() => _failure = failureFromException(error));
     } finally {

@@ -52,16 +52,13 @@ class MockSourceRepository implements SourceRepository {
     if (index >= 0 && source.id.isNotEmpty) {
       _sources[index] = source;
     } else {
+      // copyWith, not a hand-built copy: this used to rebuild the source
+      // field by field and dropped squadId, so every source added through the
+      // mock arrived with no squad — which the real repository does not do,
+      // and which is the one way a mock can make a passing test worthless.
       _sources.add(
         source.id.isEmpty
-            ? IngestionSource(
-                id: 'mock-${_sources.length + 1}',
-                type: source.type,
-                label: source.label,
-                remoteId: source.remoteId,
-                orgId: source.orgId,
-                isEnabled: source.isEnabled,
-              )
+            ? source.copyWith(id: 'mock-${_sources.length + 1}')
             : source,
       );
     }
@@ -79,16 +76,10 @@ class MockSourceRepository implements SourceRepository {
     final index = _sources.indexWhere((s) => s.id == sourceId);
     if (index < 0) return;
 
-    final current = _sources[index];
-    _sources[index] = IngestionSource(
-      id: current.id,
-      type: current.type,
-      label: current.label,
-      remoteId: current.remoteId,
-      orgId: current.orgId,
-      isEnabled: enabled,
-      lastSyncedAt: current.lastSyncedAt,
-    );
+    // Same bug as in connect above: this dropped squadId, so pausing a source
+    // and resuming it detached it from its squad. The real repository updates
+    // one field and cannot do that.
+    _sources[index] = _sources[index].copyWith(isEnabled: enabled);
 
     _emit();
   }

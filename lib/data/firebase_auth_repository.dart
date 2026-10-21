@@ -100,6 +100,24 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> sendPasswordReset({required String email}) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on fb.FirebaseAuthException catch (error) {
+      // `user-not-found` and `invalid-email` are swallowed on purpose: a reset
+      // form that distinguishes them tells anybody who asks which addresses
+      // have accounts. The screen says the same thing either way, so there is
+      // nothing to learn from trying. Everything else is a real failure and
+      // has to be reported, or somebody waits for an email that was never
+      // sent.
+      if (error.code == 'user-not-found' || error.code == 'invalid-email') {
+        return;
+      }
+      throw AuthException(_messageFor(error.code));
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     await _auth.signOut();
     _currentUser = null;
@@ -166,6 +184,8 @@ class FirebaseAuthRepository implements AuthRepository {
       'weak-password' => 'Use a longer password, at least six characters.',
       'network-request-failed' =>
         'No connection. Try again when you are back online.',
+      'too-many-requests' =>
+        'Too many attempts. Wait a few minutes and try again.',
       _ => 'Could not sign you in. Try again.',
     };
   }

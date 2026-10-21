@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app_shell.dart';
 import '../../state/auth_notifier.dart';
 import '../../state/providers.dart';
-import '../../theme/tokens.dart';
 import 'sign_in_screen.dart';
+import 'splash_screen.dart';
 
 /// Decides whether to show the app or the sign-in screen.
 ///
@@ -20,7 +20,12 @@ class AuthGate extends ConsumerWidget {
     final state = ref.watch(authNotifierProvider);
 
     return switch (state) {
-      AuthChecking() || AuthBusy() => const _Checking(),
+      // The splash covers both: restoring a session on launch, and the moment
+      // after credentials are submitted while the user document is read. They
+      // are the same wait from the person's point of view, so they look the
+      // same, and only the line underneath differs.
+      AuthChecking() => const SplashScreen(),
+      AuthBusy() => const SplashScreen(message: 'Signing you in'),
       SignedOut() => SignInScreen(
         onSubmit:
             ({
@@ -43,22 +48,5 @@ class AuthGate extends ConsumerWidget {
       ),
       SignedIn() => const AppShell(),
     };
-  }
-}
-
-class _Checking extends StatelessWidget {
-  const _Checking();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: Tokens.slate),
-        ),
-      ),
-    );
   }
 }

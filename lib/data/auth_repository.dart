@@ -21,5 +21,13 @@ abstract interface class AuthRepository {
     required String orgId,
   });
 
+  /// Sends a password reset email.
+  ///
+  /// Deliberately does not report whether the address has an account. Saying
+  /// "no account uses that email" to anybody who asks turns a reset form into
+  /// a way of finding out who is registered, so the screen says the same thing
+  /// either way and this method completes either way.
+  Future<void> sendPasswordReset({required String email});
+
   Future<void> signOut();
 }

@@ -7,16 +7,27 @@ import '../../models/squad.dart';
 import '../../state/providers.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
+import '../../widgets/confirm_dialog.dart';
+import '../../widgets/labelled_field.dart';
 import '../../widgets/panel.dart';
 
-/// Link a repository or issue tracker.
+/// Link a repository or issue tracker, or change one that is already linked.
 ///
 /// The one screen in the app where typing things in is legitimate. Everywhere
 /// else, asking a developer to enter data would repeat the failure the
 /// research identifies in existing tools; here it is a one-off setup step that
 /// buys permanent passive capture.
+///
+/// One screen for adding and editing, the same arrangement the project form
+/// uses: the fields, the validation and the squad choice are identical, and
+/// two screens would be two places for the same rules to drift apart. What
+/// differs is the title, the button, and that editing can also pause or
+/// remove.
 class ConnectSourceScreen extends ConsumerStatefulWidget {
-  const ConnectSourceScreen({super.key});
+  const ConnectSourceScreen({super.key, this.sourceId});
+
+  /// Null to add a new source. An id to change that one.
+  final String? sourceId;
 
   @override
   ConsumerState<ConnectSourceScreen> createState() =>
@@ -32,6 +43,20 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
   String _squadId = '';
   bool _busy = false;
 
+  /// True once the existing source has been read into the fields.
+  ///
+  /// The list arrives from a stream, so the first build may not have it yet.
+  /// This makes the prefill happen exactly once: doing it on every build would
+  /// overwrite what somebody is in the middle of typing each time the stream
+  /// ticked.
+  bool _loaded = false;
+
+  /// Whether the source is being read at all. Editable while editing, so a
+  /// tracker that has gone quiet can be paused rather than deleted.
+  bool _isEnabled = true;
+
+  bool get _isEditing => widget.sourceId != null;
+
   /// Why the last attempt was refused, or null if it was not.
   Failure? _failure;
 
@@ -40,6 +65,16 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
     _label.dispose();
     _remoteId.dispose();
     super.dispose();
+  }
+
+  /// Copies [source] into the form, once.
+  void _prefill(IngestionSource source) {
+    _loaded = true;
+    _label.text = source.label;
+    _remoteId.text = source.remoteId;
+    _type = source.type;
+    _squadId = source.squadId;
+    _isEnabled = source.isEnabled;
   }
 
   String get _remoteHint => switch (_type) {
@@ -56,27 +91,73 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
       _failure = null;
     });
 
-    // Id left empty so the repository allocates one. A millisecond timestamp
-    // would collide between two people adding a source at the same moment,
-    // and the loser's source would silently replace the winner's.
+    // Adding leaves the id empty so the repository allocates one: a
+    // millisecond timestamp would collide between two people adding a source
+    // at the same moment, and the loser's source would silently replace the
+    // winner's. Editing keeps the id, so connect() replaces that document
+    // rather than making a second one.
     final source = IngestionSource(
-      id: '',
+      id: widget.sourceId ?? '',
       type: _type,
       label: _label.text.trim(),
       remoteId: _remoteId.text.trim(),
       orgId: '',
-      isEnabled: true,
+      isEnabled: _isEnabled,
       squadId: _squadId,
     );
 
     try {
       await ref.read(sourceRepositoryProvider).connect(source);
-      if (mounted) Navigator.of(context).maybePop();
+      if (!mounted) return;
+      _report(_isEditing ? 'Source updated.' : 'Source connected.');
+      Navigator.of(context).maybePop();
     } catch (error) {
       if (mounted) setState(() => _failure = failureFromException(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Forgets the source entirely, after asking.
+  ///
+  /// A real delete, unlike archiving a project: a source is a statement about
+  /// where to read from, and removing one does not remove any history it
+  /// produced. The scores it contributed to stay where they are, which is why
+  /// this can be a delete and a project cannot.
+  Future<void> _remove() async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Remove this source?',
+      body:
+          'Ingestion stops reading ${_label.text.trim()} and forgets it. The '
+          'scores it has already contributed to stay as they are. To stop '
+          'reading it without forgetting it, pause it instead.',
+      confirmLabel: 'Remove',
+    );
+
+    if (!confirmed || !mounted) return;
+
+    setState(() {
+      _busy = true;
+      _failure = null;
+    });
+
+    try {
+      await ref.read(sourceRepositoryProvider).disconnect(widget.sourceId!);
+      if (!mounted) return;
+      _report('Source removed.');
+      Navigator.of(context).maybePop();
+    } catch (error) {
+      if (mounted) setState(() => _failure = failureFromException(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _report(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -85,8 +166,50 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
     final squads =
         ref.watch(healthSnapshotProvider).value?.squads ?? const <Squad>[];
 
+    // Editing reads the source out of the same stream the list screen uses,
+    // so a change made elsewhere is already reflected before the form opens.
+    if (_isEditing && !_loaded) {
+      final existing = ref
+          .watch(sourcesProvider)
+          .value
+          ?.where((s) => s.id == widget.sourceId)
+          .firstOrNull;
+
+      if (existing == null) {
+        // Either the list has not arrived yet or the source was removed from
+        // another device. A spinner covers the first; the second resolves
+        // itself when the person goes back to a list that no longer has it.
+        return Scaffold(
+          appBar: AppBar(title: const Text('Source')),
+          body: const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Tokens.slate,
+              ),
+            ),
+          ),
+        );
+      }
+
+      _prefill(existing);
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Connect a source')),
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit source' : 'Connect a source'),
+        actions: [
+          if (_isEditing)
+            IconButton(
+              onPressed: _busy ? null : _remove,
+              icon: const Icon(Icons.delete_outline),
+              color: Tokens.flare,
+              tooltip: 'Remove this source',
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           Tokens.space4,
@@ -188,7 +311,7 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
             key: _formKey,
             child: Column(
               children: [
-                _Input(
+                LabelledField(
                   controller: _label,
                   label: 'Name',
                   hint: 'What your team calls it',
@@ -196,7 +319,7 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
                       (v == null || v.trim().isEmpty) ? 'Give it a name' : null,
                 ),
                 const SizedBox(height: Tokens.space4),
-                _Input(
+                LabelledField(
                   controller: _remoteId,
                   label: 'Identifier',
                   hint: _remoteHint,
@@ -259,6 +382,43 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
               ),
             ),
           ],
+          // Pausing is offered only while editing: a source being added is
+          // being added because somebody wants it read.
+          if (_isEditing) ...[
+            const SizedBox(height: Tokens.space4),
+            Panel(
+              title: 'Reading',
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEnabled ? 'Being read' : 'Paused',
+                          style: AppType.bodyStrong,
+                        ),
+                        const SizedBox(height: Tokens.space1),
+                        Text(
+                          'Pausing keeps the source, so a tracker that has '
+                          'gone quiet for a fortnight does not have to be '
+                          'retyped afterwards.',
+                          style: AppType.bodyMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _isEnabled,
+                    onChanged: _busy
+                        ? null
+                        : (value) => setState(() => _isEnabled = value),
+                    activeThumbColor: Tokens.beacon,
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: Tokens.space5),
           FilledButton(
             onPressed: _busy ? null : _connect,
@@ -270,65 +430,22 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
                 borderRadius: BorderRadius.circular(Tokens.radiusSm),
               ),
             ),
-            child: Text(
-              'Connect source',
-              style: AppType.bodyStrong.copyWith(color: Tokens.shaft),
-            ),
+            child: _busy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Tokens.shaft,
+                    ),
+                  )
+                : Text(
+                    _isEditing ? 'Save changes' : 'Connect source',
+                    style: AppType.bodyStrong.copyWith(color: Tokens.shaft),
+                  ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Input extends StatelessWidget {
-  const _Input({
-    required this.controller,
-    required this.label,
-    this.hint,
-    this.validator,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String? hint;
-  final String? Function(String?)? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(), style: AppType.label),
-        const SizedBox(height: Tokens.space2),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          style: AppType.body,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppType.bodyMuted,
-            filled: true,
-            fillColor: Tokens.seam,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: Tokens.space3,
-              vertical: Tokens.space3,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
-              borderSide: const BorderSide(color: Tokens.rule),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
-              borderSide: const BorderSide(color: Tokens.rule),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Tokens.radiusSm),
-              borderSide: const BorderSide(color: Tokens.beacon, width: 1.5),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

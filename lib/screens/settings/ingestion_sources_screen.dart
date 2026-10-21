@@ -70,7 +70,8 @@ class IngestionSourcesScreen extends ConsumerWidget {
               ),
               itemCount: sources.length,
               separatorBuilder: (_, _) => const SizedBox(height: Tokens.space3),
-              itemBuilder: (context, i) => _SourceRow(source: sources[i]),
+              itemBuilder: (context, i) =>
+                  _SourceRow(source: sources[i], canEdit: canConnect),
             ),
       floatingActionButton: (sources.isEmpty || !canConnect)
           ? null
@@ -87,9 +88,13 @@ class IngestionSourcesScreen extends ConsumerWidget {
 }
 
 class _SourceRow extends StatelessWidget {
-  const _SourceRow({required this.source});
+  const _SourceRow({required this.source, required this.canEdit});
 
   final IngestionSource source;
+
+  /// A developer sees every source and when it last synced, and opens none of
+  /// them for editing. The route is gated too, so this hides a locked door.
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +102,7 @@ class _SourceRow extends StatelessWidget {
     final stale =
         synced == null || DateTime.now().difference(synced).inHours > 24;
 
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(Tokens.space4),
       decoration: BoxDecoration(
         color: Tokens.seam,
@@ -149,7 +154,28 @@ class _SourceRow extends StatelessWidget {
               ),
             ],
           ),
+          if (canEdit) ...[
+            const SizedBox(width: Tokens.space2),
+            const Icon(Icons.chevron_right, size: 18, color: Tokens.slate),
+          ],
         ],
+      ),
+    );
+
+    if (!canEdit) return card;
+
+    return Semantics(
+      button: true,
+      label:
+          '${source.label}, ${source.type.label}, '
+          '${source.isEnabled ? 'being read' : 'paused'}',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => Navigator.of(
+          context,
+        ).pushNamed(Routes.connectSource, arguments: source.id),
+        borderRadius: BorderRadius.circular(Tokens.radiusMd),
+        child: card,
       ),
     );
   }

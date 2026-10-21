@@ -305,9 +305,26 @@ out once so every screen is unaffected. The history and the seam stay where a
 post-mortem could still find them.
 
 **Ingestion sources are managed in the app.** Settings → Connected sources
-lists them with when each last synced, and a lead or manager can add, pause
-or remove one. Pausing keeps the source so a tracker silenced for a fortnight
-does not have to be retyped.
+lists them with when each last synced, and a lead or manager taps one to
+change its name, identifier, type or squad, to pause it, or to remove it.
+Pausing keeps the source so a tracker silenced for a fortnight does not have
+to be retyped.
+
+Adding and editing are one screen, the same arrangement the project form
+uses: the fields, the validation and the squad choice are identical, and two
+screens would be two places for the same rules to drift apart.
+
+Removing a source is a real delete, unlike archiving a project. A source is a
+statement about where to read from, and removing one destroys no history —
+the scores it contributed to stay where they are. That is the difference that
+makes a delete acceptable here and not there.
+
+**Destructive actions confirm first**, through `ConfirmDialog`. One widget
+rather than a dialog written out at each call site, because what makes a
+confirmation useful is that it reads the same every time: same shape, same
+button order, destructive action on the right in the warning colour, and the
+button names the action rather than saying OK. A dialog that moves its buttons
+around trains people to tap without reading.
 
 The connect screen takes no access token, deliberately. A source records what
 to read, never how to sign in: the credential lives with the ingestion job,
@@ -400,6 +417,26 @@ contributor threshold, over windows that have closed. Scores are not
 backdated: a score is a statement about a project now, and the seam should
 show when the app started watching.
 
+**Signing in, and getting back in.** One screen does sign-in and
+registration, toggled, because a team of five setting this up for the first
+time will do both within a minute of each other. Registration pins the role to
+developer in `firestore.rules`, so an account cannot grant itself a higher
+one; raising a role is done in the console.
+
+A forgotten password sends a Firebase reset email. The screen deliberately
+says the same thing whether or not the address has an account, and
+`FirebaseAuthRepository.sendPasswordReset` swallows `user-not-found` and
+`invalid-email` to match: an app built around not exposing its members should
+not hand out which addresses are registered at the front door. Everything
+else — no connection, too many attempts — is reported, because somebody
+otherwise waits for an email that was never sent.
+
+`SplashScreen` is what the app draws while it works out whether anybody is
+signed in. The wait is real — Firebase restores the session, then the user's
+document is read for their organisation and role — and it replaced a bare
+spinner, which on a slow connection reads as an app that has failed to start.
+It needs no data, so it renders whatever the network is doing.
+
 **Firebase project:** `project-health-monitor-436da`. Demo data lives under
 `organisations/demo-org`. Register with organisation code `demo-org` or you
 will sign in successfully to an empty dashboard.
@@ -438,7 +475,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 245 tests and they all pass; a failure is
+Both must be clean. There are 288 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an
@@ -465,6 +502,8 @@ unformatted file shows up as noise in every later diff.
 | `lib/screens/week_screen.dart` | The Schedule tab: outage loss stated, then excluded |
 | `lib/models/preferences.dart` | On-device display choices, and their defaults |
 | `lib/widgets/health_seam.dart` | The signature component |
+| `lib/widgets/labelled_field.dart` | The shared text field, used by all three forms |
+| `lib/widgets/confirm_dialog.dart` | How the app asks before something hard to undo |
 
 ---
 

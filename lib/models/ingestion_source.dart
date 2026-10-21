@@ -61,4 +61,34 @@ class IngestionSource {
   final DateTime? lastSyncedAt;
 
   bool get hasSynced => lastSyncedAt != null;
+
+  /// A copy with some fields changed.
+  ///
+  /// Added because rebuilding this by hand lost [squadId] twice in the mock
+  /// repository — once when allocating an id for a new source and once when
+  /// pausing one. A source with no squad is read on every run and thrown
+  /// away, so the field going missing is silent and expensive. Listing every
+  /// field here once is cheaper than remembering all eight at three call
+  /// sites.
+  IngestionSource copyWith({
+    String? id,
+    SourceType? type,
+    String? label,
+    String? remoteId,
+    String? orgId,
+    bool? isEnabled,
+    String? squadId,
+    DateTime? lastSyncedAt,
+  }) {
+    return IngestionSource(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      label: label ?? this.label,
+      remoteId: remoteId ?? this.remoteId,
+      orgId: orgId ?? this.orgId,
+      isEnabled: isEnabled ?? this.isEnabled,
+      squadId: squadId ?? this.squadId,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+    );
+  }
 }

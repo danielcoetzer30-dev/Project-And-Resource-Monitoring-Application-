@@ -62,6 +62,19 @@ class FakeAuthRepository implements AuthRepository {
     return _signInAs;
   }
 
+  /// Addresses [sendPasswordReset] was asked about, in order. Lets a test
+  /// assert that the screen asked, without a mail server.
+  final resetsRequested = <String>[];
+
+  /// Set to make [sendPasswordReset] fail, for the error path.
+  Object? resetError;
+
+  @override
+  Future<void> sendPasswordReset({required String email}) async {
+    resetsRequested.add(email.trim());
+    if (resetError != null) throw resetError!;
+  }
+
   @override
   Future<void> signOut() async {
     _user = null;
