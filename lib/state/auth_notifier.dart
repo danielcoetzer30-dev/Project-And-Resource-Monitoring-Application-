@@ -57,6 +57,18 @@ class AuthNotifier extends Notifier<AuthState> {
     return current == null ? const AuthChecking() : SignedIn(current);
   }
 
+  /// Signs in, and rethrows what went wrong.
+  ///
+  /// The failure is put on the state *and* rethrown, which looks redundant
+  /// and is not. The state is what the gate renders from; the throw is what
+  /// the sign-in screen catches to show the message beside the form.
+  ///
+  /// This used to only set the state. Nothing read `SignedOut.failure`, and
+  /// the screen's error display only ever worked when the callback threw — so
+  /// a refused sign-in returned normally, the gate rebuilt the form from
+  /// scratch, and the person saw the same empty screen with no explanation.
+  /// Every wrong password, every expired account, every unreachable network
+  /// looked identical: nothing happened.
   Future<void> signIn({required String email, required String password}) async {
     state = const AuthBusy();
     try {
@@ -64,6 +76,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = SignedIn(user);
     } catch (error) {
       state = SignedOut(failure: failureFromException(error));
+      rethrow;
     }
   }
 
@@ -83,7 +96,10 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       state = SignedIn(user);
     } catch (error) {
+      // Rethrown for the same reason signIn rethrows: the screen shows the
+      // message, the gate renders the state.
       state = SignedOut(failure: failureFromException(error));
+      rethrow;
     }
   }
 

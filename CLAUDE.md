@@ -505,7 +505,7 @@ flutter analyze
 flutter test
 ```
 
-Both must be clean. There are 302 tests and they all pass; a failure is
+Both must be clean. There are 316 tests and they all pass; a failure is
 something you introduced.
 
 Format with `dart format lib/ test/` — the project is formatted and an

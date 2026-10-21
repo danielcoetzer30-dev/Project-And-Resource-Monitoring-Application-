@@ -40,11 +40,17 @@ class FakeAuthRepository implements AuthRepository {
     return _controller.stream;
   }
 
+  /// Set to make [signIn] fail, so the refusal path can be exercised through
+  /// the real notifier and gate rather than through a callback a test wrote.
+  Object? signInError;
+
   @override
   Future<AppUser> signIn({
     required String email,
     required String password,
   }) async {
+    if (signInError != null) throw signInError!;
+
     _user = _signInAs;
     _controller.add(_user);
     return _signInAs;

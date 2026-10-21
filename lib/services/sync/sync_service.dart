@@ -33,6 +33,10 @@ class SyncService {
   DateTime? _lastSyncedAt;
   bool _started = false;
 
+  /// The most recent state, replayed to a listener that arrives after it was
+  /// published.
+  SyncState? _lastSyncState;
+
   Stream<HealthSnapshot> watch() {
     if (!_started) {
       _started = true;
@@ -41,7 +45,34 @@ class SyncService {
     return _snapshots.stream;
   }
 
-  Stream<SyncState> watchSyncState() => _syncStates.stream;
+  /// How current the data on screen is.
+  ///
+  /// Replays the last known state to a new listener rather than making it wait
+  /// for the next change. A broadcast stream drops everything sent before
+  /// anybody subscribed, and the shell subscribes a frame or two after the
+  /// service starts — so the banner could sit hidden through an entire
+  /// offline session simply because the connectivity change had already been
+  /// announced to nobody.
+  Stream<SyncState> watchSyncState() {
+    // Starting the underlying subscriptions here too: asking how current the
+    // data is should not depend on somebody else having asked for the data
+    // first.
+    if (!_started) {
+      _started = true;
+      _start();
+    }
+
+    return Stream<SyncState>.multi((controller) {
+      final last = _lastSyncState;
+      if (last != null) controller.add(last);
+
+      final subscription = _syncStates.stream.listen(
+        controller.add,
+        onError: controller.addError,
+      );
+      controller.onCancel = subscription.cancel;
+    });
+  }
 
   void _start() {
     // Serve whatever is cached immediately, so the first frame has real
@@ -79,13 +110,14 @@ class SyncService {
 
   void _publishSyncState() {
     if (_syncStates.isClosed) return;
-    _syncStates.add(
-      SyncState(
-        isOnline: connectivity.isOnline,
-        pendingWrites: 0, // ingestion writes server-side; nothing queues here
-        lastSyncedAt: _lastSyncedAt,
-      ),
+    final next = SyncState(
+      isOnline: connectivity.isOnline,
+      pendingWrites: 0, // ingestion writes server-side; nothing queues here
+      lastSyncedAt: _lastSyncedAt,
     );
+
+    _lastSyncState = next;
+    _syncStates.add(next);
   }
 
   void dispose() {

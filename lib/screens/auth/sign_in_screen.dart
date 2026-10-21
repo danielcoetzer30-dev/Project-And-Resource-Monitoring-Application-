@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/errors/failure.dart';
 import '../../routing/routes.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
@@ -65,7 +66,13 @@ class _SignInScreenState extends State<SignInScreen> {
       );
       if (mounted) Navigator.of(context).maybePop();
     } catch (error) {
-      if (mounted) setState(() => _error = '$error');
+      // Translated rather than interpolated. '$error' on an AppException
+      // prints "AuthException: Email or password is incorrect.", and the
+      // class name in front of the sentence is for a log, not for somebody
+      // trying to get into their account.
+      if (mounted) {
+        setState(() => _error = failureFromException(error).message);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

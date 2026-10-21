@@ -32,7 +32,35 @@ class FirestoreProjectRepository implements ProjectRepository {
   List<Squad> _squads = const [];
   List<Signal> _signals = const [];
 
+  /// Whether the last snapshot Firestore delivered came from its own cache
+  /// rather than from the server.
+  ///
+  /// This used to be hardcoded to "live", which made the app unable to report
+  /// itself stale at all: Firestore keeps serving cached documents when the
+  /// device is offline, so the stream never stops emitting and the badge
+  /// never stopped saying Live. For an application whose whole argument is
+  /// that it stays usable during load-shedding, silently showing old numbers
+  /// as current is the worst thing it could do.
+  bool _fromCache = false;
+
+  /// When the server last answered. Null until it has.
+  ///
+  /// Cached snapshots carry this rather than the current time, so "updated at"
+  /// means what it says and [SyncState.isStale] can become true.
+  DateTime? _lastServerAt;
+
   bool _started = false;
+
+  /// Records where a snapshot came from.
+  ///
+  /// Firestore reports this per query. Any one of the three arriving from
+  /// cache means the picture on screen is not wholly live, so this is an
+  /// "or" rather than a "last writer wins" — overstating freshness is the
+  /// failure that matters.
+  void _noteSource(QuerySnapshot<Map<String, dynamic>> query) {
+    _fromCache = query.metadata.isFromCache;
+    if (!_fromCache) _lastServerAt = DateTime.now();
+  }
 
   @override
   Stream<HealthSnapshot> watch() {
@@ -69,6 +97,7 @@ class FirestoreProjectRepository implements ProjectRepository {
             .map(ProjectDto.fromDoc)
             .where((project) => !project.isArchived)
             .toList();
+        _noteSource(query);
         _emit();
       }, onError: _controller.addError),
     );
@@ -76,6 +105,7 @@ class FirestoreProjectRepository implements ProjectRepository {
     _subscriptions.add(
       org.collection(AppConstants.squadsCollection).snapshots().listen((query) {
         _squads = query.docs.map(SquadDto.fromDoc).toList();
+        _noteSource(query);
         _emit();
       }, onError: _controller.addError),
     );
@@ -87,6 +117,7 @@ class FirestoreProjectRepository implements ProjectRepository {
           .snapshots()
           .listen((query) {
             _signals = query.docs.map(SignalDto.fromDoc).toList();
+            _noteSource(query);
             _emit();
           }, onError: _controller.addError),
     );
@@ -109,8 +140,12 @@ class FirestoreProjectRepository implements ProjectRepository {
           nextOutageEnd: null,
           hoursLostThisWeek: 0,
         ),
-        capturedAt: DateTime.now(),
-        isLive: true,
+        // A cached snapshot reports when the server last answered, not now.
+        // Otherwise the data always looks current and nothing is ever stale.
+        capturedAt: _fromCache
+            ? (_lastServerAt ?? DateTime.now())
+            : DateTime.now(),
+        isLive: !_fromCache,
       ),
     );
   }

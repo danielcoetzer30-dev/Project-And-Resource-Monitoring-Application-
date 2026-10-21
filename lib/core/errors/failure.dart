@@ -41,9 +41,12 @@ class ValidationFailure extends Failure {
 Failure failureFromException(Object error) {
   return switch (error) {
     NetworkException() => const NetworkFailure(),
-    AuthException() => const AuthFailure(),
-    // Both carry a message already written for the person reading it, so it
-    // is passed through rather than replaced with a generic one.
+    // These three carry a message already written for the person reading it,
+    // so it is passed through rather than replaced with a generic one. Auth
+    // used to be replaced, which turned "Email or password is incorrect" into
+    // "Sign in to continue" on the one screen where knowing which of the two
+    // went wrong is the entire point.
+    AuthException(:final message) => AuthFailure(message),
     PermissionException(:final message) => PermissionFailure(message),
     ValidationException(:final message) => ValidationFailure(message),
     ParseException() => const DataFailure(),

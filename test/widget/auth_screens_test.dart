@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:keel/core/errors/exceptions.dart';
+import 'package:keel/data/auth_repository.dart';
+import 'package:keel/screens/auth/auth_gate.dart';
 import 'package:keel/screens/auth/reset_password_screen.dart';
 import 'package:keel/screens/auth/sign_in_screen.dart';
 import 'package:keel/screens/auth/splash_screen.dart';
+import 'package:keel/state/providers.dart';
 import 'package:keel/theme/app_theme.dart';
 import 'package:keel/widgets/labelled_field.dart';
 
@@ -240,6 +243,103 @@ void main() {
 
       expect(find.textContaining('No connection'), findsOneWidget);
       expect(find.text('Check your email'), findsNothing);
+    });
+  });
+
+  group('through the real gate, not a hand-written callback', () {
+    // The previous tests in this file drive SignInScreen with a callback the
+    // test writes, which is why they all passed while sign-in was visibly
+    // broken: AuthNotifier caught the failure, stored it on a field nobody
+    // read, and returned normally. The screen saw a success. These go through
+    // AuthGate and the notifier, which is the path a person actually takes.
+
+    Widget gated(AuthRepository auth) {
+      return ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(auth)],
+        child: MaterialApp(theme: AppTheme.dark, home: const AuthGate()),
+      );
+    }
+
+    testWidgets('a wrong password says so instead of doing nothing', (
+      tester,
+    ) async {
+      final auth = FakeAuthRepository(signedIn: false);
+      auth.signInError = const AuthException('Email or password is incorrect.');
+      addTearDown(auth.dispose);
+
+      await tester.pumpWidget(gated(auth));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'a@b.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'wrong');
+      await tester.ensureVisible(find.byType(FilledButton));
+      await tester.pump();
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Email or password is incorrect.'), findsOneWidget);
+      // And no class name in front of it: that is for a log.
+      expect(find.textContaining('AuthException'), findsNothing);
+    });
+
+    testWidgets('an account with no profile document says what is wrong', (
+      tester,
+    ) async {
+      // Firebase accepts the credentials, then the users document is missing.
+      // This is the failure that looks most like "nothing happened", because
+      // the sign-in itself succeeded.
+      final auth = FakeAuthRepository(signedIn: false);
+      auth.signInError = const AuthException('Your account is not set up yet.');
+      addTearDown(auth.dispose);
+
+      await tester.pumpWidget(gated(auth));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'a@b.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'correct');
+      await tester.ensureVisible(find.byType(FilledButton));
+      await tester.pump();
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your account is not set up yet.'), findsOneWidget);
+    });
+
+    testWidgets('no connection is reported as no connection', (tester) async {
+      final auth = FakeAuthRepository(signedIn: false);
+      auth.signInError = const NetworkException('SocketException: failed');
+      addTearDown(auth.dispose);
+
+      await tester.pumpWidget(gated(auth));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'a@b.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'whatever');
+      await tester.ensureVisible(find.byType(FilledButton));
+      await tester.pump();
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('No connection'), findsOneWidget);
+      expect(find.textContaining('SocketException'), findsNothing);
+    });
+
+    testWidgets('a good password gets into the app', (tester) async {
+      final auth = FakeAuthRepository(signedIn: false);
+      addTearDown(auth.dispose);
+
+      await tester.pumpWidget(gated(auth));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'a@b.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'correct');
+      await tester.ensureVisible(find.byType(FilledButton));
+      await tester.pump();
+      await tester.tap(find.byType(FilledButton));
+      await tester.pump();
+
+      // Past the form: the gate has moved on rather than redrawing it.
+      expect(find.text('I have forgotten my password'), findsNothing);
     });
   });
 
