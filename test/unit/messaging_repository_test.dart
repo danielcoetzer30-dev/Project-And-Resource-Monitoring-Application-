@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/mock_messaging_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/conversation.dart';
-import 'package:keel/models/directory_entry.dart';
-import 'package:keel/models/message.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/mock_messaging_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/conversation.dart';
+import 'package:prahm/models/directory_entry.dart';
+import 'package:prahm/models/message.dart';
 
 /// Messaging as the screens rely on it. Runs against the in-memory repository,
 /// which applies the same permissions as `firestore.rules`.

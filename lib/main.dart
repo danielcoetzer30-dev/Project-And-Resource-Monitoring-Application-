@@ -13,11 +13,11 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const ProviderScope(child: KeelApp()));
+  runApp(const ProviderScope(child: PrahmApp()));
 }
 
-class KeelApp extends ConsumerWidget {
-  const KeelApp({super.key});
+class PrahmApp extends ConsumerWidget {
+  const PrahmApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,7 +28,7 @@ class KeelApp extends ConsumerWidget {
     final boldText = ref.watch(preferencesProvider.select((p) => p.boldText));
 
     return MaterialApp(
-      title: 'Keel',
+      title: 'PRAHM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark.copyWith(
         visualDensity: density == UiDensity.compact

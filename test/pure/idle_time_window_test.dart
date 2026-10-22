@@ -1,10 +1,10 @@
 import 'package:test/test.dart';
 
-import 'package:keel/models/outage_window.dart';
-import 'package:keel/models/project_plan.dart';
-import 'package:keel/models/squad_activity.dart';
-import 'package:keel/services/health_scoring/factor_calculators/idle_time_calculator.dart';
-import 'package:keel/services/ingestion/metrics_assembler.dart';
+import 'package:prahm/models/outage_window.dart';
+import 'package:prahm/models/project_plan.dart';
+import 'package:prahm/models/squad_activity.dart';
+import 'package:prahm/services/health_scoring/factor_calculators/idle_time_calculator.dart';
+import 'package:prahm/services/ingestion/metrics_assembler.dart';
 
 /// Idle time asks "what did they do with the time they had", so the hours
 /// worked and the hours available must cover the same period.

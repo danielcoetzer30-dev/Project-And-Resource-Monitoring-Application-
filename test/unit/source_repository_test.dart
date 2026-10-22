@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/dto/source_dto.dart';
-import 'package:keel/data/mock_source_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/ingestion_source.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/dto/source_dto.dart';
+import 'package:prahm/data/mock_source_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/ingestion_source.dart';
 
 /// Connecting a source decides what the whole organisation is measured on, so
 /// it is gated the same way scoring weights are — and it is the one write that
@@ -141,8 +141,8 @@ void main() {
         SourceRules.remoteIdProblem(SourceType.clickUp, 'board'),
         isNotNull,
       );
-      expect(SourceRules.remoteIdProblem(SourceType.jira, 'KEEL'), isNull);
-      expect(SourceRules.remoteIdProblem(SourceType.jira, 'keel'), isNotNull);
+      expect(SourceRules.remoteIdProblem(SourceType.jira, 'PRAHM'), isNull);
+      expect(SourceRules.remoteIdProblem(SourceType.jira, 'prahm'), isNotNull);
     });
 
     test('a source needs a name somebody will recognise', () {

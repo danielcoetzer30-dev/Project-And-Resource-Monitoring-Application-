@@ -29,7 +29,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:keel/services/ingestion/firestore_rest.dart';
+import 'package:prahm/services/ingestion/firestore_rest.dart';
 
 const _projectId = 'project-health-monitor-436da';
 const _org = 'organisations/demo-org';
@@ -140,8 +140,10 @@ Future<void> main(List<String> arguments) async {
     }
 
     print('');
-    print('Done. The Signals tab will now be empty until a real score falls '
-        'far enough to raise one.');
+    print(
+      'Done. The Signals tab will now be empty until a real score falls '
+      'far enough to raise one.',
+    );
   } finally {
     store.close();
   }

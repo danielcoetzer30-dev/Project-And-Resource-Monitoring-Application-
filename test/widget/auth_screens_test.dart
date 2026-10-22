@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/auth_repository.dart';
-import 'package:keel/screens/auth/auth_gate.dart';
-import 'package:keel/screens/auth/reset_password_screen.dart';
-import 'package:keel/screens/auth/sign_in_screen.dart';
-import 'package:keel/screens/auth/splash_screen.dart';
-import 'package:keel/state/providers.dart';
-import 'package:keel/theme/app_theme.dart';
-import 'package:keel/widgets/labelled_field.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/auth_repository.dart';
+import 'package:prahm/screens/auth/auth_gate.dart';
+import 'package:prahm/screens/auth/reset_password_screen.dart';
+import 'package:prahm/screens/auth/sign_in_screen.dart';
+import 'package:prahm/screens/auth/splash_screen.dart';
+import 'package:prahm/state/providers.dart';
+import 'package:prahm/theme/app_theme.dart';
+import 'package:prahm/widgets/labelled_field.dart';
 
 import '../support/fake_auth_repository.dart';
 
@@ -388,7 +388,7 @@ void main() {
     ) async {
       await tester.pumpWidget(wrap(const SplashScreen()));
 
-      expect(find.text('Keel'), findsOneWidget);
+      expect(find.text('PRAHM'), findsOneWidget);
       expect(find.text('Checking your session'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
@@ -409,7 +409,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Keel'), findsOneWidget);
+      expect(find.text('PRAHM'), findsOneWidget);
     });
   });
 }

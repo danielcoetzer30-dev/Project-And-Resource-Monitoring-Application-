@@ -147,7 +147,7 @@ class LocalAlertPresenter implements AlertPresenter {
   String _body(HealthAlert alert) {
     final direction = alert.isWorsening ? 'Down from' : 'Up from';
     final advice = alert.isWorsening
-        ? 'Open Keel to see which indicator moved.'
+        ? 'Open PRAHM to see which indicator moved.'
         : 'Whatever the team changed is working.';
 
     return '$direction ${alert.from.label.toLowerCase()}. $advice';

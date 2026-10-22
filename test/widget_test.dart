@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/data/mock_project_repository.dart';
-import 'package:keel/models/health_state.dart';
+import 'package:prahm/data/mock_project_repository.dart';
+import 'package:prahm/models/health_state.dart';
 
 void main() {
   test('scores map onto the expected states', () {

@@ -587,10 +587,30 @@ In rough order of value to the research:
    trusting the dashboard's timestamps.
 3. **Onboard the remaining teammates** — only two of five have working
    environments.
-4. **A decision on the app name.** `keel` is the package name and the display
-   name; the shortlist was Keel, Sightline, Plumb and Trim. Anything that
-   sounds like surveillance was ruled out, for the reasons in section 1 above.
-5. **An API key for the assistant**, if the team wants it live.
+4. **An API key for the assistant**, if the team wants it live.
+
+**The app is called PRAHM**, decided by the team on 22 October 2026. It was
+Keel until then, and the shortlist was Keel, Sightline, Plumb and Trim.
+Anything that sounded like surveillance was ruled out, for the reasons in
+section 1 above.
+
+The rename reached the Dart package (`package:prahm/...`), the display name on
+every platform, and every string a user can read. Two things it deliberately
+did **not** reach, both because they are identities registered elsewhere that
+the app is matched against:
+
+- **`za.co.diego.keel`** — the Android `applicationId`, the iOS bundle id and
+  the `package_name` inside `google-services.json`. Firebase matches the
+  running app against that string, so changing it breaks Auth and Firestore
+  until a new Android app is registered in the console and a fresh
+  `google-services.json` downloaded. It is invisible to users.
+- **`KEEL_SOURCE_TOKENS` and `KEEL_SQUAD_OF_AUTHOR`** — environment variables
+  read by `tool/ingest.dart`, supplied from GitHub repository secrets of the
+  same name. Renaming them in code without renaming the secrets in the GitHub
+  settings would leave ingestion running with no tokens and no error.
+
+Changing either is a deliberate, coordinated job rather than a find-and-
+replace, and neither affects what anybody sees.
 
 **Messaging was excluded and then included.** The original position was that
 general messaging duplicates the WhatsApp the team already uses and answers

@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/dto/squad_member_dto.dart';
-import 'package:keel/data/mock_squad_roster_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/directory_entry.dart';
-import 'package:keel/models/squad_member.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/dto/squad_member_dto.dart';
+import 'package:prahm/data/mock_squad_roster_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/directory_entry.dart';
+import 'package:prahm/models/squad_member.dart';
 
 /// Squad rosters: who may move whom, and what a placement is allowed to carry.
 ///

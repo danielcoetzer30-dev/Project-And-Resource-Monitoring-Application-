@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/messaging_rules.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/messaging_rules.dart';
 
 /// The permission model for messaging, in one place. These are the rules
 /// `firestore.rules` repeats, so a change here is a change there.

@@ -81,7 +81,7 @@ abstract final class SourceRules {
       SourceType.jira =>
         RegExp(r'^[A-Z][A-Z0-9]+$').hasMatch(text)
             ? null
-            : 'A Jira project key is capitals, for example KEEL.',
+            : 'A Jira project key is capitals, for example PRAHM.',
     };
   }
 

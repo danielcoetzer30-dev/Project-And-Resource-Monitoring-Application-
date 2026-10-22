@@ -32,13 +32,13 @@ class SplashScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // The keel: the line along the bottom of a hull that everything
-              // else is built on, and the mark the app is named for. Drawn
-              // rather than shipped as an asset, so it scales and recolours
-              // with the theme.
-              const _KeelMark(),
+              // A measured line that dips and recovers, over the baseline it
+              // is judged against — the same idea as the health seam, at the
+              // smallest size it still reads at. Drawn rather than shipped as
+              // an asset, so it scales and recolours with the theme.
+              const _PrahmMark(),
               const SizedBox(height: Tokens.space5),
-              Text('Keel', style: AppType.display),
+              Text('PRAHM', style: AppType.display),
               const SizedBox(height: Tokens.space2),
               Text(
                 'Project health, read from the tools your team already uses.',
@@ -77,20 +77,20 @@ class SplashScreen extends StatelessWidget {
 ///
 /// The same two-element idea as `HealthSeam` — a measured line against the
 /// level it is judged by — at the smallest size it still reads at.
-class _KeelMark extends StatelessWidget {
-  const _KeelMark();
+class _PrahmMark extends StatelessWidget {
+  const _PrahmMark();
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 72,
       height: 44,
-      child: CustomPaint(painter: _KeelPainter()),
+      child: CustomPaint(painter: _PrahmPainter()),
     );
   }
 }
 
-class _KeelPainter extends CustomPainter {
+class _PrahmPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final baseline = Paint()

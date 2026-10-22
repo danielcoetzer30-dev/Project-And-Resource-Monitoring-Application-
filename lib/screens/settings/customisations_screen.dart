@@ -175,7 +175,7 @@ class CustomisationsScreen extends ConsumerWidget {
                   messenger.showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Notifications are switched off for Keel in your '
+                        'Notifications are switched off for PRAHM in your '
                         'phone settings. Turn them on there and try again.',
                       ),
                     ),

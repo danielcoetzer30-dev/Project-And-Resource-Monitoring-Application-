@@ -3,23 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:keel/app_shell.dart';
-import 'package:keel/data/mock_comment_repository.dart';
-import 'package:keel/data/mock_messaging_repository.dart';
-import 'package:keel/data/mock_project_repository.dart';
-import 'package:keel/data/mock_project_plan_repository.dart';
-import 'package:keel/data/mock_settings_repository.dart';
-import 'package:keel/data/mock_source_repository.dart';
-import 'package:keel/data/mock_squad_roster_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/directory_entry.dart';
-import 'package:keel/models/preferences.dart';
-import 'package:keel/routing/app_router.dart';
-import 'package:keel/routing/routes.dart';
-import 'package:keel/screens/signal_thread_screen.dart';
-import 'package:keel/state/providers.dart';
-import 'package:keel/theme/app_theme.dart';
-import 'package:keel/widgets/signal_card.dart';
+import 'package:prahm/app_shell.dart';
+import 'package:prahm/data/mock_comment_repository.dart';
+import 'package:prahm/data/mock_messaging_repository.dart';
+import 'package:prahm/data/mock_project_repository.dart';
+import 'package:prahm/data/mock_project_plan_repository.dart';
+import 'package:prahm/data/mock_settings_repository.dart';
+import 'package:prahm/data/mock_source_repository.dart';
+import 'package:prahm/data/mock_squad_roster_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/directory_entry.dart';
+import 'package:prahm/models/preferences.dart';
+import 'package:prahm/routing/app_router.dart';
+import 'package:prahm/routing/routes.dart';
+import 'package:prahm/screens/signal_thread_screen.dart';
+import 'package:prahm/state/providers.dart';
+import 'package:prahm/theme/app_theme.dart';
+import 'package:prahm/widgets/signal_card.dart';
 
 import '../support/fake_auth_repository.dart';
 
@@ -99,7 +99,7 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        title: 'Keel',
+        title: 'PRAHM',
         theme: themed ? AppTheme.dark : null,
         initialRoute: Routes.shell,
         onGenerateRoute: AppRouter.onGenerateRoute,

@@ -21,7 +21,7 @@
 
 import 'dart:io';
 
-import 'package:keel/services/ingestion/firestore_rest.dart';
+import 'package:prahm/services/ingestion/firestore_rest.dart';
 
 const _projectId = 'project-health-monitor-436da';
 const _org = 'organisations/demo-org';

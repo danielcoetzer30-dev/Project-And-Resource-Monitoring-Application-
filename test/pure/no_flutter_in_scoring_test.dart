@@ -1,12 +1,12 @@
 import 'package:test/test.dart';
 
-import 'package:keel/models/health_state.dart';
-import 'package:keel/models/project.dart';
-import 'package:keel/models/seam_segment.dart';
-import 'package:keel/services/health_scoring/health_score_engine.dart';
-import 'package:keel/services/ingestion/anonymiser.dart';
-import 'package:keel/services/ingestion/ingestion_service.dart';
-import 'package:keel/services/signal_engine.dart';
+import 'package:prahm/models/health_state.dart';
+import 'package:prahm/models/project.dart';
+import 'package:prahm/models/seam_segment.dart';
+import 'package:prahm/services/health_scoring/health_score_engine.dart';
+import 'package:prahm/services/ingestion/anonymiser.dart';
+import 'package:prahm/services/ingestion/ingestion_service.dart';
+import 'package:prahm/services/signal_engine.dart';
 
 /// Guards the property that makes server-side ingestion possible at all: the
 /// scoring and anonymising path must compile and run without Flutter, because

@@ -80,7 +80,7 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
   String get _remoteHint => switch (_type) {
     SourceType.github || SourceType.gitlab => 'owner/repository',
     SourceType.clickUp => 'ClickUp list id',
-    SourceType.jira => 'Project key, e.g. KEEL',
+    SourceType.jira => 'Project key, e.g. PRAHM',
   };
 
   Future<void> _connect() async {

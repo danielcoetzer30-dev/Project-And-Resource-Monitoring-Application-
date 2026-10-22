@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/mock_project_plan_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/project_plan.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/mock_project_plan_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/project_plan.dart';
 
 /// A plan is how a project comes into existence, so this is the one write
 /// that decides what the organisation is measured on at all.

@@ -23,13 +23,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:keel/services/health_scoring/health_score_engine.dart';
-import 'package:keel/services/ingestion/anonymiser.dart';
-import 'package:keel/services/ingestion/firestore_rest.dart';
-import 'package:keel/services/ingestion/git_metadata_adapter.dart';
-import 'package:keel/services/ingestion/ingestion_runner.dart';
-import 'package:keel/services/ingestion/ingestion_service.dart';
-import 'package:keel/services/ingestion/issue_tracker_adapter.dart';
+import 'package:prahm/services/health_scoring/health_score_engine.dart';
+import 'package:prahm/services/ingestion/anonymiser.dart';
+import 'package:prahm/services/ingestion/firestore_rest.dart';
+import 'package:prahm/services/ingestion/git_metadata_adapter.dart';
+import 'package:prahm/services/ingestion/ingestion_runner.dart';
+import 'package:prahm/services/ingestion/ingestion_service.dart';
+import 'package:prahm/services/ingestion/issue_tracker_adapter.dart';
 
 const _projectId = 'project-health-monitor-436da';
 

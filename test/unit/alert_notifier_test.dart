@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:keel/data/mock_project_repository.dart';
-import 'package:keel/data/project_repository.dart';
-import 'package:keel/models/health_state.dart';
-import 'package:keel/models/project.dart';
-import 'package:keel/services/sync/alert_presenter.dart';
-import 'package:keel/services/sync/notification_service.dart';
-import 'package:keel/state/providers.dart';
+import 'package:prahm/data/mock_project_repository.dart';
+import 'package:prahm/data/project_repository.dart';
+import 'package:prahm/models/health_state.dart';
+import 'package:prahm/models/project.dart';
+import 'package:prahm/services/sync/alert_presenter.dart';
+import 'package:prahm/services/sync/notification_service.dart';
+import 'package:prahm/state/providers.dart';
 
 import '../support/fake_auth_repository.dart';
 

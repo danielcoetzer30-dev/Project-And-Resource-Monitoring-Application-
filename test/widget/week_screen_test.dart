@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/data/mock_project_repository.dart';
-import 'package:keel/data/project_repository.dart';
-import 'package:keel/screens/week_screen.dart';
-import 'package:keel/theme/app_theme.dart';
+import 'package:prahm/data/mock_project_repository.dart';
+import 'package:prahm/data/project_repository.dart';
+import 'package:prahm/screens/week_screen.dart';
+import 'package:prahm/theme/app_theme.dart';
 
 /// The Week tab carries the promise in constraint 2: outage hours are
 /// reported, never deducted. The arithmetic is tested in

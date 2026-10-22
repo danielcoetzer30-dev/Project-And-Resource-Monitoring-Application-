@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/data/mock_project_repository.dart';
-import 'package:keel/models/health_state.dart';
-import 'package:keel/state/dashboard_notifier.dart';
+import 'package:prahm/data/mock_project_repository.dart';
+import 'package:prahm/models/health_state.dart';
+import 'package:prahm/state/dashboard_notifier.dart';
 
 /// Covers the ordering and filtering the dashboard depends on.
 ///

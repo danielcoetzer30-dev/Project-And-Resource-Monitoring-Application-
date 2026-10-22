@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:keel/data/auth_repository.dart';
-import 'package:keel/models/app_user.dart';
+import 'package:prahm/data/auth_repository.dart';
+import 'package:prahm/models/app_user.dart';
 
 /// An auth repository that is already signed in.
 ///

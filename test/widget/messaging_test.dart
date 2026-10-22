@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/data/mock_messaging_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/conversation.dart';
-import 'package:keel/models/directory_entry.dart';
-import 'package:keel/screens/messaging/conversation_screen.dart';
-import 'package:keel/screens/messaging/group_members_screen.dart';
-import 'package:keel/state/providers.dart';
+import 'package:prahm/data/mock_messaging_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/conversation.dart';
+import 'package:prahm/models/directory_entry.dart';
+import 'package:prahm/screens/messaging/conversation_screen.dart';
+import 'package:prahm/screens/messaging/group_members_screen.dart';
+import 'package:prahm/state/providers.dart';
 
 import '../support/fake_auth_repository.dart';
 

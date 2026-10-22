@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/comment_repository.dart';
-import 'package:keel/data/mock_comment_repository.dart';
-import 'package:keel/models/comment.dart';
-import 'package:keel/models/health_state.dart';
-import 'package:keel/models/signal.dart';
-import 'package:keel/screens/signal_thread_screen.dart';
-import 'package:keel/state/providers.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/comment_repository.dart';
+import 'package:prahm/data/mock_comment_repository.dart';
+import 'package:prahm/models/comment.dart';
+import 'package:prahm/models/health_state.dart';
+import 'package:prahm/models/signal.dart';
+import 'package:prahm/screens/signal_thread_screen.dart';
+import 'package:prahm/state/providers.dart';
 
 import '../support/fake_auth_repository.dart';
 

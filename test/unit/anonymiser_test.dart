@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/models/activity_event.dart';
-import 'package:keel/services/ingestion/anonymiser.dart';
+import 'package:prahm/models/activity_event.dart';
+import 'package:prahm/services/ingestion/anonymiser.dart';
 
 /// These tests are the ethics commitment made executable.
 ///

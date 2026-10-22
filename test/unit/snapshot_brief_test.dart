@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/data/mock_project_repository.dart';
-import 'package:keel/services/assistant/snapshot_brief.dart';
+import 'package:prahm/data/mock_project_repository.dart';
+import 'package:prahm/services/assistant/snapshot_brief.dart';
 
 /// The brief is the only thing in the app that sends project data to a third
 /// party, so these tests are about what leaves the device, not formatting.

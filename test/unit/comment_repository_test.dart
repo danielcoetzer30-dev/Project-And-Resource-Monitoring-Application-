@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/data/mock_comment_repository.dart';
-import 'package:keel/models/comment.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/data/mock_comment_repository.dart';
+import 'package:prahm/models/comment.dart';
 
 import '../support/fake_auth_repository.dart';
 

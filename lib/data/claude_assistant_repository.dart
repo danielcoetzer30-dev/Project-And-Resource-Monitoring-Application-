@@ -175,7 +175,7 @@ class ClaudeAssistantRepository implements AssistantRepository {
   /// score is worse than no assistant at all.
   String _systemPrompt(String context) {
     return '''
-You are the assistant inside Keel, a project health monitoring app used by
+You are the assistant inside PRAHM, a project health monitoring app used by
 small South African software teams.
 
 Answer questions about the data below. Be direct and brief — two or three

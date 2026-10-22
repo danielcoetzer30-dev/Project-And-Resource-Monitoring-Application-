@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The notification small icon: the keel mark, as a white silhouette.
+    The notification small icon: the app mark, as a white silhouette.
 
     Android masks this to a single colour and draws it at 24dp in the status
     bar, so it has to read as a shape rather than as artwork. It is the same

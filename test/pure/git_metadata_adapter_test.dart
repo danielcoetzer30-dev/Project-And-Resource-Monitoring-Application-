@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
-import 'package:keel/models/activity_event.dart';
-import 'package:keel/models/ingestion_source.dart';
-import 'package:keel/services/ingestion/git_metadata_adapter.dart';
+import 'package:prahm/models/activity_event.dart';
+import 'package:prahm/models/ingestion_source.dart';
+import 'package:prahm/services/ingestion/git_metadata_adapter.dart';
 
 /// A Git source has to fill task velocity and issue complexity, or 45% of the
 /// weight abstains and the score rests on budget and commit count alone.

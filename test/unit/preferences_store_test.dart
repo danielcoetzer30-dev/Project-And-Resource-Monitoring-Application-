@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:keel/data/preferences_store.dart';
-import 'package:keel/models/preferences.dart';
-import 'package:keel/state/providers.dart';
+import 'package:prahm/data/preferences_store.dart';
+import 'package:prahm/models/preferences.dart';
+import 'package:prahm/state/providers.dart';
 
 /// Preferences are a convenience, never something the app depends on, so the
 /// behaviour that matters is what happens when storage is empty, stale or

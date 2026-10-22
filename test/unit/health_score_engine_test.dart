@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/models/health_state.dart';
-import 'package:keel/models/project_metrics.dart';
-import 'package:keel/models/scoring_weights.dart';
-import 'package:keel/services/health_scoring/health_score_engine.dart';
+import 'package:prahm/models/health_state.dart';
+import 'package:prahm/models/project_metrics.dart';
+import 'package:prahm/models/scoring_weights.dart';
+import 'package:prahm/services/health_scoring/health_score_engine.dart';
 
 /// Builds metrics for a project doing well, with named overrides so each test
 /// can change one thing and leave the rest healthy.

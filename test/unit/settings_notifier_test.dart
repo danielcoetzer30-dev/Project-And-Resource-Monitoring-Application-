@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/failure.dart';
-import 'package:keel/data/mock_settings_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/scoring_weights.dart';
-import 'package:keel/state/providers.dart';
-import 'package:keel/state/settings_notifier.dart';
+import 'package:prahm/core/errors/failure.dart';
+import 'package:prahm/data/mock_settings_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/scoring_weights.dart';
+import 'package:prahm/state/providers.dart';
+import 'package:prahm/state/settings_notifier.dart';
 
 import '../support/fake_auth_repository.dart';
 

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/data/mock_source_repository.dart';
-import 'package:keel/data/project_repository.dart';
-import 'package:keel/models/app_user.dart';
-import 'package:keel/models/ingestion_source.dart';
-import 'package:keel/models/squad.dart';
-import 'package:keel/routing/app_router.dart';
-import 'package:keel/routing/routes.dart';
-import 'package:keel/state/providers.dart';
-import 'package:keel/theme/app_theme.dart';
-import 'package:keel/widgets/confirm_dialog.dart';
+import 'package:prahm/data/mock_source_repository.dart';
+import 'package:prahm/data/project_repository.dart';
+import 'package:prahm/models/app_user.dart';
+import 'package:prahm/models/ingestion_source.dart';
+import 'package:prahm/models/squad.dart';
+import 'package:prahm/routing/app_router.dart';
+import 'package:prahm/routing/routes.dart';
+import 'package:prahm/state/providers.dart';
+import 'package:prahm/theme/app_theme.dart';
+import 'package:prahm/widgets/confirm_dialog.dart';
 
 import '../support/fake_auth_repository.dart';
 

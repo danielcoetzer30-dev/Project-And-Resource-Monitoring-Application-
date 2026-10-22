@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/models/project.dart';
-import 'package:keel/services/health_scoring/forecaster.dart';
+import 'package:prahm/models/project.dart';
+import 'package:prahm/services/health_scoring/forecaster.dart';
 
 /// A project with everything healthy, so each test can change one thing.
 Project build({

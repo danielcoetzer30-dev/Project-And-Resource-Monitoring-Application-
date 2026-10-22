@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import 'package:keel/services/ingestion/firestore_rest.dart';
+import 'package:prahm/services/ingestion/firestore_rest.dart';
 
 /// Ingestion and `tool/seed_firestore.js` write the same collections, so they
 /// have to agree on how a value is spelled. A mismatch here would not fail

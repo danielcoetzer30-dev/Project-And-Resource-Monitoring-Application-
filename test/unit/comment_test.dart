@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/models/comment.dart';
+import 'package:prahm/models/comment.dart';
 
 /// The posting rules are repeated in `firestore.rules`. These pin the client
 /// side of them, so the app never offers to send something the backend would

@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:keel/core/errors/exceptions.dart';
-import 'package:keel/core/errors/failure.dart';
-import 'package:keel/data/local_cache.dart';
-import 'package:keel/data/project_repository.dart';
-import 'package:keel/models/sync_state.dart';
-import 'package:keel/services/sync/connectivity_service.dart';
-import 'package:keel/services/sync/sync_service.dart';
+import 'package:prahm/core/errors/exceptions.dart';
+import 'package:prahm/core/errors/failure.dart';
+import 'package:prahm/data/local_cache.dart';
+import 'package:prahm/data/project_repository.dart';
+import 'package:prahm/models/sync_state.dart';
+import 'package:prahm/services/sync/connectivity_service.dart';
+import 'package:prahm/services/sync/sync_service.dart';
 
 /// How current the app says its data is.
 ///

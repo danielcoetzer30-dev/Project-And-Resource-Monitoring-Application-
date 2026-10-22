@@ -24,9 +24,9 @@ class AboutScreen extends StatelessWidget {
         ),
         children: [
           Panel(
-            title: 'Keel',
+            title: 'PRAHM',
             child: Text(
-              'Keel watches the health of your projects and the capacity of '
+              'PRAHM watches the health of your projects and the capacity of '
               'your squads in real time, and warns you early when something '
               'is drifting. It reads from the tools your squads already use, '
               'so nobody has to type in progress.',
@@ -96,7 +96,7 @@ class AboutScreen extends StatelessWidget {
               title: Text('Open source licences', style: AppType.bodyStrong),
               trailing: const Icon(Icons.chevron_right, size: 18),
               onTap: () =>
-                  showLicensePage(context: context, applicationName: 'Keel'),
+                  showLicensePage(context: context, applicationName: 'PRAHM'),
             ),
           ),
         ],
