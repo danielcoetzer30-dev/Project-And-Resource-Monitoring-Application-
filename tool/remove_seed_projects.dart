@@ -5,8 +5,8 @@
 //
 // Inspects by default and changes nothing. Pass --apply to write.
 //
-// The original seed invented four projects. Two of them — p2 "Fleet tracker
-// v2" on squad s2 and p4 "POS integration" on squad s3 — belong to squads
+// The original seed invented four projects. Two of them, p2 "Fleet tracker
+// v2" on squad s2 and p4 "POS integration" on squad s3, belong to squads
 // with no working source, so ingestion has skipped them since September and
 // their figures have been frozen at whatever the seed set. A dashboard
 // showing a live score beside a four-week-old one teaches somebody to
@@ -16,7 +16,7 @@
 // source feeds, so their scores are real and current.
 //
 // Signals are deleted with them. Both existing signals point at p2, and a
-// signal whose project has gone renders with no name against it — worse than
+// signal whose project has gone renders with no name against it, worse than
 // not being there, because it looks like a bug rather than an absence.
 //
 // Everything removed is written to a backup file first. These are seeded

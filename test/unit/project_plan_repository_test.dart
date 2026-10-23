@@ -9,7 +9,7 @@ import 'package:prahm/models/project_plan.dart';
 /// that decides what the organisation is measured on at all.
 ///
 /// It is also the write that had to be refused when it arrived as a teammate's
-/// `createProject` on `ProjectRepository` — not because adding projects is
+/// `createProject` on `ProjectRepository`, not because adding projects is
 /// wrong, but because writing them to `projects/` is. These tests pin the
 /// shape that works.
 void main() {
@@ -144,8 +144,8 @@ void main() {
 
   group('a half-filled plan still works', () {
     test('a project with no budget or dates is saveable but not usable', () {
-      // Ingestion scores it on what is known. The alternative — refusing to
-      // save until every figure is in — would mean a team cannot start
+      // Ingestion scores it on what is known. The alternative, refusing to
+      // save until every figure is in, would mean a team cannot start
       // tracking a project until its finance paperwork is done.
       const sparse = ProjectPlan(projectId: '', name: 'Spike', squadId: 's1');
 

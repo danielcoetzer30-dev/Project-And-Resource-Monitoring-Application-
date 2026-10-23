@@ -174,7 +174,7 @@ class _FactorRow extends StatelessWidget {
 /// Where the current trend ends up.
 ///
 /// Hidden entirely when there is not enough history to project from, rather
-/// than shown empty — a forecast panel with nothing in it reads as "fine",
+/// than shown empty, a forecast panel with nothing in it reads as "fine",
 /// which is the opposite of "we cannot tell yet".
 class _ForecastPanel extends StatelessWidget {
   const _ForecastPanel({required this.project});

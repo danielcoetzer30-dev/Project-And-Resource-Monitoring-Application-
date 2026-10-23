@@ -12,7 +12,7 @@ import '../../widgets/empty_state.dart';
 
 /// The projects a team has told the app about.
 ///
-/// This is setup, not status. Nothing typed here says how the work is going —
+/// This is setup, not status. Nothing typed here says how the work is going,
 /// a name, a client, a squad, a budget and a schedule, all of which a commit
 /// log cannot know. The score still comes from ingestion and is still
 /// unwritable from the app, which is what keeps constraint 3 intact while a
@@ -164,7 +164,7 @@ class _PlanRow extends StatelessWidget {
                     if (incomplete && !plan.isArchived) ...[
                       const SizedBox(height: Tokens.space2),
                       Text(
-                        'Budget, dates or hours missing — scored on less',
+                        'Budget, dates or hours missing, scored on less',
                         style: AppType.data.copyWith(color: Tokens.brass),
                       ),
                     ],

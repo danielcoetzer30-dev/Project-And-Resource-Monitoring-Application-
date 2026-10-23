@@ -11,7 +11,7 @@
 // chosen because its shape resembles the teams this app is for: around eight
 // contributors and a few commits a day, rather than a corporate monorepo.
 //
-// Only public commit metadata is read — authors, timestamps, nothing else.
+// Only public commit metadata is read, authors, timestamps, nothing else.
 // Nothing identifying is stored: the anonymiser aggregates to the squad named
 // here before anything reaches Firestore, and squads below the contributor
 // threshold are dropped entirely.
@@ -44,26 +44,14 @@ const _disable = 'src2';
 /// Figures ingestion cannot measure, and the one that has to be calibrated.
 ///
 /// `weeklyHours` is what the squad is expected to put in, and idle time is
-/// measured against it. Set it wrong and that indicator is meaningless: the
-/// first run here used 36 hours a week against a repository whose
-/// contributors logged five person-hours a fortnight, and reported 7%
-/// utilisation — a number about the roster, not about the team.
+/// measured against it. Set it wrong and the indicator is meaningless: 36
+/// hours a week against a source logging five person-hours a fortnight read
+/// 7% utilisation, which says something about the roster and nothing about
+/// the team. Ten hours against eleven then pegged it at 100%.
 ///
-/// Nine hours a week is what this source actually looks like: an open-source
-/// project people work on around other things, not an agency billing a
-/// client, and a demonstration that pretends otherwise demonstrates the wrong
-/// thing.
-///
-/// It has been recalibrated once. Five hours was right when a Git source gave
-/// commits alone and the squad logged six person-hours a fortnight. Reading
-/// pull requests as well took that to eleven, which against a ten-hour roster
-/// pegged utilisation at 100% — a fact about the roster again, in the
-/// opposite direction. The figure has to follow what the source actually
-/// reports.
-///
-/// For a real team this comes from what they committed to, not from what
-/// makes the number look good. Spending more of a budget always lowers the
-/// score, so none of this can be tuned to flatter.
+/// Nine is what this source actually looks like. The figure has to follow
+/// what the source reports; for a real team it comes from what they committed
+/// to, not from what makes the number look good.
 const _plan = {
   'budgetTotal': 180000.0,
   'budgetSpent': 94000.0,
@@ -123,7 +111,7 @@ Future<void> main(List<String> arguments) async {
     }
 
     if (onSquad.isEmpty) {
-      print('  none — nothing would be scored. Stopping.');
+      print('  none, nothing would be scored. Stopping.');
       exit(1);
     }
 

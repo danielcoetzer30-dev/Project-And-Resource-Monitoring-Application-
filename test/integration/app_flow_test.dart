@@ -27,7 +27,7 @@ import '../support/fake_auth_repository.dart';
 /// dashboard, move between tabs, open a project.
 ///
 /// Runs against the mock repository, so it needs no Firebase, no network and
-/// no credentials — which is the same reason the prototype can be demonstrated
+/// no credentials, which is the same reason the prototype can be demonstrated
 /// on a phone with no signal.
 /// Who exists to be messaged and placed on a squad.
 const _directory = [
@@ -134,7 +134,7 @@ void main() {
     tester,
   ) async {
     // StartTab.index is used directly as the shell's tab index, so this is
-    // what catches the two lists drifting apart — as they did when Grid and
+    // what catches the two lists drifting apart, as they did when Grid and
     // Calendar were folded into Week.
     SharedPreferences.setMockInitialValues({
       'preferences.startTab': StartTab.week.name,
@@ -181,7 +181,7 @@ void main() {
     await tester.tap(find.text('Ledger rebuild').first);
     await tester.pumpAndSettle();
 
-    // The breakdown is the point of the detail screen — a score with no
+    // The breakdown is the point of the detail screen, a score with no
     // reasoning is not actionable. It sits below the score and the Seam, so
     // in a test viewport it is not built until scrolled to.
     await tester.scrollUntilVisible(
@@ -227,7 +227,7 @@ void main() {
   testWidgets('reaches project setup from the Projects tab, not from '
       'Settings', (tester) async {
     // Setup used to be a row under Settings. It moved onto the tab the
-    // projects are on, so this is the path that has to work — and the old
+    // projects are on, so this is the path that has to work, and the old
     // one has to be gone, or there are two doors to one room.
     await tester.pumpWidget(themedApp());
     await tester.pump();

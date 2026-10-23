@@ -52,7 +52,7 @@ class _ApiKeyScreenState extends ConsumerState<ApiKeyScreen> {
   Future<void> _save() async {
     final value = _controller.text.trim();
 
-    // Catches the most common mistake — pasting something that is not a key —
+    // Catches the most common mistake, pasting something that is not a key,
     // before it becomes a 401 the user has to interpret.
     if (!value.startsWith('sk-ant-')) {
       setState(() => _error = 'An Anthropic key starts with "sk-ant-".');

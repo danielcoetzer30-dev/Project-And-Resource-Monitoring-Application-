@@ -9,30 +9,18 @@ import 'ingestion_adapter.dart';
 
 /// Reads commit and pull-request metadata from GitHub.
 ///
-/// Two endpoints, nothing else. Commit messages are returned by the API but
-/// deliberately not read, diffs are never requested, and a pull request's
-/// title and body are ignored the same way — an author, a timestamp and the
-/// fact that the thing happened is the entire extent of what the scoring
-/// engine needs from version control.
+/// Two endpoints, nothing else. Commit messages, diffs and pull-request
+/// bodies are never requested: an author, a timestamp and the fact that the
+/// thing happened is all the scoring engine needs.
 ///
-/// ## Why pull requests count as tasks
+/// Pull requests count as tasks. A merged one is work finished, an opened one
+/// is work arriving, and the ratio between them is what the complexity
+/// calculator reads. Without them, task velocity and issue complexity (45% of
+/// the weight) have nothing to measure.
 ///
-/// A Git source used to give commits and nothing else, which left task
-/// velocity and issue complexity — 45% of the weight — abstaining, because
-/// neither has anything to measure. Pull requests fill both honestly:
-///
-///  - A merged pull request is a unit of work finished. For a team that
-///    reviews before merging it is a better measure of delivery than a ticket
-///    somebody remembered to drag across a board, and it is harder to inflate
-///    than a commit count, which is why commit volume is weighted lowest.
-///  - A pull request opened is work arriving. The ratio of arriving to
-///    finishing is what the complexity calculator reads, so this measures
-///    whether the pile is growing faster than it is being cleared.
-///
-/// Issues are deliberately **not** read. A public repository's issue tracker
-/// accumulates years of user reports, and comparing that stock against a
-/// fortnight's throughput produces a number about open-source culture rather
-/// than about a team's health. Pull requests compare like with like.
+/// Issues are deliberately not read: a public tracker holds years of reports,
+/// so weighing that stock against a fortnight's throughput says more about
+/// open-source culture than about a team.
 class GitMetadataAdapter implements IngestionAdapter {
   GitMetadataAdapter({http.Client? client}) : _client = client ?? http.Client();
 
@@ -43,7 +31,7 @@ class GitMetadataAdapter implements IngestionAdapter {
   /// GitHub caps a page at 100, and this does not page further.
   ///
   /// A fortnight of activity fits comfortably for the teams this is built for
-  /// — the sampled repositories run 5 to 20 pull requests a fortnight. A
+  ///, the sampled repositories run 5 to 20 pull requests a fortnight. A
   /// repository busy enough to exceed this would be silently under-reported,
   /// which is the one failure mode here worth knowing about.
   static const _perPage = 100;

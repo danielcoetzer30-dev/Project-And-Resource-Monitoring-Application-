@@ -92,7 +92,7 @@ class IngestionRunner {
   ///
   /// A source connected today has no baseline, so velocity and commit volume
   /// abstain with "not enough history yet" until enough runs have accumulated
-  /// — a fortnight of daily runs before the first non-overlapping comparison
+  ///, a fortnight of daily runs before the first non-overlapping comparison
   /// exists. That is correct and it is also avoidable: the past fortnights
   /// already happened, and the source can still be asked about them.
   ///
@@ -129,7 +129,7 @@ class IngestionRunner {
         await _appendHistory(activity);
         written.add(
           '${activity.squadId}: ${windowStart.toIso8601String().split('T').first}'
-          ' to ${windowEnd.toIso8601String().split('T').first} — '
+          ' to ${windowEnd.toIso8601String().split('T').first}, '
           '${activity.commitCount} commits, ${activity.tasksCompleted} done, '
           '${activity.contributorCount} contributors',
         );
@@ -362,7 +362,7 @@ class IngestionRunner {
   /// Brings `projects/` into line with what the team has stated.
   ///
   /// This is how a project comes into existence. A lead saves a plan and the
-  /// project document appears on the next run, carrying only its identity —
+  /// project document appears on the next run, carrying only its identity,
   /// no score, because nothing has been read about it yet. The scoring loop
   /// picks it up from there, which is why a new project shows on the
   /// dashboard before it shows a number.
@@ -487,7 +487,7 @@ class IngestionRunner {
 
     // The forecaster divides schedule remaining by this to project a
     // completion date. Leaving it stale would pair a fresh burn rate with
-    // last month's velocity and produce a confidently wrong date — worse
+    // last month's velocity and produce a confidently wrong date, worse
     // than no forecast, which the forecaster is otherwise careful to give.
     if (metrics.tasksCompletedBaseline > 0) {
       fields['velocityRatio'] =
@@ -518,7 +518,7 @@ class IngestionRunner {
   /// Updates what the Squads tab shows.
   ///
   /// Only ever a merge, and only the three fields ingestion can actually
-  /// measure. `name` and `headcount` are stated by the team — a headcount is
+  /// measure. `name` and `headcount` are stated by the team, a headcount is
   /// not something a commit log knows, and overwriting it with a guess would
   /// be worse than leaving it alone.
   ///
@@ -578,7 +578,7 @@ class IngestionRunner {
       //
       // That multiplication was here and it was a guess wearing a number. It
       // assumed everybody on a squad is full-time on this work, which made a
-      // part-time squad read as permanently idle — eleven per cent, from four
+      // part-time squad read as permanently idle, eleven per cent, from four
       // people against eighteen committed hours. The same mistake as a roster
       // figure that does not match the source: a fact about the assumption
       // rather than about the team.
@@ -646,7 +646,7 @@ class IngestionRunner {
   ///
   /// Signals are a statement about now. One that no longer holds has to go, or
   /// the dashboard accumulates warnings nobody can clear and the whole thing
-  /// becomes noise to be ignored — which is the failure mode the research
+  /// becomes noise to be ignored, which is the failure mode the research
   /// describes in the tools this replaces.
   Future<void> _replaceSignalsFor({
     required String projectId,

@@ -13,7 +13,7 @@ import '../theme/typography.dart';
 /// screen could not.
 ///
 /// Dismissible, and deliberately not blocking. An early warning is a thing to
-/// notice, not a thing to acknowledge — a banner with an OK button would train
+/// notice, not a thing to acknowledge, a banner with an OK button would train
 /// people to clear it without reading, which is the failure mode this whole
 /// tool exists to avoid.
 ///

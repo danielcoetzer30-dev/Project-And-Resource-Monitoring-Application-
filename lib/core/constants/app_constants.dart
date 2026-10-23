@@ -28,7 +28,7 @@ abstract final class AppConstants {
   /// Who can be messaged: display name and role, nothing else.
   static const directoryCollection = 'directory';
 
-  /// Who is on which squad. One field per document, `squadId`, keyed by uid —
+  /// Who is on which squad. One field per document, `squadId`, keyed by uid.
   /// the name and role a roster shows are read from the directory, so this is
   /// not a second place a person's details accumulate. See
   /// `lib/models/squad_member.dart` for what adding it cost.

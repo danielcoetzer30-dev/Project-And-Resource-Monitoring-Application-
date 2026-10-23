@@ -19,7 +19,7 @@ Counts are uneven on purpose. Scoring and Ingestion are small by file count
 because they're the hardest; Interface is large because widgets are quick. If one
 area falls behind, widgets are the easiest work to hand to whoever finishes first.
 
-### A — Data & Auth  *(foundation — starts first)*
+### A, Data & Auth  *(foundation, starts first)*
 
 Everything that defines what the data looks like and how it's stored.
 
@@ -46,11 +46,11 @@ Everything that defines what the data looks like and how it's stored.
 | `core/errors/exceptions.dart` | Data-layer exceptions, converted at the repository boundary |
 | `core/constants/app_constants.dart` | Collection names, default thresholds, polling intervals |
 
-**Depends on:** nothing. **Blocks:** everyone — which is why this area does Stage 0.
+**Depends on:** nothing. **Blocks:** everyone, which is why this area does Stage 0.
 
 **First task:** the Stage 0 interfaces PR (see §3).
 
-### B — Scoring  *(the research contribution)*
+### B, Scoring  *(the research contribution)*
 
 The algorithm. Everything else is plumbing around this folder.
 
@@ -70,13 +70,13 @@ their tests
 | `test/unit/factor_calculators_test.dart` | One case per calculator, including the outage path |
 
 **Depends on:** models only. Can start the day Stage 0 lands, using hand-written
-input values — real ingested data isn't needed to develop the maths.
+input values, real ingested data isn't needed to develop the maths.
 
 **First task:** `factor_calculator.dart` (the interface), then the engine test
 *before* the engine. Write down what score a known input should produce, then
 make it produce that.
 
-### C — Ingestion  *(passive capture)*
+### C, Ingestion  *(passive capture)*
 
 Reading Git and tracker metadata without anyone typing anything in.
 
@@ -86,7 +86,7 @@ Reading Git and tracker metadata without anyone typing anything in.
 |---|---|
 | `ingestion/anonymiser.dart` | **Build first.** Strips individual identity and aggregates to squad level before anything is stored |
 | `ingestion/ingestion_service.dart` | Orchestrates adapters, writes through the repository |
-| `ingestion/git_metadata_adapter.dart` | Commits and PRs from GitHub/GitLab — metadata only, never code |
+| `ingestion/git_metadata_adapter.dart` | Commits and PRs from GitHub/GitLab, metadata only, never code |
 | `ingestion/issue_tracker_adapter.dart` | Task state from ClickUp or Jira |
 | `ingestion/ingestion_scheduler.dart` | Background polling that backs off when offline |
 | `test/unit/anonymiser_test.dart` | Asserts no individual identifier survives ingestion |
@@ -94,12 +94,12 @@ Reading Git and tracker metadata without anyone typing anything in.
 **Depends on:** models, external APIs.
 
 **First task:** the anonymiser and its test. Not the adapters. The research
-proposal (Section D) commits to a system built without individual identity — if
+proposal (Section D) commits to a system built without individual identity, if
 per-developer data is ever written to Firestore, even in development, that
 commitment is broken in a way no later deletion undoes. The filter exists before
 any data flows.
 
-### D — Infrastructure & Sync  *(the part no competitor has)*
+### D, Infrastructure & Sync  *(the part no competitor has)*
 
 Separating "the team is slipping" from "the grid went down", and staying useful
 while offline.
@@ -121,10 +121,10 @@ and the three state widgets
 
 **Depends on:** the data layer.
 
-**First task:** `connectivity_service.dart` and `offline_banner.dart` — small,
+**First task:** `connectivity_service.dart` and `offline_banner.dart`, small,
 self-contained, and immediately visible in the app.
 
-### E — Interface  *(screens, navigation, state)*
+### E, Interface  *(screens, navigation, state)*
 
 **Owns:** `lib/screens/`, `lib/widgets/` (except D's three), `lib/routing/`,
 `lib/state/`, `lib/core/utils/`, `lib/theme/`, widget and integration tests
@@ -151,11 +151,11 @@ self-contained, and immediately visible in the app.
 | `test/widget/dashboard_test.dart` | Worst-first ordering and state counts |
 | `test/integration/app_flow_test.dart` | Sign in → dashboard → project → signal |
 
-**Depends on:** repository interfaces only — never on implementations.
+**Depends on:** repository interfaces only, never on implementations.
 
 **First task:** extract `capacity_bar.dart` and `metric_tile.dart` from the
 existing screens. Zero dependencies, teaches the widget conventions, and
-unblocks nothing else — so it's safe to do while Stage 0 is in review.
+unblocks nothing else, so it's safe to do while Stage 0 is in review.
 
 ### Assigning people
 
@@ -164,7 +164,7 @@ unblocks nothing else — so it's safe to do while Stage 0 is in review.
 | A | Data & Auth | Set up Firebase, or wants to understand the schema | |
 | B | Scoring | Is comfortable with the maths and wants to own the research contribution | |
 | C | Ingestion | Is happy working against external APIs and reading their docs | |
-| D | Infrastructure | Likes systems problems — caching, connectivity, background work | |
+| D | Infrastructure | Likes systems problems, caching, connectivity, background work | |
 | E | Interface | Has an eye for the design system and wants to build screens | |
 
 Fill in the last column as a group. Whoever takes **A** should be the most
@@ -186,13 +186,13 @@ gets *wired in*, not when it gets *written*.
 |---|---|---|---|
 | **0** | Interfaces, models, schema, providers skeleton | A drafts, all review | Reading the PR |
 | **1** | Rules opened per collection, auth, user model | A | Building against Stage 0 |
-| **2** | Anonymiser, then adapters | C | — |
-| **3** | Scoring engine and calculators | B | — |
+| **2** | Anonymiser, then adapters | C |, |
+| **3** | Scoring engine and calculators | B |, |
 | **4** | Firestore repository; mock swapped out in `providers.dart` | A + E | Screens change not at all |
-| **5** | Cache, sync, outage service | D | — |
+| **5** | Cache, sync, outage service | D |, |
 | **6** | Settings, notifications, onboarding | E + D | Testing end to end |
 
-### Stage 0 — the one meeting that matters
+### Stage 0, the one meeting that matters
 
 Do this in one sitting, together, before anyone writes a feature. **A** drafts,
 opens one pull request, and everyone reviews it. Nothing else starts until it
@@ -200,15 +200,15 @@ merges.
 
 The PR contains:
 
-1. **The six new models**, as plain Dart classes with `const` constructors — no
+1. **The six new models**, as plain Dart classes with `const` constructors, no
    Firestore imports.
-2. **The three new repository interfaces** — `AuthRepository`, `OutageRepository`,
-   `SettingsRepository` — as `abstract interface class`, mirroring
+2. **The three new repository interfaces**, `AuthRepository`, `OutageRepository`,
+   `SettingsRepository`, as `abstract interface class`, mirroring
    `ProjectRepository`. Method signatures only.
-3. **A Firestore schema document** — `docs/SCHEMA.md` — listing every collection,
+3. **A Firestore schema document**, `docs/SCHEMA.md`, listing every collection,
    its path, its fields, and which workstream writes to it. Ten minutes of
    agreement here saves days of DTO rework.
-4. **The Riverpod provider skeleton** — `state/providers.dart` gains a provider per
+4. **The Riverpod provider skeleton**, `state/providers.dart` gains a provider per
    repository interface, each returning a mock for now.
 
 Everyone else's job during Stage 0: read that PR properly, and ask about anything
@@ -235,7 +235,7 @@ git pull
 git checkout -b feature/scoring-velocity-calculator
 ```
 
-Work. Commit often — small commits are easier to review and to revert.
+Work. Commit often, small commits are easier to review and to revert.
 
 ```bash
 git add lib/services/health_scoring/factor_calculators/velocity_calculator.dart
@@ -299,7 +299,7 @@ added the anonymiser file and fixed some stuff
 ```
 
 If the *why* isn't obvious, add a blank line and a body explaining it. The body is
-for reasoning, not a list of files changed — git already knows the files.
+for reasoning, not a list of files changed, git already knows the files.
 
 ### Pull request template
 
@@ -323,7 +323,7 @@ What the reviewer should look at or run.
 
 ### Keep PRs small
 
-One file group per PR — a calculator and its test, a screen and its widgets. A
+One file group per PR, a calculator and its test, a screen and its widgets. A
 PR touching thirty files across three workstreams can't be reviewed properly and
 won't be. If a task is genuinely big, land it as a sequence of PRs that each
 compile on their own.
@@ -383,7 +383,7 @@ and drop the underscore.
 
 ### Riverpod
 
-We use Riverpod **without code generation** — no `build_runner`, no `.g.dart`.
+We use Riverpod **without code generation**, no `build_runner`, no `.g.dart`.
 Three provider types cover everything:
 
 | Need | Use |
@@ -399,7 +399,7 @@ repository or service inside a widget.**
 
 ### Documentation in code
 
-Every public class gets a `///` doc comment saying what it's *for* — the
+Every public class gets a `///` doc comment saying what it's *for*, the
 responsibility, not a restatement of the name. Where a decision isn't obvious,
 say why in a comment. The existing files show the register: see `squad.dart`
 for a constraint explained, `health_seam.dart` for a rendering choice explained.
@@ -414,7 +414,7 @@ A file is done when all of these hold. Not before.
 - [ ] It has a test, if it contains logic (models and pure widgets are exempt;
       calculators, services and repositories are not)
 - [ ] `flutter test` passes
-- [ ] No colour, font or size is hardcoded — everything comes from `Tokens` and
+- [ ] No colour, font or size is hardcoded, everything comes from `Tokens` and
       `AppType`
 - [ ] Nothing in it exposes, stores or displays individual-level data
 - [ ] Public classes have doc comments
@@ -434,5 +434,5 @@ A file is done when all of these hold. Not before.
   which means a boundary was crossed. Fix the conflict, then talk about the
   boundary.
 - **Not sure where a file goes?** Check the build map. If it's genuinely not
-  there, ask before creating it — a new file in the wrong folder is a small
+  there, ask before creating it, a new file in the wrong folder is a small
   problem today and a large one in a month.

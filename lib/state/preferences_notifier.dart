@@ -69,7 +69,7 @@ class PreferencesNotifier extends Notifier<Preferences> {
   }
 
   /// Puts date, time, density, start tab and the dashboard choices back.
-  /// Accessibility is left alone, because it has its own reset — somebody who
+  /// Accessibility is left alone, because it has its own reset, somebody who
   /// needs large text should not lose it by tidying up their date format.
   void resetDisplayToDefaults() => _apply(
     state.copyWith(

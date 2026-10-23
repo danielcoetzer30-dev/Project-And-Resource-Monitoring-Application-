@@ -6,8 +6,8 @@ import '../../theme/typography.dart';
 /// The first thing the app draws, while it works out whether anybody is
 /// signed in.
 ///
-/// It replaced a bare spinner. The wait is real — Firebase has to restore the
-/// session and then read the user's document for their organisation and role —
+/// It replaced a bare spinner. The wait is real, Firebase has to restore the
+/// session and then read the user's document for their organisation and role,
 /// and on a slow connection an unlabelled spinner on a dark screen reads as an
 /// app that has failed to start.
 ///
@@ -33,7 +33,7 @@ class SplashScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // A measured line that dips and recovers, over the baseline it
-              // is judged against — the same idea as the health seam, at the
+              // is judged against, the same idea as the health seam, at the
               // smallest size it still reads at. Drawn rather than shipped as
               // an asset, so it scales and recolours with the theme.
               const _PrahmMark(),
@@ -75,8 +75,8 @@ class SplashScreen extends StatelessWidget {
 
 /// The app mark: a rising seam over a baseline.
 ///
-/// The same two-element idea as `HealthSeam` — a measured line against the
-/// level it is judged by — at the smallest size it still reads at.
+/// The same two-element idea as `HealthSeam`, a measured line against the
+/// level it is judged by, at the smallest size it still reads at.
 class _PrahmMark extends StatelessWidget {
   const _PrahmMark();
 

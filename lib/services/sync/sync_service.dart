@@ -50,7 +50,7 @@ class SyncService {
   /// Replays the last known state to a new listener rather than making it wait
   /// for the next change. A broadcast stream drops everything sent before
   /// anybody subscribed, and the shell subscribes a frame or two after the
-  /// service starts — so the banner could sit hidden through an entire
+  /// service starts, so the banner could sit hidden through an entire
   /// offline session simply because the connectivity change had already been
   /// announced to nobody.
   Stream<SyncState> watchSyncState() {

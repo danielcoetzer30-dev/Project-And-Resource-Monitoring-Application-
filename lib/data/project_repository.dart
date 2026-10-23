@@ -39,7 +39,7 @@ class HealthSnapshot {
   final List<Signal> signals;
   final GridStatus grid;
 
-  /// When this data was actually captured — not when it was displayed.
+  /// When this data was actually captured, not when it was displayed.
   /// Connectivity is unreliable by assumption, so the UI always says how stale
   /// what you are looking at is.
   final DateTime capturedAt;
@@ -62,8 +62,8 @@ class HealthSnapshot {
 
 /// The UI talks only to this.
 ///
-/// Data arrives passively — read from version control and issue trackers in
-/// the background — so there is deliberately no method here for a person to
+/// Data arrives passively, read from version control and issue trackers in
+/// the background, so there is deliberately no method here for a person to
 /// type in a status. Swapping the mock for a real ingestion service means
 /// writing one new implementation, not touching any screen.
 abstract interface class ProjectRepository {

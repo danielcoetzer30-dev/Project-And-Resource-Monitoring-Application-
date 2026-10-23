@@ -14,7 +14,7 @@
 //
 // It is not invented data: the same adapters, the same anonymiser and the
 // same contributor threshold, over windows that have closed. Scores are not
-// backdated — a score is a statement about a project now, and the seam should
+// backdated, a score is a statement about a project now, and the seam should
 // show when the app started watching rather than imply it was always there.
 
 // ignore_for_file: avoid_print

@@ -6,7 +6,7 @@ import '../theme/typography.dart';
 
 /// A hairline-ruled instrument panel.
 ///
-/// Depth comes from a surface step and a one-pixel rule, not from shadows —
+/// Depth comes from a surface step and a one-pixel rule, not from shadows,
 /// shadows on a dark base turn into mud, and the app is meant to read as a
 /// panel of instruments rather than a stack of floating cards.
 class Panel extends StatelessWidget {

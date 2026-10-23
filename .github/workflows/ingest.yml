@@ -8,7 +8,7 @@
 # plan, this project is on Spark, and the team already has the repository.
 #
 # It runs `dart run tool/ingest.dart`, which reuses the same anonymiser and
-# scoring engine the app was built around. That reuse is the point — a
+# scoring engine the app was built around. That reuse is the point, a
 # reimplementation in another language would mean two anonymisers, and one of
 # them would drift out of compliance without anyone noticing.
 
@@ -22,7 +22,7 @@ on:
   #
   # Fourteen rather than seven, measured rather than guessed. The anonymiser
   # needs two contributors in a window or it suppresses the squad, and a week
-  # does not reliably contain two — even in active projects. Sampled on
+  # does not reliably contain two, even in active projects. Sampled on
   # 19 October 2026:
   #
   #   rrousselGit/riverpod    7d:  2 commits /  1 author    14d: 10 /  2
@@ -49,7 +49,7 @@ on:
 jobs:
   ingest:
     # Pinned for the same reason Flutter is below. GitHub migrates the
-    # ubuntu-latest label — to Ubuntu 26 from 19 October 2026 — and a job
+    # ubuntu-latest label, to Ubuntu 26 from 19 October 2026, and a job
     # whose whole point is that scores move only when activity moves should
     # not have its operating system change underneath it mid-study.
     runs-on: ubuntu-24.04
@@ -95,7 +95,7 @@ jobs:
 
           # The one genuinely identifying configuration in this system: which
           # person belongs to which squad. A secret rather than a Firestore
-          # document on purpose — see Anonymiser.squadOfAuthor.
+          # document on purpose, see Anonymiser.squadOfAuthor.
           KEEL_SQUAD_OF_AUTHOR: ${{ secrets.KEEL_SQUAD_OF_AUTHOR }}
 
           KEEL_ORG_ID: demo-org

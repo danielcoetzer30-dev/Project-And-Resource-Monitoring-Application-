@@ -50,7 +50,7 @@ final savedWeightsProvider = StreamProvider<ScoringWeights>((ref) {
 ///
 /// Exposing these at all is a deliberate design position: the score is not a
 /// black box. A team that can see and change what it is measured on is far
-/// more likely to trust the result — and the research raises exactly that
+/// more likely to trust the result, and the research raises exactly that
 /// concern, where opaque metrics get read as surveillance.
 class SettingsNotifier extends Notifier<WeightsDraft> {
   @override

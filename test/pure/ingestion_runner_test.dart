@@ -258,7 +258,7 @@ void main() {
 
     // A fortnight apart, so the first run's window has closed before the
     // second one opens. Runs closer together overlap, and an overlapping
-    // window is not a baseline — it is thirteen-fourteenths of the same days.
+    // window is not a baseline, it is thirteen-fourteenths of the same days.
     final second = now.add(const Duration(days: 15));
 
     // An outage inside the week the second run reports, overlapping it only
@@ -328,7 +328,7 @@ void main() {
   test('a squad that has not stated its hours gets no capacity', () async {
     // The bug this replaced: capacity was committed hours over a headcount
     // times a forty-hour week. That assumed everybody is full-time on this
-    // work, and a part-time squad read as permanently idle — eleven per cent
+    // work, and a part-time squad read as permanently idle, eleven per cent
     // from four people against eighteen committed hours. A number about the
     // assumption, not about the team. With no stated hours there is no
     // answer, so none is written.

@@ -273,7 +273,7 @@ void main() {
     // The thing this feature must not become. A placement that could carry an
     // hours figure, an activity count or a name would be per-person
     // measurement reached by the back door, and `firestore.rules` refuses any
-    // document with another key — so if this map ever grows, the rules start
+    // document with another key, so if this map ever grows, the rules start
     // rejecting every write and the roster silently stops working.
     final map = SquadMemberDto.toMap(
       const SquadPlacement(userId: 'dev', squadId: 's1'),

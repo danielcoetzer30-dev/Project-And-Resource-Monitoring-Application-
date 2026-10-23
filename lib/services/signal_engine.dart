@@ -9,7 +9,7 @@ import 'health_scoring/health_score_engine.dart';
 ///
 /// The score says how a project is doing. A signal says what specifically is
 /// wrong and why, which is the difference between a dashboard and an early
-/// warning system — the research is explicit that existing tools are reactive
+/// warning system, the research is explicit that existing tools are reactive
 /// because they report state without explaining it.
 ///
 /// Every signal this produces carries its reasoning. That is enforced by the
@@ -29,7 +29,7 @@ class SignalEngine {
     required String projectName,
 
     /// Optional: when supplied, forecast signals are raised as well. Null when
-    /// the caller only has metrics — scoring runs before a Project exists.
+    /// the caller only has metrics, scoring runs before a Project exists.
     Project? project,
   }) {
     final signals = <Signal>[];

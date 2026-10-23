@@ -2,7 +2,7 @@
 ///
 /// Deliberately free of Flutter. Ingestion scores projects server-side, where
 /// there is no Flutter to import, and it has to arrive at the same states the
-/// app renders — one definition, used by both.
+/// app renders, one definition, used by both.
 ///
 /// The colour and icon that go with each state live in
 /// `lib/theme/health_state_style.dart`. They are not optional: a state is
@@ -23,7 +23,7 @@ enum HealthState {
   /// matters in an early warning system.
   final int severity;
 
-  /// Maps a 0–100 health score onto a state.
+  /// Maps a 0-100 health score onto a state.
   ///
   /// Thresholds are a starting point and will move once the interview data
   /// says where the real boundaries sit.

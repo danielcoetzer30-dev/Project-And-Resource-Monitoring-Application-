@@ -5,7 +5,7 @@
 /// person, and no list from which one could be reconstructed.
 ///
 /// [contributorCount] is a number, not a set of names. It exists so the
-/// anonymiser can check that an aggregate actually aggregates something —
+/// anonymiser can check that an aggregate actually aggregates something,
 /// a "squad total" covering one person is that person's activity wearing a
 /// different label.
 class SquadActivity {

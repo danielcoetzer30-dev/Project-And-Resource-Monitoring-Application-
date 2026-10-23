@@ -1,28 +1,18 @@
 /// What a team states about a project, as opposed to what ingestion measures.
 ///
-/// This is the half of a project people own. Commits, pull requests and issue
-/// weights can be read passively; a name, a client, a budget and a roster
-/// cannot, because no system a small team already runs holds them in a
-/// readable form. So they are stated here and read on every scoring run.
+/// The half of a project people own. A name, a client, a budget and a roster
+/// cannot be read passively the way commits can, so they are stated here and
+/// read on every scoring run.
 ///
-/// Why this is a separate document from `projects/`:
+/// Kept separate from `projects/` because that collection is ingestion's
+/// output and read-only to every client, which is what stops a team editing
+/// its own scores. This is also how a project comes into existence: ingestion
+/// builds the `projects/` document from the plan, so a new project reaches
+/// the dashboard on the next run.
 ///
-///  - `projects/` is ingestion's output and is read-only to every client,
-///    which is what stops a team editing its own scores. Keeping the plan in
-///    the same document would mean opening that door.
-///  - A plan is owned by people and changes rarely. A score is owned by the
-///    machine and changes every run. Mixing them makes it unclear who last
-///    wrote what.
-///
-/// **This is how a project comes into existence.** Ingestion creates the
-/// `projects/` document from the plan and keeps its score current; nothing in
-/// the app writes to `projects/` directly. A lead fills in a plan, and the
-/// project appears on the dashboard on the next run.
-///
-/// None of this is status entry in the sense constraint 4 rules out. Nothing
-/// here reports on how the work is going, and nothing here can be moved to
-/// flatter a score: spending more of a budget always lowers it, and a longer
-/// schedule lowers the burn rate while lengthening the delivery forecast.
+/// Not status entry in the sense constraint 4 rules out. Nothing here says how
+/// the work is going, and nothing here flatters a score: spending more of a
+/// budget always lowers it.
 class ProjectPlan {
   const ProjectPlan({
     required this.projectId,
@@ -70,7 +60,7 @@ class ProjectPlan {
   /// project is the simplest way to make it stop looking bad, which is the
   /// behaviour the whole anti-gaming argument exists to resist. Archiving
   /// keeps the history and the seam, so a project that went wrong can still
-  /// be looked at afterwards — which is the post-mortem this app is supposed
+  /// be looked at afterwards, which is the post-mortem this app is supposed
   /// to make unnecessary, not impossible.
   final bool isArchived;
 
@@ -166,7 +156,7 @@ abstract final class ProjectPlanRules {
   }
 
   /// Money is checked for sense, not for size. A spend above the total is
-  /// allowed — that is an overrun, and reporting it is the point.
+  /// allowed, that is an overrun, and reporting it is the point.
   static String? budgetProblem(ProjectPlan plan) {
     if (plan.budgetTotal < 0 || plan.budgetSpent < 0) {
       return 'Budget figures cannot be negative.';

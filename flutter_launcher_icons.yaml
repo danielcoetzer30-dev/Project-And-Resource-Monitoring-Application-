@@ -11,7 +11,7 @@
 #                        iOS applies its own rounding, so this is a full square.
 #   icon_foreground.png  1024x1024, transparent. The Android adaptive layer.
 #                        Artwork sits inside the inner 66% because launchers
-#                        crop to circles, squircles and rounded squares — any
+#                        crop to circles, squircles and rounded squares, any
 #                        closer to the edge and it gets clipped on half of
 #                        Android.
 
@@ -27,6 +27,6 @@ flutter_launcher_icons:
 
   # Themed icons follow the user's wallpaper colours on Android 13+. The
   # monochrome layer is the same artwork; the system recolours it, so the
-  # signal ramp is lost there by design — shape has to carry it alone, which
+  # signal ramp is lost there by design, shape has to carry it alone, which
   # is why the descending staircase was chosen over the segmented band.
   android_adaptive_monochrome: "assets/icon/icon_foreground.png"

@@ -8,7 +8,7 @@ import 'source_repository.dart';
 
 /// An in-memory [SourceRepository], for tests and for running with no backend.
 ///
-/// Applies the same two refusals as the real one — role, then validity — so a
+/// Applies the same two refusals as the real one (role, then validity), so a
 /// test that passes here cannot rely on something Firestore would reject.
 class MockSourceRepository implements SourceRepository {
   MockSourceRepository({
@@ -54,7 +54,7 @@ class MockSourceRepository implements SourceRepository {
     } else {
       // copyWith, not a hand-built copy: this used to rebuild the source
       // field by field and dropped squadId, so every source added through the
-      // mock arrived with no squad — which the real repository does not do,
+      // mock arrived with no squad, which the real repository does not do,
       // and which is the one way a mock can make a passing test worthless.
       _sources.add(
         source.id.isEmpty

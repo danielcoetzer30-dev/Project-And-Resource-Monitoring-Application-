@@ -51,7 +51,7 @@ class IngestionSource {
   /// This is what lets ingestion aggregate without anybody being named: every
   /// contributor to the repository counts towards this squad, and the
   /// anonymiser never has to be told who they are. The contributor threshold
-  /// is unaffected — they are still counted, from the events themselves.
+  /// is unaffected, they are still counted, from the events themselves.
   ///
   /// Empty means the source is read and then discarded, because activity that
   /// belongs to no squad cannot be aggregated into anything.
@@ -65,7 +65,7 @@ class IngestionSource {
   /// A copy with some fields changed.
   ///
   /// Added because rebuilding this by hand lost [squadId] twice in the mock
-  /// repository — once when allocating an id for a new source and once when
+  /// repository, once when allocating an id for a new source and once when
   /// pausing one. A source with no squad is read on every run and thrown
   /// away, so the field going missing is silent and expensive. Listing every
   /// field here once is cheaper than remembering all eight at three call

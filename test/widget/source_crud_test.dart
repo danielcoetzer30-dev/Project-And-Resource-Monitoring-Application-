@@ -19,7 +19,7 @@ import '../support/fake_auth_repository.dart';
 ///
 /// This is the module where a record genuinely disappears. A project is
 /// archived rather than deleted, because removing a failing project is the
-/// easiest way to make it stop looking bad — a source is a statement about
+/// easiest way to make it stop looking bad, a source is a statement about
 /// where to read from, and removing one destroys no history, so here delete
 /// means delete.
 void main() {
@@ -86,7 +86,7 @@ void main() {
   late MockSourceRepository repository;
 
   /// The real router, so the test exercises the route guard as well as the
-  /// screens — the permission check lives in the router, and a test that
+  /// screens, the permission check lives in the router, and a test that
   /// pushed the screen directly would skip it.
   Future<void> pumpApp(
     WidgetTester tester, {
@@ -195,7 +195,7 @@ void main() {
 
     testWidgets('the form takes no access token, deliberately', (tester) async {
       // A token box would take a secret, fail to store it, and leave somebody
-      // believing they had set it up — `firestore.rules` refuses any source
+      // believing they had set it up, `firestore.rules` refuses any source
       // document carrying one.
       await pumpApp(tester, signedInAs: lead);
 

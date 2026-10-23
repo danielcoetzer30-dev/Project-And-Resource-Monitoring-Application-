@@ -41,7 +41,7 @@ class ComplexityRatioCalculator implements FactorCalculator {
 
     final detail = switch (ratio) {
       > 1.6 =>
-        'Remaining issues are much heavier than what is being cleared — the hard work is stacking up',
+        'Remaining issues are much heavier than what is being cleared, the hard work is stacking up',
       > 1.2 => 'Open issues skewing heavier as simpler work is cleared',
       < 0.8 => 'Remaining work is lighter than what has been cleared',
       _ => 'Backlog weight stable against completed work',

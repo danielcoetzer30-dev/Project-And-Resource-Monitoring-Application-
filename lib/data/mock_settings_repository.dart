@@ -8,7 +8,7 @@ import 'settings_repository.dart';
 /// An in-memory [SettingsRepository], for tests and for running the app with
 /// no backend.
 ///
-/// Applies the same two refusals as the real one — role, then validity — so a
+/// Applies the same two refusals as the real one, role, then validity, so a
 /// test that passes here cannot be relying on something Firestore would
 /// reject.
 class MockSettingsRepository implements SettingsRepository {

@@ -200,7 +200,7 @@ class _Sent extends StatelessWidget {
   }
 }
 
-/// Shown when the request itself failed — no connection, or too many
+/// Shown when the request itself failed, no connection, or too many
 /// attempts. Not shown for an address with no account, which is not an error
 /// this screen is willing to report.
 class _ErrorPanel extends StatelessWidget {

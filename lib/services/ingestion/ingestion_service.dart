@@ -20,7 +20,7 @@ class IngestionResult {
   final List<String> suppressedSquads;
 
   /// Sources that could not be read, by source id. A run continues when one
-  /// source fails — a broken ClickUp token should not stop GitHub ingestion.
+  /// source fails, a broken ClickUp token should not stop GitHub ingestion.
   final Map<String, Failure> failures;
 
   final DateTime ranAt;

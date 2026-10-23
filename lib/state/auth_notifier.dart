@@ -64,7 +64,7 @@ class AuthNotifier extends Notifier<AuthState> {
   /// the sign-in screen catches to show the message beside the form.
   ///
   /// This used to only set the state. Nothing read `SignedOut.failure`, and
-  /// the screen's error display only ever worked when the callback threw — so
+  /// the screen's error display only ever worked when the callback threw, so
   /// a refused sign-in returned normally, the gate rebuilt the form from
   /// scratch, and the person saw the same empty screen with no explanation.
   /// Every wrong password, every expired account, every unreachable network

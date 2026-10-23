@@ -9,7 +9,7 @@ import 'tokens.dart';
 /// score projects server-side against the same definition the app renders.
 ///
 /// Presentation code uses the colour, the icon **and** [HealthState.label]
-/// together. Colour alone is not an accessible signal — `StatusPill` is the
+/// together. Colour alone is not an accessible signal, `StatusPill` is the
 /// component that gets this right, and everything else should follow it.
 extension HealthStateStyle on HealthState {
   Color get color => switch (this) {

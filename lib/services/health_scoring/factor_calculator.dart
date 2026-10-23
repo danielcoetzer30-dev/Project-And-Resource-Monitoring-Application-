@@ -9,7 +9,7 @@ import '../../models/scoring_weights.dart';
 class FactorResult {
   const FactorResult({required this.value, required this.detail});
 
-  /// 0–100, where higher is healthier.
+  /// 0-100, where higher is healthier.
   final double value;
 
   /// Plain-language reading of what the number means right now.
@@ -20,7 +20,7 @@ class FactorResult {
 ///
 /// Each indicator is its own class implementing this, so adding an indicator
 /// means adding a file rather than editing the engine. That matters here
-/// because which indicators predict failure is the open research question —
+/// because which indicators predict failure is the open research question,
 /// the set is expected to change once interview data comes back.
 abstract interface class FactorCalculator {
   /// Shown as the factor name on the project detail screen.
@@ -32,7 +32,7 @@ abstract interface class FactorCalculator {
   FactorResult calculate(ProjectMetrics metrics);
 }
 
-/// Clamps a value into the 0–100 range the whole app assumes.
+/// Clamps a value into the 0-100 range the whole app assumes.
 ///
 /// Shared by every calculator so none of them can quietly produce a number
 /// outside the scale and skew the composite.
@@ -42,7 +42,7 @@ double clampScore(double value) {
   return value;
 }
 
-/// Converts a ratio of actual-to-expected into a 0–100 score.
+/// Converts a ratio of actual-to-expected into a 0-100 score.
 ///
 /// A ratio of 1 (meeting the baseline) scores 75, which is the bottom of "On
 /// track". Doing better pushes toward 100; falling behind drops away steeply,

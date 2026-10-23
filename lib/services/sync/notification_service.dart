@@ -29,7 +29,7 @@ class HealthAlert {
 /// Watches for projects crossing into a worse state and raises an alert once.
 ///
 /// Fires on the *transition*, not on the state. A project sitting at Critical
-/// for a fortnight should generate one alert, not one every polling cycle —
+/// for a fortnight should generate one alert, not one every polling cycle,
 /// an early warning system that cries wolf daily gets muted, and a muted
 /// warning system is worse than none.
 ///

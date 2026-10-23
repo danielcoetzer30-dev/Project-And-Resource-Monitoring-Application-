@@ -3,7 +3,7 @@ import 'project_repository.dart';
 
 /// Load-shedding data, as an interface.
 ///
-/// The implementation belongs to the Infrastructure workstream — it may read a
+/// The implementation belongs to the Infrastructure workstream, it may read a
 /// public schedule API or fall back to windows a team enters by hand. Either
 /// way the rest of the app only sees this.
 abstract interface class OutageRepository {

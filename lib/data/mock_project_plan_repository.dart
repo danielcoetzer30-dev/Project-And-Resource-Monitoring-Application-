@@ -8,7 +8,7 @@ import 'project_plan_repository.dart';
 /// An in-memory [ProjectPlanRepository], for tests and for running with no
 /// backend.
 ///
-/// Applies the same two refusals as the real one — role, then validity — so a
+/// Applies the same two refusals as the real one (role, then validity), so a
 /// test that passes here cannot rely on something Firestore would reject.
 class MockProjectPlanRepository implements ProjectPlanRepository {
   MockProjectPlanRepository({

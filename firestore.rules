@@ -96,7 +96,7 @@ service cloud.firestore {
       allow write: if false; // created server-side or in the console
 
       // -------------------------------------------------------------------
-      // Monitoring data — readable by members, written only by ingestion.
+      // Monitoring data, readable by members, written only by ingestion.
       // -------------------------------------------------------------------
       match /projects/{projectId} {
         allow read: if belongsToOrg(orgId);
@@ -118,8 +118,8 @@ service cloud.firestore {
         //
         //   - You may only post as yourself, so a comment cannot be
         //     attributed to somebody who did not write it.
-        //   - Exactly four fields are accepted. Anything else — a squad id, a
-        //     score, an activity count — is refused outright, so a comment
+        //   - Exactly four fields are accepted. Anything else, a squad id, a
+        //     score, an activity count, is refused outright, so a comment
         //     can never become a side channel for individual data.
         //   - No editing, by anybody. A discussion that can be rewritten
         //     after the fact is not a record of what was decided.
@@ -158,7 +158,7 @@ service cloud.firestore {
       }
 
       // -------------------------------------------------------------------
-      // Configuration — writable by the team.
+      // Configuration, writable by the team.
       // -------------------------------------------------------------------
       match /sources/{sourceId} {
         allow read: if belongsToOrg(orgId);
@@ -173,10 +173,10 @@ service cloud.firestore {
 
       // Every member reads the settings, because the scoring has to be
       // inspectable by the people it scores. Only a lead or a manager changes
-      // them. The client checks this too, so it can say why it refused — this
+      // them. The client checks this too, so it can say why it refused, this
       // is what makes that check more than a courtesy.
       // A project's stated figures, as opposed to its measured ones: budget,
-      // dates, rostered hours. Ingestion reads these and cannot invent them —
+      // dates, rostered hours. Ingestion reads these and cannot invent them,
       // a commit log does not know what a project costs.
       //
       // Separate from projects/ on purpose. That collection is ingestion's
@@ -239,7 +239,7 @@ service cloud.firestore {
       //     The name and role on screen are read from the directory.
       //   - Only somebody who strictly outranks you may move you. A manager
       //     places leads and developers, a lead places developers, and nobody
-      //     places a manager — not even themselves. A developer's rank is 0,
+      //     places a manager, not even themselves. A developer's rank is 0,
       //     so the comparison alone refuses them; there is no separate check.
       //   - Roles come from the real `users` documents, never from the
       //     directory, which is a display copy a person writes about
@@ -290,7 +290,7 @@ service cloud.firestore {
       }
 
       // -------------------------------------------------------------------
-      // Messaging — direct messages and groups.
+      // Messaging, direct messages and groups.
       // -------------------------------------------------------------------
       //
       // Roles rank developer < lead < manager, and the rules below are the

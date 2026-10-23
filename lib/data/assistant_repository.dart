@@ -7,7 +7,7 @@ import '../models/chat_message.dart';
 /// network, and swapping a direct API call for a backend proxy later is one new
 /// class rather than a rewrite of the chat screen.
 abstract interface class AssistantRepository {
-  /// True when the assistant is usable — for the direct implementation, that
+  /// True when the assistant is usable, for the direct implementation, that
   /// means an API key has been entered.
   Future<bool> isConfigured();
 

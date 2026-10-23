@@ -1,6 +1,6 @@
 import 'health_state.dart';
 
-/// One period of a project's history — a day, a sprint, whatever the caller
+/// One period of a project's history: a day, a sprint, whatever the caller
 /// decides a segment means.
 ///
 /// Lives in `models/` rather than next to the widget that draws it because

@@ -37,7 +37,7 @@ void main() {
   testWidgets('renders at a range of segment counts without overflowing', (
     tester,
   ) async {
-    // One segment, a normal month, and far more than fits — the painter
+    // One segment, a normal month, and far more than fits, the painter
     // collapses gaps below about 3px per segment, and this is what proves it
     // does not blow up instead.
     for (final count in [1, 30, 200]) {

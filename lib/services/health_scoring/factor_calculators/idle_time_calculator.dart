@@ -29,7 +29,7 @@ class IdleTimeCalculator implements FactorCalculator {
 
     if (workable <= 0) {
       // The entire window was lost to outages. There is no performance to
-      // measure, so report neutral rather than zero — a blackout is not a
+      // measure, so report neutral rather than zero, a blackout is not a
       // failing team.
       return FactorResult(
         value: 60,

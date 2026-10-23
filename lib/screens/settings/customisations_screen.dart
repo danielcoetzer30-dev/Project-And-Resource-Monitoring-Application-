@@ -192,7 +192,7 @@ class CustomisationsScreen extends ConsumerWidget {
               subtitle: Text(
                 'A notification when a project moves into at risk or '
                 'critical, and when one recovers. Once per change, never '
-                'once per day — and nothing about a person, only a '
+                'once per day, and nothing about a person, only a '
                 'project.',
                 style: AppType.bodyMuted,
               ),

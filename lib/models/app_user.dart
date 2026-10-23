@@ -12,8 +12,8 @@ enum UserRole {
 
   final String label;
 
-  /// Higher outranks lower. The declaration order above *is* the rank order —
-  /// developer, then lead, then manager — so reordering the values changes who
+  /// Higher outranks lower. The declaration order above *is* the rank order,
+  /// developer, then lead, then manager. Reordering the values changes who
   /// may remove whom in a group. `messaging_rules_test.dart` pins it.
   int get rank => index;
 
@@ -32,7 +32,7 @@ enum UserRole {
 /// A signed-in user.
 ///
 /// Deliberately thin. It carries who you are and which organisation you belong
-/// to, and nothing about what you have done — activity is aggregated to squad
+/// to, and nothing about what you have done, activity is aggregated to squad
 /// level before storage and is never attached to a user.
 class AppUser {
   const AppUser({

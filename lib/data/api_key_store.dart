@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// The key is the user's own, entered by them, and stays on their device. It
 /// is never sent to Firestore, never shared with the team, and never included
-/// in an APK — which is the whole reason the assistant asks for one instead of
+/// in an APK, which is the whole reason the assistant asks for one instead of
 /// shipping a key everyone could extract from the app.
 ///
 /// `shared_preferences` is not encrypted storage. For a prototype where each

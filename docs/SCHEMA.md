@@ -4,7 +4,7 @@ What lives where in `project-health-monitor-436da`, which workstream writes it,
 and why the structure is shaped this way.
 
 The field names here match the DTOs in `lib/data/dto/` exactly. If you change
-one, change both — a mismatch fails silently, because Firestore returns null
+one, change both, a mismatch fails silently, because Firestore returns null
 for a field that does not exist and the DTO falls back to a default.
 
 ---
@@ -46,7 +46,7 @@ Document id is the Firebase Auth uid.
 | `role` | string | `developer`, `lead` or `manager` |
 | `createdAt` | timestamp | Server timestamp |
 
-**Written by:** the app, on registration. Roles are never raised by the client —
+**Written by:** the app, on registration. Roles are never raised by the client,
 promoting someone is an administrative action done in the console.
 
 **No activity data ever goes here.** This document says who someone is, never
@@ -71,11 +71,11 @@ what they have done.
 | `name` | string | |
 | `client` | string | |
 | `squadId` | string | References a sibling squad document |
-| `score` | number | 0–100 composite |
+| `score` | number | 0-100 composite |
 | `factors` | array of maps | See below |
 | `seam` | array of maps | See below |
 | `openSignals` | number | |
-| `budgetBurn` | number | Fraction, 0–1, can exceed 1 |
+| `budgetBurn` | number | Fraction, 0-1, can exceed 1 |
 | `scheduleDaysRemaining` | number | |
 | `loadSheddingHoursLost` | number | Reported, never deducted from `score` |
 | `scheduleTotalDays` | number | Total planned duration. Needed for a burn *rate* |
@@ -83,32 +83,32 @@ what they have done.
 | `updatedAt` | timestamp | |
 
 `scheduleTotalDays` and `velocityRatio` exist for the forecaster. Burn alone
-cannot produce a date — 94% spent means nothing until you know whether that
+cannot produce a date, 94% spent means nothing until you know whether that
 took three weeks or three months. Both default safely when absent (0 and 1),
 and a project missing them produces no forecast rather than a wrong one.
 
-**`factors[]`** — each entry:
+**`factors[]`**, each entry:
 
 | Field | Type |
 |---|---|
 | `name` | string |
-| `value` | number (0–100) |
+| `value` | number (0-100) |
 | `weight` | number (weights sum to 1) |
-| `detail` | string — the sentence explaining the number |
+| `detail` | string, the sentence explaining the number |
 
-**`seam[]`** — each entry, oldest first:
+**`seam[]`**, each entry, oldest first:
 
 | Field | Type |
 |---|---|
-| `state` | string — `onTrack`, `watch`, `atRisk`, `critical` |
-| `periodLabel` | string — e.g. "12 Sep" |
-| `flagged` | boolean — a risk flag fired in this period |
+| `state` | string, `onTrack`, `watch`, `atRisk`, `critical` |
+| `periodLabel` | string, e.g. "12 Sep" |
+| `flagged` | boolean, a risk flag fired in this period |
 
 Factors and seam segments are stored **inline rather than as subcollections**.
 They are always read with the project and never queried alone, so a
 subcollection would cost an extra read per project for no benefit.
 
-**Written by:** ingestion, server-side. Never by a client — which is what stops
+**Written by:** ingestion, server-side. Never by a client, which is what stops
 a team editing its own scores.
 
 ---
@@ -119,7 +119,7 @@ a team editing its own scores.
 |---|---|---|
 | `name` | string | |
 | `headcount` | number | How many people. **Not who.** |
-| `weeklyHours` | number | Hours the squad has in a week, across everything. Stated by the team, like the headcount — a commit log knows somebody worked, not how many hours they had. Absent means capacity is not computed rather than guessed. |
+| `weeklyHours` | number | Hours the squad has in a week, across everything. Stated by the team, like the headcount, a commit log knows somebody worked, not how many hours they had. Absent means capacity is not computed rather than guessed. |
 | `capacityUsed` | number | Committed hours over `weeklyHours`; above 1 is over-allocation |
 | `activeProjectCount` | number | |
 | `velocityTrend` | number | Fraction against own baseline; negative is slowing |
@@ -131,7 +131,7 @@ reads a score reads no identity with it.
 
 Membership is held separately, in `squadMembers/{uid}` below. That collection
 was added on 21 October 2026 and it does mean squad membership is now
-derivable — see constraint 1 in `ARCHITECTURE.md` for what that cost and what was
+derivable, see constraint 1 in `ARCHITECTURE.md` for what that cost and what was
 kept. No metric moved with it: nothing on a squad, a project or a signal
 resolves to a person.
 
@@ -157,7 +157,7 @@ constructed in code. Anything written here without it is a bug.
 
 | Field | Type | Notes |
 |---|---|---|
-| `stage` | number | Load-shedding stage, 1–8 |
+| `stage` | number | Load-shedding stage, 1-8 |
 | `start` | timestamp | |
 | `end` | timestamp | |
 | `affectedSquadIds` | array of strings | Squads, not people |
@@ -188,11 +188,11 @@ from it.
 
 | Field | Type | Notes |
 |---|---|---|
-| `name` | string | Required, 1–80 characters |
+| `name` | string | Required, 1-80 characters |
 | `client` | string | May be empty, up to 80 characters |
 | `squadId` | string | Which squad does the work. Required, or the project is never scored |
 | `budgetTotal` | number | Cannot be negative |
-| `budgetSpent` | number | Cannot be negative. May exceed the total — an overrun is the thing worth reporting |
+| `budgetSpent` | number | Cannot be negative. May exceed the total, an overrun is the thing worth reporting |
 | `startDate` | timestamp or null | Null is written rather than omitted, so a date cleared on purpose reaches the document |
 | `endDate` | timestamp or null | Must be after `startDate` |
 | `weeklyHours` | number | Hours rostered to this project. Idle time is measured against it |
@@ -200,7 +200,7 @@ from it.
 
 **Written by:** a lead or manager, from project setup on the Projects tab.
 **Read by:** ingestion, which creates or updates `projects/{projectId}` from
-it on the next run — which is what lets the app offer project setup while
+it on the next run, which is what lets the app offer project setup while
 `projects` stays unwritable by every client.
 
 **Exactly these nine fields**, enforced with `hasOnly` in the rules. One that
@@ -268,12 +268,12 @@ Document id is the Firebase Auth uid. Who is on which squad.
 
 **One field, and the rules refuse any document with another key.** The name
 and role a roster shows are joined from the directory, so this is not a second
-place a person's details accumulate — and if this document ever grew a field,
+place a person's details accumulate, and if this document ever grew a field,
 every write would start being rejected rather than quietly succeeding.
 
 **Written by:** somebody who **strictly outranks** the person being placed. A
 manager places leads and developers, a lead places developers, and nobody
-places a manager — not even themselves. Same ladder as group removal in
+places a manager, not even themselves. Same ladder as group removal in
 messaging, and roles are read from `users`, never from the directory.
 
 **Read by:** every member of the organisation. A roster only management could
@@ -305,8 +305,8 @@ A direct conversation or a group.
 | Field | Type | Notes |
 |---|---|---|
 | `kind` | string | `direct` or `group` |
-| `name` | string | Groups only. 1–60 characters |
-| `memberIds` | array of strings | Uids. Two for `direct`; 1–50 for `group` |
+| `name` | string | Groups only. 1-60 characters |
+| `memberIds` | array of strings | Uids. Two for `direct`; 1-50 for `group` |
 | `createdBy` | string | Uid of whoever made it |
 | `createdAt` | timestamp | Server timestamp |
 | `lastMessageAt` | timestamp | Orders the inbox. Set when it is made and on every send |
@@ -350,7 +350,7 @@ composite index.
 
 | Field | Type | Notes |
 |---|---|---|
-| `body` | string | 1–2000 characters |
+| `body` | string | 1-2000 characters |
 | `senderId` | string | Must be the signed-in uid |
 | `senderName` | string | Snapshot of the display name when sent. At most 80 characters |
 | `createdAt` | timestamp | Server timestamp |
@@ -376,7 +376,7 @@ person is attached to anything the app reports on. The line this schema still
 holds is between knowing who somebody works with and knowing what they
 produced.
 
-`RawActivityEvent` — the only type in the codebase carrying an author — exists
+`RawActivityEvent`, the only type in the codebase carrying an author, exists
 in memory inside the ingestion layer and is never serialised. The anonymiser
 converts it to squad totals before anything reaches Firestore, and drops squads
 with fewer than two contributors entirely, because a one-person aggregate is
@@ -401,7 +401,7 @@ The shape:
 - A user reads and updates only their own `users/{uid}` document
 - Organisation data is readable by members of that organisation, checked
   against `users/{uid}.orgId`
-- `projects`, `squads` and `signals` are **read-only to clients** — they are
+- `projects`, `squads` and `signals` are **read-only to clients**, they are
   written by ingestion, never by the app
 - `settings` is writable by a lead or manager, so weights can be tuned
 - `projectPlans` is writable by a lead or manager, nine fields exactly, and is

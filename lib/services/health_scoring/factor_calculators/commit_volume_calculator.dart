@@ -5,8 +5,8 @@ import '../factor_calculator.dart';
 /// Commit activity against the squad's own recent baseline.
 ///
 /// Weighted lowest of the five on purpose. Commit count is the easiest
-/// indicator to game — a developer who knows they are measured on it can
-/// produce a dozen trivial commits in a minute — so it contributes least and
+/// indicator to game, a developer who knows they are measured on it can
+/// produce a dozen trivial commits in a minute, so it contributes least and
 /// only ever alongside four others. That is the whole reason the score is a
 /// matrix rather than a single number.
 ///

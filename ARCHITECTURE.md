@@ -49,7 +49,7 @@ In practice:
 to read "No individual-level data".** It was weakened deliberately, by the
 team, and the honest version is this:
 
-`Squad` still has a `headcount` and never a member list — but
+`Squad` still has a `headcount` and never a member list, but
 `squadMembers/{uid}` now says who is on which squad, and the Capacity tab
 shows each squad's roster by name. A roster beside published squad metrics
 re-identifies: "Platform squad: these two people" next to "Platform squad,
@@ -62,7 +62,7 @@ That is the same objection that turned down a teammate's member-management
 feature on 19 October 2026, recorded further down this file. It has not
 stopped being true. The team decided on 21 October 2026 that being able to see
 and change who is on a squad was worth it, and the proposal's ethics section
-has to say so — an app whose documentation calls a capability a breach while
+has to say so, an app whose documentation calls a capability a breach while
 shipping it is worse than either choice made cleanly.
 
 What was kept, and is what the constraint now protects:
@@ -72,7 +72,7 @@ What was kept, and is what the constraint now protects:
   second place a person's details accumulate, and `firestore.rules` refuses a
   placement document carrying any other key.
 - Placement is an act of management: only somebody who **strictly outranks**
-  you may move you, so a developer places nobody and nobody places a manager —
+  you may move you, so a developer places nobody and nobody places a manager,
   not even themselves. There is no self-service route onto a squad, because
   which aggregate your work counts in is not the individual's to choose.
 - The roster is readable by every member, not only by management. A roster
@@ -116,7 +116,7 @@ signal, which are a discussion about the data and never the data itself.
 
 `lib/services/assistant/snapshot_brief.dart` is the only thing in the app that
 sends project data to a third party. It can only emit squad-level data because
-that is all the domain model holds — there is no per-person field to include by
+that is all the domain model holds, there is no per-person field to include by
 accident. `test/unit/snapshot_brief_test.dart` asserts it.
 
 If you ever add individual data to a model, that test fails, and it should.
@@ -167,7 +167,7 @@ Keep it that way. A screen importing `cloud_firestore` is a bug.
 `lib/services/health_scoring/` is the research contribution. Everything else is
 plumbing around it.
 
-Five weighted indicators compose into one 0–100 score:
+Five weighted indicators compose into one 0-100 score:
 
 | Indicator | Default weight | Measures |
 |---|---|---|
@@ -178,7 +178,7 @@ Five weighted indicators compose into one 0–100 score:
 | Idle-time ratio | 0.15 | Use of workable time, outages excluded |
 
 **It is multi-dimensional on purpose.** A single linear indicator is trivially
-gamed — the proposal raises this when discussing the Hawthorne effect. Commit
+gamed, the proposal raises this when discussing the Hawthorne effect. Commit
 volume is weighted lowest precisely because it is easiest to inflate, and a
 test proves thousands of fake commits still leave a failing project failing.
 
@@ -206,7 +206,7 @@ no connection), Projects, Capacity, Signals, **Schedule** and **Ask**.
 than what it is about: Health became Projects, which is also where projects
 are now set up; Squads became Capacity, which is the figure that screen
 reports; Week became Schedule. Signals stayed, because it is the deliberate
-word — milder than an alert, stronger than a note — and the copy voice rests
+word, milder than an alert, stronger than a note, and the copy voice rests
 on it. `StartTab` in `preferences.dart` changed its labels only: the enum
 *names* are what gets stored on the device, so renaming one of those
 identifiers would invalidate every saved start-tab preference.
@@ -216,7 +216,7 @@ per project, then states what load-shedding has taken from it and that those
 hours are excluded from every score. Grid and Calendar used to be separate
 tabs; Calendar's grid panel and squad list only repeated what Grid and Squads
 already said, so they were folded into one. Outage state is shown for today
-only — a schedule that changes daily cannot honestly be labelled for Thursday,
+only, a schedule that changes daily cannot honestly be labelled for Thursday,
 so a future day says so rather than reading as outage-free.
 `test/widget/week_screen_test.dart` holds that promise in place.
 
@@ -232,7 +232,7 @@ developer reads every setting and every score and writes none of them, which
 is the point: scoring a team with numbers it cannot inspect is the thing this
 project exists to argue against. `AppUser.canChangeSettings` is the predicate,
 `currentUserProvider` and friends in `auth_notifier.dart` are how screens ask,
-and every client-side check is repeated in `firestore.rules` — a check only in
+and every client-side check is repeated in `firestore.rules`, a check only in
 the client is a courtesy, not a control.
 
 **Scoring weights persist.** `SettingsNotifier` reads the organisation's saved
@@ -279,11 +279,11 @@ still the committed hours over the hours the squad stated, so placing somebody
 changes who is accounted for and not what anything scores.
 
 **Projects are added in the app, and still written by ingestion.** Project
-setup sits at the top of the Projects tab — it was a row under Settings until
+setup sits at the top of the Projects tab, it was a row under Settings until
 21 October 2026, which meant reading a score flagged "budget, dates or hours
 missing" and then going somewhere else to fix it. A lead states what a project
 is: name, client, squad, budget, schedule and weekly hours. None of it says
-how the work is going, so constraint 4 holds — it is setup, like connecting a
+how the work is going, so constraint 4 holds, it is setup, like connecting a
 source. A developer opens the same screen and changes nothing on it.
 
 The trick is which collection it writes. A plan goes to `projectPlans`, which
@@ -315,7 +315,7 @@ uses: the fields, the validation and the squad choice are identical, and two
 screens would be two places for the same rules to drift apart.
 
 Removing a source is a real delete, unlike archiving a project. A source is a
-statement about where to read from, and removing one destroys no history —
+statement about where to read from, and removing one destroys no history,
 the scores it contributed to stay where they are. That is the difference that
 makes a delete acceptable here and not there.
 
@@ -335,7 +335,7 @@ set it up.
 **Alerts.** A project crossing into at risk or critical raises one alert, and
 so does one recovering. `NotificationService` decides whether anything is
 worth saying, `AlertPresenter` decides how it is said, and `AlertNotifier` is
-the wire between them and the snapshot — which did not exist until 21 October
+the wire between them and the snapshot, which did not exist until 21 October
 2026, so the service was correct and unreachable for weeks. Nothing called
 `evaluate` and nothing listened to `alerts`.
 
@@ -347,7 +347,7 @@ Recovery is announced too, so the tool does not read as purely punitive.
 Two halves. The in-app banner always shows, because it is a change on a screen
 somebody is already looking at. The tray notification is opt-in under Settings
 → Customisations, off by default, and asks for the Android permission at the
-moment it is switched on rather than at launch — a prompt before anybody knows
+moment it is switched on rather than at launch, a prompt before anybody knows
 what it is for gets refused, and on Android a refusal is remembered. A refused
 permission leaves the switch off rather than claiming to be on while nothing
 can be shown.
@@ -365,7 +365,7 @@ asserts it.
 format, density, which tab the app opens on, how many signals the dashboard
 lists, whether the grid strip shows, and whether a declining project notifies
 you. Text size and bold text sit
-separately under Accessibility, and have their own reset — somebody who needs
+separately under Accessibility, and have their own reset, somebody who needs
 large text should not lose it by tidying up their date format.
 
 All of it is on-device only, in `shared_preferences`, and never sent anywhere:
@@ -376,11 +376,11 @@ to those defaults rather than surfacing an error.
 
 `StartTab` in `preferences.dart` is indexed straight into the shell's
 `_sections`, so the two lists have to stay in step. A stored tab that no
-longer exists falls back to Home rather than opening the wrong screen —
+longer exists falls back to Home rather than opening the wrong screen,
 `preferences_store_test.dart` and the start-tab case in
 `app_flow_test.dart` are what hold that together.
 
-**Forecasting** projects the current trend forward — `forecaster.dart` turns
+**Forecasting** projects the current trend forward, `forecaster.dart` turns
 burn rate and velocity into "the budget runs out eight days before the work
 does". Deliberately linear: "at the current rate" honestly means a straight
 line, and there is no historical outcome data to fit anything against. Every
@@ -389,14 +389,14 @@ total, one that has not started, or a squad at 2% of baseline all produce no
 date rather than a wrong one.
 
 **The assistant** (Ask tab) answers questions about the current snapshot. Each
-user supplies their own Anthropic API key, stored on-device — a shared key
+user supplies their own Anthropic API key, stored on-device, a shared key
 would ship inside the APK where anyone could extract it. Nobody has added a
 key yet, so it is inert until someone does.
 
 **Ingestion runs.** `tool/ingest.dart` reads the sources, aggregates, scores
 and writes, reusing the same anonymiser and engine the app was built around.
 It authenticates as a service account, which is not subject to
-`firestore.rules` — that is the point: `projects`, `squads` and `signals` stay
+`firestore.rules`, that is the point: `projects`, `squads` and `signals` stay
 unwritable by every client and this is the only identity that can change them.
 
 `.github/workflows/ingest.yml` runs it daily at 04:00 UTC, which is 06:00
@@ -413,8 +413,8 @@ holds a signal rather than noise.
 
 **Demonstration data comes from a public repository**, `rrousselGit/riverpod`,
 set up by `tool/configure_demo_source.dart`. Chosen because its shape
-resembles the teams this app is for — around eight contributors at a few
-commits a day — rather than a corporate monorepo. Only public commit metadata
+resembles the teams this app is for, around eight contributors at a few
+commits a day, rather than a corporate monorepo. Only public commit metadata
 is read, and the anonymiser aggregates before anything is stored. The team's
 own repository is too quiet to demonstrate anything: five commits a week with
 one author per window is the privacy protection working, not the system.
@@ -422,7 +422,7 @@ one author per window is the privacy protection working, not the system.
 **All five indicators are live**, from that one source. A Git source reads
 pull requests as well as commits: a merged pull request is work finished, an
 opened one is work arriving, and the ratio between them is what the
-complexity calculator reads. Issues are deliberately not read — riverpod has
+complexity calculator reads. Issues are deliberately not read, riverpod has
 86 open and closed none in a fortnight, so weighing that stock against a
 fortnight's throughput would clamp the indicator to zero and say more about
 open-source culture than about a team.
@@ -441,7 +441,7 @@ written rather than a guess.
 
 `tool/backfill_history.dart` gave the source the history it had but had not
 been asked about. Velocity and commit volume compare a window against the one
-before it, so a source connected today abstains for a fortnight — avoidably,
+before it, so a source connected today abstains for a fortnight, avoidably,
 since those fortnights already happened. Same adapters, same anonymiser, same
 contributor threshold, over windows that have closed. Scores are not
 backdated: a score is a statement about a project now, and the seam should
@@ -458,12 +458,12 @@ says the same thing whether or not the address has an account, and
 `FirebaseAuthRepository.sendPasswordReset` swallows `user-not-found` and
 `invalid-email` to match: an app built around not exposing its members should
 not hand out which addresses are registered at the front door. Everything
-else — no connection, too many attempts — is reported, because somebody
+else, no connection, too many attempts, is reported, because somebody
 otherwise waits for an email that was never sent.
 
 `SplashScreen` is what the app draws while it works out whether anybody is
-signed in. The wait is real — Firebase restores the session, then the user's
-document is read for their organisation and role — and it replaced a bare
+signed in. The wait is real, Firebase restores the session, then the user's
+document is read for their organisation and role, and it replaced a bare
 spinner, which on a slow connection reads as an app that has failed to start.
 It needs no data, so it renders whatever the network is doing.
 
@@ -480,7 +480,7 @@ will sign in successfully to an empty dashboard.
 Full system in `docs/DESIGN.md`.
 
 **Naming:** `snake_case.dart`, one primary class per file, named after it.
-Suffixes carry meaning — `_repository`, `_service`, `_calculator`, `_notifier`,
+Suffixes carry meaning, `_repository`, `_service`, `_calculator`, `_notifier`,
 `_dto`, `_screen`.
 
 **Riverpod without code generation.** No `build_runner`, no `.g.dart`.
@@ -508,7 +508,7 @@ flutter test
 Both must be clean. There are 317 tests and they all pass; a failure is
 something you introduced.
 
-Format with `dart format lib/ test/` — the project is formatted and an
+Format with `dart format lib/ test/`, the project is formatted and an
 unformatted file shows up as noise in every later diff.
 
 ---
@@ -550,14 +550,14 @@ such list to pick from.
 
 **That reason is gone, and it is worth being straight about it.** The
 messaging directory names everybody, `squadMembers` says who is on which
-squad, and `projectPlans` is a collection a client may write — so a `leadId`
+squad, and `projectPlans` is a collection a client may write, so a `leadId`
 on a plan is now perfectly buildable, and the rules could gate it to a lead or
 manager the same way they gate everything else there.
 
 What is left is a choice rather than an impossibility. The argument against
 it is the one in constraint 1: a project with a named lead, beside that
 project's score and its squad's roster, is the narrowest attribution in the
-app — one score, one name. The squad roster at least aggregates to a handful
+app, one score, one name. The squad roster at least aggregates to a handful
 of people. If the team wants per-project ownership, that is the sentence the
 proposal has to answer, not a technical obstacle.
 
@@ -581,11 +581,11 @@ In rough order of value to the research:
    other than the one shipped is the one defect a marker will certainly find.
    Messaging needs the same amendment, below.
 2. **Confirm the scheduled run actually fires.** The cron was switched on on
-   19 October 2026 and the first scheduled run wrote nothing — GitHub delays
+   19 October 2026 and the first scheduled run wrote nothing, GitHub delays
    scheduled workflows, sometimes by hours, and a job that has never run in
    Actions has never had its environment tested. Check the Actions tab before
    trusting the dashboard's timestamps.
-3. **Onboard the remaining teammates** — only two of five have working
+3. **Onboard the remaining teammates**, only two of five have working
    environments.
 4. **An API key for the assistant**, if the team wants it live.
 
@@ -599,12 +599,12 @@ every platform, and every string a user can read. Two things it deliberately
 did **not** reach, both because they are identities registered elsewhere that
 the app is matched against:
 
-- **`za.co.diego.keel`** — the Android `applicationId`, the iOS bundle id and
+- **`za.co.diego.keel`**, the Android `applicationId`, the iOS bundle id and
   the `package_name` inside `google-services.json`. Firebase matches the
   running app against that string, so changing it breaks Auth and Firestore
   until a new Android app is registered in the console and a fresh
   `google-services.json` downloaded. It is invisible to users.
-- **`KEEL_SOURCE_TOKENS` and `KEEL_SQUAD_OF_AUTHOR`** — environment variables
+- **`KEEL_SOURCE_TOKENS` and `KEEL_SQUAD_OF_AUTHOR`**, environment variables
   read by `tool/ingest.dart`, supplied from GitHub repository secrets of the
   same name. Renaming them in code without renaming the secrets in the GitHub
   settings would leave ingestion running with no tokens and no error.
@@ -615,7 +615,7 @@ replace, and neither affects what anybody sees.
 **Messaging was excluded and then included.** The original position was that
 general messaging duplicates the WhatsApp the team already uses and answers
 none of the research questions. The team revisited that on 19 October 2026
-and decided to keep it. The proposal needs to say so too — an app that ships a
+and decided to keep it. The proposal needs to say so too, an app that ships a
 feature its own documentation calls deliberately absent is worse than either
 choice made cleanly.
 
@@ -635,7 +635,7 @@ the reasons are not obvious from the code, and whoever wrote them deserves an
 answer better than silence.
 
 **Merged: managing ingestion sources from the app.** The idea was right and
-filled a real gap — the sources screen could only ever show an empty list,
+filled a real gap, the sources screen could only ever show an empty list,
 because nothing provided it one. Reimplemented rather than taken as-is: the
 submitted version also re-added `Project.leadId`, removed the doc comments
 explaining why it had been removed, and stripped the stale-sync highlighting
@@ -656,7 +656,7 @@ above. Delete became archive, for the reason given there.
 
 **Not merged, then largely conceded: member management.** The team confirmed
 on 19 October 2026 that the need behind it was knowing who is in the
-organisation, which the messaging directory already serves — one directory,
+organisation, which the messaging directory already serves, one directory,
 not two.
 
 The implementation was refused on more than that. `Member` carried a name, an
@@ -666,12 +666,12 @@ safe because a member has no metric attached, which is true on its own and
 misses the combination: a member list is harmless, squad metrics are harmless,
 and together they re-identify. "Platform squad: two people, here they are"
 beside "Platform squad, velocity down 31%" is individual performance data
-about two named people — exactly what `Anonymiser.minimumContributors` exists
+about two named people, exactly what `Anonymiser.minimumContributors` exists
 to prevent, reached from a direction the anonymiser cannot see.
 
 **On 21 October 2026 the team overruled that, and the squad roster was
 built.** Whoever wrote the original is owed the plain version: the objection
-above was not wrong, and it was not withdrawn — the capability was judged
+above was not wrong, and it was not withdrawn, the capability was judged
 worth the cost anyway. What the rebuild changed is the shape, not the
 principle:
 
@@ -691,7 +691,7 @@ archive arrived the same day, forked from before the Week fold. It restored
 Grid and Calendar as separate tabs, taking the bottom bar back to seven, and
 added an app-bar popup menu to navigate between them.
 
-The dropdown is a reasonable answer to too many sections — it is just a
+The dropdown is a reasonable answer to too many sections, it is just a
 different answer to the one the team had already chosen, and its
 implementation hardcoded colours, listed five of the seven destinations, and
 duplicated the `_sections` list that exists so a section is named and iconed
@@ -709,7 +709,7 @@ status badge rather than only that shedding was on. Stage 2 and stage 6 are
 different days, and the number is the first thing a team here asks, so the
 badge moved into `week_screen.dart` with a test.
 
-**Merged on the team's decision: messaging.** Careful work — forked from
+**Merged on the team's decision: messaging.** Careful work, forked from
 current main, thorough security rules, roles read from `users` rather than
 from the directory it adds, messages immutable. Its directory carries a name
 and a role and deliberately no squad, so constraint 1 holds. The team chose

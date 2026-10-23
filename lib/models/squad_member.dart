@@ -3,20 +3,14 @@ import 'directory_entry.dart';
 
 /// Who is in which squad, by name.
 ///
-/// This is the one place in the app where a person is attached to a squad, and
-/// it is a deliberate reversal, taken by the team on 21 October 2026. The cost
-/// is worth stating in full, because nothing else in this codebase pays it:
+/// The one place a person is attached to a squad, and a deliberate reversal.
 ///
-/// A roster beside published squad metrics re-identifies. "Platform squad:
-/// these two people" next to "Platform squad, velocity down 31%" is individual
-/// performance data about two named people, reached from a direction
-/// `Anonymiser.minimumContributors` cannot see — suppressing a squad with one
-/// contributor does not help a squad of two with its members listed. This is
-/// the same objection that turned down a teammate's member-management feature
-/// on 19 October 2026, and it has not stopped being true; the team decided the
-/// capability was worth it anyway. The research proposal has to say so.
+/// A roster beside published squad metrics re-identifies: naming the two
+/// people on a squad whose velocity is down 31% is individual performance
+/// data, and `Anonymiser.minimumContributors` cannot prevent it. The team
+/// accepted that cost. The research proposal has to say so.
 ///
-/// What still holds, and is worth keeping hold of:
+/// What still holds:
 ///
 ///  - No individual *metric* exists anywhere. `RawActivityEvent` still never
 ///    leaves memory, the anonymiser still aggregates before storage, and there
@@ -43,7 +37,7 @@ class SquadPlacement {
 /// One person as a squad roster shows them: a name, a role, and nothing else.
 ///
 /// Built by joining placements against the directory, never stored. There is
-/// deliberately no activity, no capacity and no score on here — a roster says
+/// deliberately no activity, no capacity and no score on here, a roster says
 /// who is on a squad, and the squad card beside it says how the squad is
 /// doing.
 class RosterMember {
@@ -138,7 +132,7 @@ class SquadRoster {
 /// rule is the same one messaging uses for removing somebody from a group: you
 /// may place a person only when you strictly outrank them. So a lead places
 /// developers, a manager places leads and developers, and nobody places a
-/// manager — including themselves.
+/// manager, including themselves.
 ///
 /// Moving somebody between squads changes which aggregate their work is
 /// counted in, which is to say it changes what the organisation reports. That

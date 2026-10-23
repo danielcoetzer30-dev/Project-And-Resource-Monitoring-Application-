@@ -20,7 +20,7 @@ import '../../widgets/panel.dart';
 ///
 /// What is saved here is a plan. Ingestion reads it and produces the project
 /// document, which is why a new project appears on the dashboard on the next
-/// run rather than instantly — honest, because until something has been read
+/// run rather than instantly, honest, because until something has been read
 /// there is nothing to say about its health.
 class EditProjectScreen extends ConsumerStatefulWidget {
   const EditProjectScreen({super.key, this.projectId});
@@ -133,8 +133,8 @@ class _EditProjectScreenState extends ConsumerState<EditProjectScreen> {
   /// Archiving is this module's delete: there is deliberately no permanent
   /// one, because removing a failing project is the simplest way to make it
   /// stop looking bad, and the history is the research record. It is still
-  /// hard to undo from the dashboard's point of view — the project disappears
-  /// from every screen and stops being scored — so it asks first.
+  /// hard to undo from the dashboard's point of view, the project disappears
+  /// from every screen and stops being scored, so it asks first.
   ///
   /// Bringing one back is not destructive and is not confirmed.
   Future<void> _setArchived(bool archived) async {
@@ -367,7 +367,7 @@ class _EditProjectScreenState extends ConsumerState<EditProjectScreen> {
                     ? 'This project is archived. Bringing it back puts it on '
                           'the dashboard and starts it being scored again.'
                     : 'Archiving takes a project off the dashboard and stops '
-                          'it being scored. The history is kept — there is no '
+                          'it being scored. The history is kept, there is no '
                           'delete, because a project that went wrong is the '
                           'one most worth being able to look back at.',
                 style: AppType.bodyMuted,

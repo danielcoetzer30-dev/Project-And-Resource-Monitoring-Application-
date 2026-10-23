@@ -16,7 +16,7 @@ class HealthFactor {
 
   final String name;
 
-  /// 0–100, where higher is healthier.
+  /// 0-100, where higher is healthier.
   final double value;
 
   /// Contribution to the overall score. Weights across a project sum to 1.
@@ -53,7 +53,7 @@ class Project {
 
   /// Archived projects are filtered out before they reach the app, so every
   /// screen is unaffected by them existing. Set by ingestion from the plan,
-  /// never by a client — archiving is a decision about the plan, and this is
+  /// never by a client, archiving is a decision about the plan, and this is
   /// the consequence of it.
   ///
   /// Not deleted: the history and the seam are the research record, and a
@@ -64,13 +64,13 @@ class Project {
   // ARCHITECTURE.md: assigning one needs a member directory the privacy rules
   // forbid, and there is nothing on a project a client may write anyway.
 
-  /// 0–100 composite.
+  /// 0-100 composite.
   final double score;
   final List<HealthFactor> factors;
   final List<SeamSegment> seam;
   final int openSignals;
 
-  /// Fraction of budget consumed, 0–1. Can exceed 1.
+  /// Fraction of budget consumed, 0-1. Can exceed 1.
   final double budgetBurn;
   final int scheduleDaysRemaining;
 
@@ -90,7 +90,7 @@ class Project {
   /// 0.62 means running at 62% of it.
   ///
   /// Held here as well as in the factor breakdown because a forecast needs the
-  /// raw ratio, not the 0–100 score the ratio was turned into.
+  /// raw ratio, not the 0-100 score the ratio was turned into.
   final double velocityRatio;
 
   HealthState get state => HealthState.fromScore(score);

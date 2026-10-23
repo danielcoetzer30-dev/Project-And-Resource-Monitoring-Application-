@@ -69,7 +69,7 @@ class IssueTrackerAdapter implements IngestionAdapter {
       if (item is! Map<String, dynamic>) continue;
 
       // ClickUp reports assignees as a list. Only the first is used, and only
-      // to route the event to a squad — it is dropped by the anonymiser
+      // to route the event to a squad, it is dropped by the anonymiser
       // immediately afterwards.
       final assignees = item['assignees'] as List<dynamic>?;
       if (assignees == null || assignees.isEmpty) continue;

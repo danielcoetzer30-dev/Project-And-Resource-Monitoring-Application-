@@ -19,11 +19,11 @@ class HealthAssessment {
 
   final String projectId;
 
-  /// 0–100 composite.
+  /// 0-100 composite.
   final double score;
 
   /// Every contributing factor, with its value, weight and explanation.
-  /// Always returned alongside the score, never separately — the breakdown is
+  /// Always returned alongside the score, never separately, the breakdown is
   /// what makes a warning actionable.
   final List<HealthFactor> factors;
 
@@ -33,7 +33,7 @@ class HealthAssessment {
 /// Composes weighted indicators into a single health score.
 ///
 /// Deliberately multi-dimensional. A single linear indicator is trivially
-/// gamed — the research calls this out directly when discussing the Hawthorne
+/// gamed, the research calls this out directly when discussing the Hawthorne
 /// effect, where developers who know they are measured start optimising for
 /// the measure instead of the work. Five indicators pulling in different
 /// directions, each weighted, is far harder to fake than any one of them.
@@ -59,7 +59,7 @@ class HealthScoreEngine {
   ///
   /// Weights are normalised before use rather than trusted. They are editable
   /// in settings, and weights that do not sum to 1 would silently produce a
-  /// score outside the 0–100 scale the rest of the app assumes.
+  /// score outside the 0-100 scale the rest of the app assumes.
   HealthAssessment score({
     required ProjectMetrics metrics,
     ScoringWeights weights = const ScoringWeights.defaults(),

@@ -4,7 +4,7 @@
 //   node tool/seed_firestore.js
 //
 // Uses the Firestore REST API rather than the Admin SDK, so it needs no
-// service-account key — just the public web API key already in
+// service-account key, just the public web API key already in
 // lib/firebase_options.dart.
 //
 // Writes are refused by the production security rules (projects, squads and
@@ -163,7 +163,7 @@ const projects = [
     ),
     factors: [
       { name: 'Budget burn', value: 18, weight: 0.25, detail: '94% of budget spent with 11 days of scope remaining' },
-      { name: 'Task velocity', value: 31, weight: 0.25, detail: 'Throughput down 38% against this squad’s own baseline' },
+      { name: 'Task velocity', value: 31, weight: 0.25, detail: "Throughput down 38% against this squad's own baseline" },
       { name: 'Issue complexity ratio', value: 24, weight: 0.2, detail: 'Open issues skewing heavier as simpler work is cleared' },
       { name: 'Commit volume', value: 42, weight: 0.15, detail: 'Steady, but concentrated in one area of the codebase' },
       { name: 'Idle-time ratio', value: 35, weight: 0.15, detail: '6.5 hours lost to outages, already excluded from this score' },
@@ -208,7 +208,7 @@ const projects = [
     seam: buildSeam([['watch', 7], ['onTrack', 14], ['watch', 9]], [8]),
     factors: [
       { name: 'Budget burn', value: 71, weight: 0.25, detail: 'Tracking slightly under plan' },
-      { name: 'Task velocity', value: 58, weight: 0.25, detail: 'Recovered after last sprint’s dip' },
+      { name: 'Task velocity', value: 58, weight: 0.25, detail: "Recovered after last sprint's dip" },
       { name: 'Issue complexity ratio', value: 66, weight: 0.2, detail: 'Healthy mix of work sizes' },
       { name: 'Commit volume', value: 69, weight: 0.15, detail: 'Consistent across the squad' },
       { name: 'Idle-time ratio', value: 55, weight: 0.15, detail: '2 hours lost to outages this week' },
@@ -259,7 +259,7 @@ const signals = [
   {
     id: 'sig3',
     title: 'Stage 2 outage will remove 2.5 hours from tomorrow',
-    because: 'Scheduled outage overlaps the Mobile squad’s working window. Capacity forecasts have been adjusted; no project has been scored down for it.',
+    because: "Scheduled outage overlaps the Mobile squad's working window. Capacity forecasts have been adjusted; no project has been scored down for it.'",
     severity: 'watch',
     projectId: 'p2',
     raisedAt: hoursAgo(1),

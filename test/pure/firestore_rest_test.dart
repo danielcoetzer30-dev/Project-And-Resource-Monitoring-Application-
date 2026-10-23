@@ -4,7 +4,7 @@ import 'package:prahm/services/ingestion/firestore_rest.dart';
 
 /// Ingestion and `tool/seed_firestore.js` write the same collections, so they
 /// have to agree on how a value is spelled. A mismatch here would not fail
-/// loudly — it would write a second, differently shaped document that the app
+/// loudly, it would write a second, differently shaped document that the app
 /// reads as missing data.
 void main() {
   group('encoding matches what the app reads back', () {

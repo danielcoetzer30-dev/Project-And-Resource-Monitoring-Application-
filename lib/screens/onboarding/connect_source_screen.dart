@@ -333,7 +333,7 @@ class _ConnectSourceScreenState extends ConsumerState<ConnectSourceScreen> {
           const SizedBox(height: Tokens.space4),
           // No token field, deliberately. The credential belongs to the
           // ingestion job, and `firestore.rules` refuses any source document
-          // carrying one — so a box here would take a secret, fail to store
+          // carrying one, so a box here would take a secret, fail to store
           // it, and leave somebody believing they had set it up.
           Panel(
             title: 'Where the token goes',

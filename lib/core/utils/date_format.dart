@@ -38,10 +38,10 @@ abstract final class DateFormatting {
     _timeStyle = timeStyle;
   }
 
-  /// "12 Sep" — for Seam axes and compact rows.
+  /// "12 Sep", for Seam axes and compact rows.
   static String shortDate(DateTime date) => shortDateAs(_dateStyle, date);
 
-  /// "12 Sep 2026" — where the year matters.
+  /// "12 Sep 2026", where the year matters.
   static String mediumDate(DateTime date) => mediumDateAs(_dateStyle, date);
 
   /// "14:05" or "2:05 pm". 24-hour by default, which is how outage windows are

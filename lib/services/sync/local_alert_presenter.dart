@@ -10,14 +10,14 @@ import 'notification_service.dart';
 ///
 /// A local notification rather than a push one. The alert is produced on the
 /// device from a snapshot the app has already read, so there is nothing for a
-/// server to send — and this project is on Firebase's free plan, which has no
+/// server to send, and this project is on Firebase's free plan, which has no
 /// Cloud Functions to send one from. The honest consequence is that alerts are
 /// raised while the app is running; it is not a background service.
 ///
 /// The channel is created once, at a low-enough importance that it appears in
 /// the tray and in a heads-up banner but does not take over the screen. An
 /// early warning system that interrupts gets muted, and a muted warning system
-/// is worse than none — the same reasoning that makes
+/// is worse than none, the same reasoning that makes
 /// [NotificationService] fire on a transition rather than on a state.
 class LocalAlertPresenter implements AlertPresenter {
   LocalAlertPresenter({FlutterLocalNotificationsPlugin? plugin})
@@ -122,7 +122,7 @@ class LocalAlertPresenter implements AlertPresenter {
           priority: Priority.high,
           // Recovery is good news and should not read as a warning. The
           // colour comes from Tokens rather than a hex literal here, so the
-          // tray matches the app — this is the one file under services/ that
+          // tray matches the app, this is the one file under services/ that
           // imports the theme, and it does so because it is a presenter.
           color: alert.isWorsening ? Tokens.ember : null,
           styleInformation: BigTextStyleInformation(_body(alert)),

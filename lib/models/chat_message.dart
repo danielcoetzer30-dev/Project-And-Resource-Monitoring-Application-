@@ -4,7 +4,7 @@ enum ChatRole { user, assistant }
 /// One turn in a conversation with the assistant.
 ///
 /// Conversations are not persisted. They live for as long as the screen does
-/// and are gone when the app closes — a question about project health is not
+/// and are gone when the app closes, a question about project health is not
 /// something the app needs to keep, and storing it would mean storing a copy
 /// of the data outside the security rules that protect the original.
 class ChatMessage {

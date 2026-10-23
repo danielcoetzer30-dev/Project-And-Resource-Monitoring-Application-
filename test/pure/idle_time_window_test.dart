@@ -12,7 +12,7 @@ import 'package:prahm/services/ingestion/metrics_assembler.dart';
 /// They have not always. Scoring a six-hour window against a sixth of a week's
 /// roster reported a squad as idle overnight, four times a day, for the
 /// entirely normal act of being asleep. The window is a week now, which fixes
-/// that by construction — and introduces the opposite trap, which these tests
+/// that by construction, and introduces the opposite trap, which these tests
 /// are mostly here to hold shut.
 void main() {
   const assembler = MetricsAssembler();
@@ -65,7 +65,7 @@ void main() {
   test('overlapping stored windows are never added together', () {
     // The trap. Runs are daily and each covers seven days, so yesterday's
     // stored window shares six of them with today's. Summing the ones inside
-    // the last week — which is what this did when a run covered six hours —
+    // the last week, which is what this did when a run covered six hours,
     // would report about seven times the work actually done, and every squad
     // would look fully utilised forever.
     final history = [

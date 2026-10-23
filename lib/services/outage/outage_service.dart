@@ -13,7 +13,7 @@ class OutageService {
 
   /// Hours a squad lost to outages inside a window.
   ///
-  /// Overlap is computed rather than assumed: an outage running 16:00–18:30
+  /// Overlap is computed rather than assumed: an outage running 16:00-18:30
   /// against a working day ending at 17:00 costs one hour, not two and a half.
   double hoursLostBySquad({
     required String squadId,

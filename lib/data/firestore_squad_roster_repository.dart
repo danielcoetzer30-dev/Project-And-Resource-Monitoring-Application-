@@ -77,7 +77,7 @@ class FirestoreSquadRosterRepository implements SquadRosterRepository {
   ///
   /// The directory is a display copy each person writes about themselves, and
   /// the rules refuse an entry whose role differs from their real `users`
-  /// document — so it is safe to read here, and it is the only copy a client
+  /// document, so it is safe to read here, and it is the only copy a client
   /// can read at all. `users` is readable only by its owner, deliberately.
   Future<UserRole> _targetRole(String userId) async {
     final doc = await _org

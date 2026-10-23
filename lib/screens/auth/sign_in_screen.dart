@@ -18,7 +18,7 @@ class SignInScreen extends StatefulWidget {
   ///
   /// Belt and braces alongside the screen's own error handling. The screen
   /// catches what [onSubmit] throws, which works as long as it is still
-  /// mounted when the throw comes back — and it is only still mounted because
+  /// mounted when the throw comes back, and it is only still mounted because
   /// the gate deliberately keeps the form on screen while a request is in
   /// flight. This covers the case where it is rebuilt anyway.
   final String? initialError;

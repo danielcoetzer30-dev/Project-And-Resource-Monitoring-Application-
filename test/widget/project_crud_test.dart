@@ -304,7 +304,7 @@ void main() {
     testWidgets('there is no permanent delete anywhere on the form', (
       tester,
     ) async {
-      // If a delete control ever appears here, this fails — and it should.
+      // If a delete control ever appears here, this fails, and it should.
       // Removing a failing project is the simplest possible way to make it
       // stop looking bad.
       await pumpApp(tester, signedInAs: lead, initial: [plan]);

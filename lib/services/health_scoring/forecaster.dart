@@ -4,7 +4,7 @@ import '../../models/project.dart';
 ///
 /// Every field is nullable, and null means "not enough information to say"
 /// rather than zero. A monitoring tool that invents a date is worse than one
-/// that admits it cannot produce one — a team will plan around a number they
+/// that admits it cannot produce one, a team will plan around a number they
 /// are given, and a wrong one costs more than a blank.
 class Forecast {
   const Forecast({
@@ -48,7 +48,7 @@ class Forecast {
 /// Deliberately linear. The honest reading of "at the current rate" is a
 /// straight line, and a straight line is something a team lead can check
 /// against their own judgement. Anything fitted or smoothed would be harder to
-/// argue with and no more likely to be right — there is no historical outcome
+/// argue with and no more likely to be right, there is no historical outcome
 /// data to fit against, and the research this implements is qualitative.
 ///
 /// This is what turns the app from "your project is at 28" into "your budget
@@ -62,7 +62,7 @@ class Forecaster {
   /// completion date centuries away.
   static const _minimumBurnRate = 0.0001;
 
-  /// Velocity this far below baseline produces absurd projections — at 2% of
+  /// Velocity this far below baseline produces absurd projections, at 2% of
   /// baseline a two-week sprint finishes next year. Report it as stalled
   /// rather than as a date.
   static const _minimumVelocityRatio = 0.05;
@@ -91,7 +91,7 @@ class Forecaster {
 
   /// How far ahead of the work the money runs out.
   ///
-  /// This is the number worth acting on. Burn alone says nothing — 94% spent
+  /// This is the number worth acting on. Burn alone says nothing, 94% spent
   /// is fine at 94% elapsed and alarming at 60%.
   int? _budgetShortfall(Project p) {
     final runsOut = _budgetRunsOutInDays(p);

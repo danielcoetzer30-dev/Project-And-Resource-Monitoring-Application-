@@ -27,7 +27,7 @@ class AuthGate extends ConsumerWidget {
       // Busy deliberately keeps the form on screen rather than replacing it
       // with the splash. Swapping it out destroys the screen's State, and
       // with it both what was typed and the error that was about to be
-      // shown — which is how every refused sign-in came back as an empty
+      // shown, which is how every refused sign-in came back as an empty
       // form and no message at all. The form has its own spinner in the
       // button and disables itself while a request is in flight.
       AuthBusy() => _form(ref),

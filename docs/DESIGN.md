@@ -1,19 +1,19 @@
 # Design system
 
 How the app looks, and the rules for keeping it looking that way. Everything here
-is already implemented in `lib/theme/` — this document explains it so nobody has
+is already implemented in `lib/theme/`, this document explains it so nobody has
 to reverse-engineer it from the code.
 
 **The one rule that matters:** never hardcode a colour, font, size or spacing
 value in a screen or widget. Use `Tokens.*` and `AppType.*`. If the value you
-need doesn't exist there, add it there — then it exists everywhere.
+need doesn't exist there, add it there, then it exists everywhere.
 
 ---
 
 ## Direction
 
 A dark instrument panel for a technical audience checking project health on the go.
-Think fintech-ops rather than consumer app — calm and readable under a lot of live
+Think fintech-ops rather than consumer app, calm and readable under a lot of live
 data, with colour reserved almost entirely for meaning.
 
 Three principles drive every decision below:
@@ -56,13 +56,13 @@ Depth comes from stepping between `shaft` → `seam` and a one-pixel `rule` bord
 Deliberately cool-blue and outside the warm health ramp, so "this is tappable"
 can never be misread as "this is healthy". Use it for nothing else.
 
-### Signal ramp — the four health states
+### Signal ramp, the four health states
 
 | Token | Hex | State | Icon | Score |
 |---|---|---|---|---|
 | `Tokens.jade` | `#35A87C` | On track | `Icons.check_circle_outline` | ≥ 75 |
-| `Tokens.brass` | `#D8A33A` | Watch | `Icons.trending_down` | 55–74 |
-| `Tokens.ember` | `#E2703A` | At risk | `Icons.warning_amber_outlined` | 35–54 |
+| `Tokens.brass` | `#D8A33A` | Watch | `Icons.trending_down` | 55-74 |
+| `Tokens.ember` | `#E2703A` | At risk | `Icons.warning_amber_outlined` | 35-54 |
 | `Tokens.flare` | `#E04B4B` | Critical | `Icons.error_outline` | < 35 |
 
 The ramp runs cool → hot. It carries a temperature reading *and* a luminance
@@ -71,7 +71,7 @@ plain red/amber/green set.
 
 **Don't reach for these tokens directly.** Go through `HealthState` in
 `lib/models/health_state.dart`, which bundles colour, icon, label and severity
-together — so you can't accidentally show a colour without its icon and word.
+together, so you can't accidentally show a colour without its icon and word.
 Render a state with the `StatusPill` widget, which does all three.
 
 Score thresholds are a starting point. They'll move once interview data says
@@ -97,9 +97,9 @@ Styles live in `lib/theme/typography.dart` as `AppType.<name>`.
 
 | Face | Job | Why |
 |---|---|---|
-| **Archivo** | Structure — titles, headings, big numbers | Industrial grotesk, holds up compressed and heavy |
-| **IBM Plex Sans** | Prose — body text, labels | Slight humanist warmth stops Archivo reading cold |
-| **IBM Plex Mono** | Data — timestamps, deltas, IDs, anything that changes | Monospaced and tabular, so live values stay put |
+| **Archivo** | Structure, titles, headings, big numbers | Industrial grotesk, holds up compressed and heavy |
+| **IBM Plex Sans** | Prose, body text, labels | Slight humanist warmth stops Archivo reading cold |
+| **IBM Plex Mono** | Data, timestamps, deltas, IDs, anything that changes | Monospaced and tabular, so live values stay put |
 
 **Inter is not used anywhere. Don't introduce it.**
 
@@ -119,7 +119,7 @@ Styles live in `lib/theme/typography.dart` as `AppType.<name>`.
 | `AppType.dataStrong` | Plex Mono | 12 | 500 | Same, in `chalk` |
 
 Large display sizes use tight negative tracking; small labels use loose positive
-tracking. Don't override tracking on a style — pick the style that already has it.
+tracking. Don't override tracking on a style, pick the style that already has it.
 
 To recolour a style, use `copyWith`:
 
@@ -148,10 +148,10 @@ Inside a panel, `space4`.
 |---|---|---|
 | `Tokens.radiusSm` | 4 | Chips, pills, small controls |
 | `Tokens.radiusMd` | 6 | Panels, cards, list rows |
-| `Tokens.radiusLg` | 10 | Rarely — large containers |
+| `Tokens.radiusLg` | 10 | Rarely, large containers |
 | `Tokens.hairline` | 1 | Every border and divider |
 
-Radii are small on purpose. This is an instrument panel, not a card grid — don't
+Radii are small on purpose. This is an instrument panel, not a card grid, don't
 round things off further.
 
 ---
@@ -166,14 +166,14 @@ A `seam` surface with a `rule` border and `radiusMd`. Optional uppercase title i
 almost everything.
 
 ### `StatusPill`
-Renders a `HealthState` as colour + icon + label together — the only sanctioned
+Renders a `HealthState` as colour + icon + label together, the only sanctioned
 way to show a state. `compact: true` drops the word for dense rows where the label
 is adjacent anyway.
 
 ### `HealthSeam`
 The signature component. A segmented horizontal band, one segment per day or
 sprint, coloured by the state it was in, with a white notch above any period where
-a risk flag fired. Reads left→right as *trajectory*, not snapshot — the point is
+a risk flag fired. Reads left→right as *trajectory*, not snapshot, the point is
 seeing "drifting for nine days", not just "currently at risk".
 
 - On list rows: `height: 22`, no axis
@@ -183,7 +183,7 @@ It exposes the trend to screen readers as a sentence rather than a list of colou
 
 ### Capacity bar (in `squads_screen.dart`, to be extracted)
 100% sits at a fixed white marker roughly three-quarters along the bar, not at the
-end — so over-allocation renders as visible overflow past the mark rather than as
+end, so over-allocation renders as visible overflow past the mark rather than as
 a merely full bar.
 
 ---
@@ -191,7 +191,7 @@ a merely full bar.
 ## Platform conventions
 
 Material 3 on Android (`NavigationBar`, `InkWell` ripples). Cupertino navigation
-cues on iOS. One visual identity across both — same palette, type and iconography.
+cues on iOS. One visual identity across both, same palette, type and iconography.
 Don't build two differently-styled apps.
 
 Keyboard focus is always visible (`beacon`). Reduced-motion preferences are

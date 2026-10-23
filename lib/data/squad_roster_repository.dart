@@ -5,7 +5,7 @@ import '../models/squad_member.dart';
 /// Deliberately not on `ProjectRepository` and not on a squad document: that
 /// interface reads ingestion's output and has no write method, and a squad is
 /// written by ingestion alone. Placements are written by people, so they live
-/// in their own collection with their own rule — the same split that keeps a
+/// in their own collection with their own rule, the same split that keeps a
 /// project plan apart from a project.
 ///
 /// Reading is open to every member of the organisation. A roster only

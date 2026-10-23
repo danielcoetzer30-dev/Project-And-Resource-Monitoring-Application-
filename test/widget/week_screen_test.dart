@@ -12,7 +12,7 @@ import 'package:prahm/theme/app_theme.dart';
 /// the screen is actually told so.
 void main() {
   /// One snapshot from the seeded mock, with the repository shut down again
-  /// before the widget is pumped — it drifts its numbers on a periodic timer,
+  /// before the widget is pumped, it drifts its numbers on a periodic timer,
   /// which a widget test will not tolerate outliving the tree.
   Future<HealthSnapshot> seeded() async {
     final repo = MockProjectRepository();

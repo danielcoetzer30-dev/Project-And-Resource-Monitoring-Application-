@@ -14,7 +14,7 @@ import '../widgets/panel.dart';
 ///
 /// This is the screen no competing tool has. Its job is to hold infrastructure
 /// loss separate from delivery performance, so a team is never scored down for
-/// a national power failure — the hours are stated plainly and then excluded
+/// a national power failure, the hours are stated plainly and then excluded
 /// from every score.
 ///
 /// Horizons are deliberately short. A bar is the same linear projection the
@@ -385,7 +385,7 @@ class _DayDetails extends StatelessWidget {
                   const SizedBox(height: Tokens.space3),
                   Text(
                     'Next outage ${_time(grid.nextOutageStart!)}'
-                    '–${_time(grid.nextOutageEnd!)}',
+                    '-${_time(grid.nextOutageEnd!)}',
                     style: AppType.body,
                   ),
                 ],

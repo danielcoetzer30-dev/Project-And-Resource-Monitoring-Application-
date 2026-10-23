@@ -5,7 +5,7 @@ import '../models/project_plan.dart';
 /// Deliberately not on [ProjectRepository]. That interface reads ingestion's
 /// output and has no write method, which is constraint 4 in code; this one
 /// writes what people state. Keeping them apart is what makes the difference
-/// visible at the call site — a screen that saves a plan cannot accidentally
+/// visible at the call site, a screen that saves a plan cannot accidentally
 /// be a screen that edits a score.
 ///
 /// The split in one line: a plan says what a project *is*, and `projects/`
@@ -25,7 +25,7 @@ abstract interface class ProjectPlanRepository {
   /// A plan with an empty [ProjectPlan.projectId] is new and gets one
   /// allocated. Ingestion creates the matching `projects/` document on its
   /// next run, so a project appears on the dashboard shortly after it is
-  /// saved rather than instantly — which is honest, because there is nothing
+  /// saved rather than instantly, which is honest, because there is nothing
   /// to say about its health until something has been read.
   Future<String> save(ProjectPlan plan);
 

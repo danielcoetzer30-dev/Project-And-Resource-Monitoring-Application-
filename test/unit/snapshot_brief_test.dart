@@ -89,7 +89,7 @@ void main() {
 
     // The brief is sent on every turn, so its size is the running cost of the
     // feature. Roughly four characters per token, so this is about 2k tokens
-    // for four projects — a sane ceiling to notice if it grows.
+    // for four projects, a sane ceiling to notice if it grows.
     expect(
       brief.length,
       lessThan(8000),

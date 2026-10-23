@@ -14,7 +14,7 @@ import 'package:prahm/services/signal_engine.dart';
 ///
 /// This file is deliberately a `package:test` test rather than a
 /// `flutter_test` one. If someone reintroduces a Flutter import anywhere in
-/// the chain below, this stops compiling — which is the warning.
+/// the chain below, this stops compiling, which is the warning.
 void main() {
   test('scoring and ingestion run without Flutter', () {
     expect(HealthState.fromScore(28), HealthState.critical);

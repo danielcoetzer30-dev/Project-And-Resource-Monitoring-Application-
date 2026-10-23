@@ -45,7 +45,7 @@ import 'settings_notifier.dart';
 /// Root providers: the concrete implementations behind each interface.
 ///
 /// This is the one place a real implementation is named. Swapping the mock for
-/// Firestore is a change to one line here and nothing else — every screen reads
+/// Firestore is a change to one line here and nothing else, every screen reads
 /// through the interface and never learns which implementation it got.
 ///
 /// Feature-level providers (dashboard state, auth state, settings) live in
@@ -65,7 +65,7 @@ final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
 /// someone from a different organisation builds a new one pointed at their
 /// data. Nothing above this ever learns which implementation it got.
 ///
-/// To go back to seeded data — for a demo with no connection, or for tests —
+/// To go back to seeded data, for a demo with no connection, or for tests,
 /// override this provider with MockProjectRepository. That is the only change
 /// needed; every screen reads through the interface.
 final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
@@ -170,7 +170,7 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 /// How an alert reaches somebody: a notification in the system tray.
 ///
 /// Override with RecordingAlertPresenter in tests and in any build with no
-/// notification plugin. Nothing breaks when it does nothing — the in-app
+/// notification plugin. Nothing breaks when it does nothing, the in-app
 /// banner is driven from the alert stream rather than from here.
 final alertPresenterProvider = Provider<AlertPresenter>(
   (ref) => LocalAlertPresenter(),

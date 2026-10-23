@@ -13,7 +13,7 @@ import 'package:prahm/services/ingestion/git_metadata_adapter.dart';
 ///
 /// Pull requests are what fills them: a merged one is work finished, an opened
 /// one is work arriving, and the ratio between them is what the complexity
-/// calculator reads. Issues deliberately do not count — a public repository's
+/// calculator reads. Issues deliberately do not count, a public repository's
 /// tracker holds years of user reports, and weighing that against a
 /// fortnight's throughput says more about open-source culture than about a
 /// team.

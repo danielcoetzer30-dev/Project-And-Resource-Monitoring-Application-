@@ -5,7 +5,7 @@ import '../models/health_state.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
 
-/// Colour, icon and word together — the only sanctioned way to render a state.
+/// Colour, icon and word together, the only sanctioned way to render a state.
 ///
 /// Using this everywhere is what guarantees the app never leans on hue alone.
 class StatusPill extends StatelessWidget {

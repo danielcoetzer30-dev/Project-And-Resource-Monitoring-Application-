@@ -7,7 +7,7 @@ import 'package:prahm/services/ingestion/anonymiser.dart';
 ///
 /// Section D of the research proposal promises a system built without
 /// individual identity. If someone later changes the anonymiser in a way that
-/// lets an author key reach the output, these fail — which is the point.
+/// lets an author key reach the output, these fail, which is the point.
 void main() {
   final windowStart = DateTime(2026, 9, 1);
   final windowEnd = DateTime(2026, 9, 30);
@@ -52,7 +52,7 @@ void main() {
       expect(results, isNotEmpty);
 
       // Every field of every result, rendered as text, must not contain any
-      // author key. Deliberately crude — it would catch an identifier smuggled
+      // author key. Deliberately crude, it would catch an identifier smuggled
       // into a squad id or any other string field.
       for (final activity in results) {
         final rendered = [

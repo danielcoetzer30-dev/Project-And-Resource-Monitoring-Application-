@@ -1,6 +1,6 @@
 /// How dates are written.
 enum DateStyle {
-  /// "12 Sep 2026" — the style the app has always used.
+  /// "12 Sep 2026", the style the app has always used.
   dayMonthName,
 
   /// "12/09/2026"
@@ -15,7 +15,7 @@ enum DateStyle {
 
 /// 24-hour or 12-hour clock.
 enum TimeStyle {
-  /// "14:05" — how load-shedding schedules are published.
+  /// "14:05", how load-shedding schedules are published.
   h24,
 
   /// "2:05 pm"
@@ -29,14 +29,14 @@ enum UiDensity { comfortable, compact }
 ///
 /// The order matches `_sections` in the shell: Home first, then the data
 /// sections, so [index] can be used directly. If a tab is added, renamed or
-/// folded away there, change it here too — and note that the stored value is
+/// folded away there, change it here too, and note that the stored value is
 /// the enum's `name`, so a removed value falls back to Home rather than
 /// opening the wrong screen.
 /// Which tab the app opens on.
 ///
 /// The enum *name* is what gets stored on the device, so renaming one of these
-/// identifiers silently invalidates every saved preference — which is why the
-/// tabs renamed on 21 October 2026 changed only their labels. `health` is the
+/// identifiers silently invalidates every saved preference, which is why the
+/// renamed tabs changed only their labels. `health` is the
 /// Projects tab, `squads` is Capacity and `week` is Schedule. The labels have
 /// to match the titles in `AppShell._sections`, because the index is used
 /// directly.

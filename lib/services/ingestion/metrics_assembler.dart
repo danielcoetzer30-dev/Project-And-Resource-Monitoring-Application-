@@ -12,7 +12,7 @@ import '../../models/squad_activity.dart';
 ///
 /// Baselines come from the squad's past windows, never from an industry
 /// average. Small teams vary enormously and a global benchmark would flag half
-/// of them as failing on day one — that reasoning is in [ProjectMetrics] too,
+/// of them as failing on day one, that reasoning is in [ProjectMetrics] too,
 /// and it is the reason this class takes a history at all.
 class MetricsAssembler {
   const MetricsAssembler();
@@ -21,7 +21,7 @@ class MetricsAssembler {
   ///
   /// Only the one before this is read, but the margin matters. Runs are daily
   /// over a fortnight, so the window this one is compared against is the one
-  /// stored fourteen runs ago — retaining exactly fourteen would put that
+  /// stored fourteen runs ago, retaining exactly fourteen would put that
   /// lookup on the boundary, and a single skipped run would drop the baseline
   /// and report "not enough history" to a team that has plenty.
   static const retainedWindows = 21;
@@ -29,7 +29,7 @@ class MetricsAssembler {
   /// Assembles metrics for one project.
   ///
   /// [history] is previous windows for the same squad, most recent first, and
-  /// may be empty — a project in its first window has no baseline, and the
+  /// may be empty, a project in its first window has no baseline, and the
   /// calculators say so rather than inventing one.
   ProjectMetrics assemble({
     required String projectId,
@@ -56,7 +56,7 @@ class MetricsAssembler {
     // own baseline" from a run that had no baseline at all. Zero takes the
     // guard clause each calculator already has, which says "not enough
     // history yet" and scores the neutral middle. There was never a collapse
-    // to protect against — a zero baseline has always returned 60, not 0.
+    // to protect against, a zero baseline has always returned 60, not 0.
     final commitsBaseline = previous?.commitCount.toDouble() ?? 0;
     final tasksBaseline = previous?.tasksCompleted.toDouble() ?? 0;
 
@@ -111,8 +111,8 @@ class MetricsAssembler {
   /// The stored window covering the period immediately before [activity].
   ///
   /// Only windows that ended before this one opened are eligible. Runs
-  /// overlap — a seven-day window read daily shares six days with
-  /// yesterday's — and comparing a week against six of its own days would
+  /// overlap, a seven-day window read daily shares six days with
+  /// yesterday's, and comparing a week against six of its own days would
   /// report "steady" through almost anything.
   ///
   /// Of those, the most recent wins, so a skipped run compares against the
@@ -177,7 +177,7 @@ class MetricsAssembler {
   ///
   /// Capped at the workable hours, so utilisation never exceeds 1. A squad
   /// that touched more hours than it was rostered for has a roster figure
-  /// that is wrong, not a superhuman week — and over-commitment is what
+  /// that is wrong, not a superhuman week, and over-commitment is what
   /// `Squad.capacityUsed` reports, not this.
   double _cappedActiveHours({
     required int activePersonHours,

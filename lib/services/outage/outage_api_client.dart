@@ -7,7 +7,7 @@ import '../../models/outage_window.dart';
 
 /// Fetches load-shedding schedules from EskomSePush.
 ///
-/// A public schedule is only ever a forecast — stages change at short notice
+/// A public schedule is only ever a forecast, stages change at short notice
 /// and the published times shift. So this returns what the feed says and the
 /// service layer treats it as an estimate, never as a record of what happened.
 class OutageApiClient {

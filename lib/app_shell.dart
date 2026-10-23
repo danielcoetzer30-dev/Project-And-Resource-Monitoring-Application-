@@ -40,7 +40,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   ///
   /// Saved preferences arrive a moment after launch, so this reads the store
   /// directly rather than waiting on the provider, and gives up if they have
-  /// already tapped somewhere in the meantime — moving the screen out from
+  /// already tapped somewhere in the meantime, moving the screen out from
   /// under somebody is worse than ignoring their preference once.
   Future<void> _openOnStartTab() async {
     final saved = await ref.read(preferencesStoreProvider).load();
@@ -52,10 +52,10 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// this same list, so a section is named and iconed in exactly one place.
   ///
   /// Each title names what the tab is for rather than what it is about.
-  /// "Health" and "Week" were both renamed on 21 October 2026, because
-  /// neither said what you would find: one is the project list and now also
+  /// "Health" and "Week" were both renamed, because neither said what you
+  /// would find: one is the project list and now also
   /// where projects are set up, the other is the week laid out against the
-  /// hours load-shedding took. "Signals" stayed — it is the deliberate word,
+  /// hours load-shedding took. "Signals" stayed, it is the deliberate word,
   /// milder than an alert and stronger than a note, and the copy voice in
   /// `docs/DESIGN.md` rests on it.
   ///

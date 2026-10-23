@@ -33,7 +33,7 @@ abstract interface class FirestoreStore {
 ///
 /// Why REST and a service account rather than the Admin SDK: there is no
 /// Firebase Admin SDK for Dart. Using one would mean writing ingestion in
-/// another language, which would mean a second copy of the anonymiser — and
+/// another language, which would mean a second copy of the anonymiser, and
 /// two anonymisers means one of them drifts out of compliance without anyone
 /// noticing. Reusing the tested Dart code is worth hand-rolling this.
 ///

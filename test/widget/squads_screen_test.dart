@@ -18,7 +18,7 @@ import '../support/fake_auth_repository.dart';
 /// The Capacity tab: squad totals, and the roster beneath each one.
 ///
 /// The roster is the part worth testing hard. It is a privacy position the
-/// team reversed deliberately on 21 October 2026, and what has to keep
+/// team reversed deliberately, and what has to keep
 /// holding is that the move control follows rank, that a refusal is said out
 /// loud, and that no figure ever appears against a person.
 ///
@@ -196,7 +196,7 @@ void main() {
     tester,
   ) async {
     // Mobile squad states one person and has the manager placed on it, which
-    // agrees. Platform states two and has two, which also agrees — so moving
+    // agrees. Platform states two and has two, which also agrees, so moving
     // one away has to produce the warning rather than a silent reconcile.
     final roster = await pumpScreen(tester, signedInAs: manager);
 
@@ -267,7 +267,7 @@ void main() {
   ) async {
     // The row was drawn from a directory that said developer, and the
     // repository reads the role again when it writes. If somebody was
-    // promoted in between, the move is refused — and has to be said, or the
+    // promoted in between, the move is refused, and has to be said, or the
     // person who made it carries on believing the roster says what they meant.
     final roster = await pumpScreen(
       tester,

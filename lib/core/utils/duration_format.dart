@@ -1,7 +1,7 @@
 /// Human-readable durations.
 ///
 /// Both of these were previously reimplemented on two screens each, with
-/// slightly different rounding — one said "2h ago" where the other said
+/// slightly different rounding, one said "2h ago" where the other said
 /// "1h ago" for the same instant.
 abstract final class DurationFormatting {
   /// "3h ago", "2d ago". Used on signals and sync badges.
@@ -16,10 +16,10 @@ abstract final class DurationFormatting {
     return '${(elapsed.inDays / 30).floor()}mo ago';
   }
 
-  /// "6.5h" — outage hours, where the half matters.
+  /// "6.5h", outage hours, where the half matters.
   static String hours(double value) => '${value.toStringAsFixed(1)}h';
 
-  /// "2h 30m" — for a window length rather than a total.
+  /// "2h 30m", for a window length rather than a total.
   static String span(Duration duration) {
     final h = duration.inHours;
     final m = duration.inMinutes.remainder(60);

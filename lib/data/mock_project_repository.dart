@@ -160,7 +160,7 @@ class MockProjectRepository implements ProjectRepository {
             name: 'Task velocity',
             value: 31,
             weight: 0.25,
-            detail: 'Throughput down 38% against this squad’s own baseline',
+            detail: "Throughput down 38% against this squad's own baseline",
           ),
           HealthFactor(
             name: 'Issue complexity ratio',
@@ -268,7 +268,7 @@ class MockProjectRepository implements ProjectRepository {
             name: 'Task velocity',
             value: 58,
             weight: 0.25,
-            detail: 'Recovered after last sprint’s dip',
+            detail: "Recovered after last sprint's dip",
           ),
           HealthFactor(
             name: 'Issue complexity ratio',
@@ -400,7 +400,7 @@ class MockProjectRepository implements ProjectRepository {
         id: 'sig3',
         title: 'Stage 2 outage will remove 2.5 hours from tomorrow',
         because:
-            'Scheduled outage overlaps the Mobile squad’s working window. '
+            "Scheduled outage overlaps the Mobile squad's working window. "
             'Capacity forecasts have been adjusted; no project has been scored '
             'down for it.',
         severity: HealthState.watch,

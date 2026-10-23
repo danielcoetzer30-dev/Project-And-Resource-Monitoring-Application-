@@ -4,7 +4,7 @@
 /// the scoring engine consumes it, and neither needs to know about the other.
 ///
 /// Everything here is already aggregated to squad level. No field identifies a
-/// person, and none can be traced back to one — that aggregation happens in the
+/// person, and none can be traced back to one, that aggregation happens in the
 /// anonymiser before these numbers are ever assembled.
 class ProjectMetrics {
   const ProjectMetrics({
@@ -65,7 +65,7 @@ class ProjectMetrics {
   /// national power failure.
   final double outageHours;
 
-  /// Available hours with outage time removed — the hours a team could
+  /// Available hours with outage time removed, the hours a team could
   /// realistically have worked.
   double get workableHours {
     final workable = availableHours - outageHours;

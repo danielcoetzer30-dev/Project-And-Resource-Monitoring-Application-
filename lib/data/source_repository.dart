@@ -6,8 +6,8 @@ import '../models/ingestion_source.dart';
 /// what the whole organisation is measured on. `firestore.rules` gates it to
 /// leads and managers, and refuses any document carrying a token.
 ///
-/// **Credentials never pass through here.** A source records *what* to read —
-/// a repository name, a board id — and never *how* to authenticate. The token
+/// **Credentials never pass through here.** A source records *what* to read,
+/// a repository name, a board id, and never *how* to authenticate. The token
 /// lives in the ingestion job's secrets, where the app cannot reach it and a
 /// stolen phone does not carry it. [connect] takes no token for that reason,
 /// and the rules refuse one even if a future caller tried.

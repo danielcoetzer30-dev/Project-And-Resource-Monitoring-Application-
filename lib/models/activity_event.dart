@@ -22,7 +22,7 @@ class RawActivityEvent {
 
   final String sourceId;
 
-  /// Whatever the source uses to identify a person — a username or an email.
+  /// Whatever the source uses to identify a person, a username or an email.
   /// Used once, to decide which squad the event belongs to, and then dropped.
   final String authorKey;
 

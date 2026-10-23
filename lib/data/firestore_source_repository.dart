@@ -11,7 +11,7 @@ import 'source_repository.dart';
 ///
 /// Checks the role before writing so the app can say *why* a change was
 /// refused, and relies on `firestore.rules` to make that check more than a
-/// courtesy. A developer reads every source and changes none — the same shape
+/// courtesy. A developer reads every source and changes none, the same shape
 /// as scoring weights, and for the same reason: what a team is measured on
 /// should be inspectable by everyone it measures.
 class FirestoreSourceRepository implements SourceRepository {

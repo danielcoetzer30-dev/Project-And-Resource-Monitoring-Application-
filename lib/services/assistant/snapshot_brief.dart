@@ -7,8 +7,8 @@ import '../../models/health_state.dart';
 /// so what it includes matters more than how it reads.
 ///
 /// **It can only emit squad-level data, because that is all the snapshot
-/// holds.** No individual is identified anywhere in the app's domain model —
-/// `Squad` carries a headcount and no member list — so there is no per-person
+/// holds.** No individual is identified anywhere in the app's domain model,
+/// `Squad` carries a headcount and no member list, so there is no per-person
 /// field here to accidentally include. The guarantee is structural rather than
 /// a rule this file has to remember, which is the point of having built it
 /// that way. `snapshot_brief_test.dart` asserts it anyway.
@@ -23,7 +23,7 @@ abstract final class SnapshotBrief {
     buffer.writeln();
     buffer.writeln(
       'Captured ${_timestamp(snapshot.capturedAt)}'
-      '${snapshot.isLive ? '' : ' (cached — the device was offline)'}.',
+      '${snapshot.isLive ? '' : ' (cached, the device was offline)'}.',
     );
     buffer.writeln();
 
@@ -44,12 +44,12 @@ abstract final class SnapshotBrief {
       final start = s.grid.nextOutageStart;
       final end = s.grid.nextOutageEnd;
       if (start != null && end != null) {
-        b.writeln('Next outage ${_clock(start)}–${_clock(end)}.');
+        b.writeln('Next outage ${_clock(start)}-${_clock(end)}.');
       }
     }
     b.writeln(
       '${s.grid.hoursLostThisWeek} hours lost across the team this week. '
-      'These hours are excluded from every health score — a team is never '
+      'These hours are excluded from every health score, a team is never '
       'marked down for a power failure.',
     );
     b.writeln();
@@ -65,7 +65,7 @@ abstract final class SnapshotBrief {
 
     for (final p in s.worstFirst) {
       b.writeln();
-      b.writeln('### ${p.name} — ${p.client}');
+      b.writeln('### ${p.name}, ${p.client}');
       b.writeln('- Health score: ${p.score.round()}/100 (${p.state.label})');
       b.writeln('- Squad: ${p.squadId}');
       b.writeln('- Budget consumed: ${(p.budgetBurn * 100).round()}%');

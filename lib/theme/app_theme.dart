@@ -69,7 +69,7 @@ abstract final class AppTheme {
           ),
         ),
       ),
-      // Keyboard focus must always be visible — it is part of the quality
+      // Keyboard focus must always be visible, it is part of the quality
       // floor, not an accessibility extra.
       focusColor: Tokens.beacon,
       splashFactory: InkSparkle.splashFactory,

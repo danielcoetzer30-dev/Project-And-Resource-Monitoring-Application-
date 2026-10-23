@@ -11,7 +11,7 @@ import '../theme/typography.dart';
 /// always on the right in the warning colour. A dialog that moves its buttons
 /// around trains people to tap without reading.
 ///
-/// It states what will happen rather than asking "are you sure?" — somebody
+/// It states what will happen rather than asking "are you sure?", somebody
 /// who has to ask themselves whether they are sure has not been told what the
 /// button does.
 class ConfirmDialog extends StatelessWidget {
@@ -30,7 +30,7 @@ class ConfirmDialog extends StatelessWidget {
   /// The consequence, including anything that cannot be undone.
   final String body;
 
-  /// Names the action — "Archive", "Remove" — never "OK". A button labelled
+  /// Names the action, "Archive", "Remove", never "OK". A button labelled
   /// OK next to a question is the one people tap by reflex.
   final String confirmLabel;
 

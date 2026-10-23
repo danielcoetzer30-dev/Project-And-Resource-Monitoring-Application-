@@ -101,8 +101,8 @@ async function main() {
     console.log(
       `  ${id}  ${name}` +
         (has
-          ? `  — already has scheduleTotalDays=${total}, velocityRatio=${ratio}`
-          : '  — missing the forecast fields'),
+          ? `, already has scheduleTotalDays=${total}, velocityRatio=${ratio}`
+          : ', missing the forecast fields'),
     );
 
     if (!apply) continue;

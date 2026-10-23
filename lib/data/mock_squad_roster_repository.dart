@@ -9,8 +9,8 @@ import 'squad_roster_repository.dart';
 /// An in-memory [SquadRosterRepository], for tests and for running with no
 /// backend.
 ///
-/// Applies the same refusals as the real one — can you place anybody, then do
-/// you outrank this person — so a test that passes here cannot rely on
+/// Applies the same refusals as the real one: can you place anybody, then do
+/// you outrank this person, so a test that passes here cannot rely on
 /// something Firestore would reject.
 class MockSquadRosterRepository implements SquadRosterRepository {
   MockSquadRosterRepository({

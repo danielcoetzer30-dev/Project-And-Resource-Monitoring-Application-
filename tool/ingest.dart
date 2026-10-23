@@ -7,8 +7,8 @@
 // credential or a mapping that must not be committed:
 //
 //   FIREBASE_SERVICE_ACCOUNT  the whole service-account JSON key
-//   KEEL_SQUAD_OF_AUTHOR      {"github-username": "squadId", ...}, optional
-//   KEEL_SOURCE_TOKENS        {"sourceId": "token", ...}
+//   KEEL_SQUAD_OF_AUTHOR      {"github-username": "squadId"...}, optional
+//   KEEL_SOURCE_TOKENS        {"sourceId": "token"...}
 //   KEEL_ORG_ID               defaults to demo-org
 //   KEEL_WINDOW_HOURS         defaults to 336 (fourteen days). See the note on
 //                             the cron in .github/workflows/ingest.yml
@@ -74,7 +74,7 @@ Future<void> main(List<String> arguments) async {
       window: Duration(hours: windowHours),
     );
 
-    if (dryRun) print('DRY RUN — nothing was written.');
+    if (dryRun) print('DRY RUN, nothing was written.');
     report.summary.forEach(print);
 
     // A run where every source failed is a failure, so the Action goes red

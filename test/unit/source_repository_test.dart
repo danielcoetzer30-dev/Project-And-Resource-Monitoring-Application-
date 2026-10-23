@@ -7,7 +7,7 @@ import 'package:prahm/models/app_user.dart';
 import 'package:prahm/models/ingestion_source.dart';
 
 /// Connecting a source decides what the whole organisation is measured on, so
-/// it is gated the same way scoring weights are — and it is the one write that
+/// it is gated the same way scoring weights are, and it is the one write that
 /// could plausibly carry a credential, so it is the one that must not.
 void main() {
   const lead = AppUser(

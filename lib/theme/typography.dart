@@ -8,7 +8,7 @@ import 'tokens.dart';
 /// Archivo carries structure, IBM Plex Sans carries prose, IBM Plex Mono
 /// carries anything that changes while you are looking at it. Numbers use
 /// tabular figures so a live-updating metric does not jitter as digits change
-/// width — the whole app is numbers that move.
+/// width, the whole app is numbers that move.
 abstract final class AppType {
   static TextStyle get _tabular =>
       const TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
@@ -32,7 +32,7 @@ abstract final class AppType {
     color: Tokens.chalk,
   );
 
-  /// The large numbers — health scores, counts.
+  /// The large numbers, health scores, counts.
   static TextStyle get metric => GoogleFonts.archivo(
     fontSize: 34,
     fontWeight: FontWeight.w700,
@@ -71,7 +71,7 @@ abstract final class AppType {
     color: Tokens.slate,
   );
 
-  /// Data face — timestamps, deltas, identifiers, anything monospaced.
+  /// Data face, timestamps, deltas, identifiers, anything monospaced.
   static TextStyle get data => GoogleFonts.ibmPlexMono(
     fontSize: 12,
     fontWeight: FontWeight.w500,

@@ -13,7 +13,7 @@ import 'project_repository.dart';
 ///
 /// This is the offline half of the thesis. A team lead checking project health
 /// during a four-hour outage, on a phone with no signal, should still see
-/// yesterday's numbers and be told they are yesterday's — rather than a spinner
+/// yesterday's numbers and be told they are yesterday's, rather than a spinner
 /// or an error, which is what every tool the research criticises would show.
 ///
 /// Stored as JSON in shared preferences. A snapshot is a few kilobytes and is

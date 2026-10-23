@@ -4,7 +4,7 @@ import '../factor_calculator.dart';
 
 /// Spend rate measured against how much of the schedule has passed.
 ///
-/// Burn on its own says nothing — 60% spent is healthy at 60% elapsed and
+/// Burn on its own says nothing, 60% spent is healthy at 60% elapsed and
 /// alarming at 20%. What matters is the gap between the two, which is the
 /// earliest visible sign of a project that will run out of money before it
 /// runs out of scope.
@@ -41,13 +41,13 @@ class BudgetBurnCalculator implements FactorCalculator {
 
     final detail = switch (gap) {
       > 0.15 =>
-        '$burnPercent% of budget spent against $elapsedPercent% of the schedule — spending well ahead of plan',
+        '$burnPercent% of budget spent against $elapsedPercent% of the schedule, spending well ahead of plan',
       > 0.05 =>
-        '$burnPercent% spent against $elapsedPercent% elapsed — slightly ahead of plan',
+        '$burnPercent% spent against $elapsedPercent% elapsed, slightly ahead of plan',
       < -0.05 =>
-        '$burnPercent% spent against $elapsedPercent% elapsed — under plan',
+        '$burnPercent% spent against $elapsedPercent% elapsed, under plan',
       _ =>
-        '$burnPercent% spent against $elapsedPercent% elapsed — tracking to plan',
+        '$burnPercent% spent against $elapsedPercent% elapsed, tracking to plan',
     };
 
     return FactorResult(value: value, detail: detail);

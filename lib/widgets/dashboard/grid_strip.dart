@@ -52,7 +52,7 @@ class GridStrip extends StatelessWidget {
                   if (start != null && end != null) ...[
                     const SizedBox(height: Tokens.space1),
                     Text(
-                      'Next outage ${clockTime(start)}–${clockTime(end)}',
+                      'Next outage ${clockTime(start)}-${clockTime(end)}',
                       style: AppType.data,
                     ),
                   ],

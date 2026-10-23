@@ -43,7 +43,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const Divider(height: 1),
                 // Project setup used to be a row here. It moved to the top of
-                // the Projects tab on 21 October 2026, where the projects
+                // the Projects tab, where the projects
                 // themselves are: looking at a score that says its budget is
                 // missing and then hunting through Settings to add one was
                 // two places for one thought.
@@ -163,7 +163,7 @@ class SettingsScreen extends ConsumerWidget {
                 : _Row(
                     icon: Icons.logout,
                     title: 'Sign in',
-                    subtitle: 'Not signed in — running on demonstration data',
+                    subtitle: 'Not signed in, running on demonstration data',
                     onTap: () => Navigator.of(context).pushNamed(Routes.signIn),
                   ),
           ),

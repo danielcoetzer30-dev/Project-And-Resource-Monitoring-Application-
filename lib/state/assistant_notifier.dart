@@ -110,8 +110,8 @@ class AssistantNotifier extends Notifier<AssistantState> {
 
 /// Questions offered on the empty screen.
 ///
-/// Chosen to show what the assistant is actually for — reading the data and
-/// the reasoning behind it — rather than what a chat box could theoretically
+/// Chosen to show what the assistant is actually for, reading the data and
+/// the reasoning behind it, rather than what a chat box could theoretically
 /// be asked.
 const assistantSuggestions = <String>[
   'Which project is in the most trouble, and why?',

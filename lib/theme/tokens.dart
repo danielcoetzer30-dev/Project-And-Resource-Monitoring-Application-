@@ -12,7 +12,7 @@ abstract final class Tokens {
   static const chalk = Color(0xFFE6EDF3); // primary text, metrics
   static const slate = Color(0xFF8697A8); // labels, secondary text, axes
 
-  /// Interactive affordances only — links, focus rings, selection.
+  /// Interactive affordances only: links, focus rings, selection.
   /// Deliberately cool so "tappable" can never be misread as a health state.
   static const beacon = Color(0xFF4C9DD8);
 

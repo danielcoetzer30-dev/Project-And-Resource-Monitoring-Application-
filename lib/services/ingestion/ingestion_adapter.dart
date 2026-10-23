@@ -4,7 +4,7 @@ import '../../models/ingestion_source.dart';
 /// Reads activity from one kind of external system.
 ///
 /// Adapters only read. There is no method here for writing anything back, and
-/// none of them touch code content — commit messages, diffs and issue bodies
+/// none of them touch code content, commit messages, diffs and issue bodies
 /// are never requested. Metadata is all the scoring engine needs, and asking
 /// for less is what makes it defensible to point this at a client's private
 /// repository.

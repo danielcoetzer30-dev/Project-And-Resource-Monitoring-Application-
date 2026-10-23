@@ -21,7 +21,7 @@ import '../widgets/status_pill.dart';
 /// slowest" is not, because no per-person figure is stored anywhere to answer
 /// it with.
 ///
-/// The roster half was added on 21 October 2026 and does change what this
+/// The roster half was added later and does change what this
 /// screen exposes. A list of names beside a squad's metrics narrows those
 /// metrics to the people named, which is the trade the team made deliberately
 /// and which `lib/models/squad_member.dart` sets out in full. Nothing here
@@ -59,7 +59,7 @@ class SquadsScreen extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Every figure on this screen is a squad total. No activity '
-                  'is stored, scored or shown against a person — not to you, '
+                  'is stored, scored or shown against a person, not to you, '
                   'and not to management. The rosters below say who is on a '
                   'squad, never what they did.',
                   style: AppType.bodyMuted,
@@ -343,8 +343,8 @@ class _MemberRow extends ConsumerWidget {
   }
 
   Future<void> _openMoveSheet(BuildContext context, WidgetRef ref) async {
-    // Held before the sheet opens. Afterwards this row may be gone — a move
-    // rebuilds the roster it is part of — and the result still has to be
+    // Held before the sheet opens. Afterwards this row may be gone, a move
+    // rebuilds the roster it is part of, and the result still has to be
     // reportable.
     final messenger = ScaffoldMessenger.of(context);
 
@@ -503,7 +503,7 @@ class _CapacityBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // The bar is scaled so 100% sits at a fixed marker rather than at the far
-    // edge — over-allocation has to be visible as overflow, not just as a
+    // edge, over-allocation has to be visible as overflow, not just as a
     // full bar.
     const fullMark = 0.72;
     final fill = (squad.capacityUsed * fullMark).clamp(0.0, 1.0);

@@ -55,7 +55,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
   /// Called from the empty state. Null hides the button.
   final VoidCallback? onConnectSource;
 
-  /// Opens project setup — budgets, schedules, squads, archiving.
+  /// Opens project setup: budgets, schedules, squads, archiving.
   ///
   /// It lives on this tab rather than in Settings because a project is what
   /// this tab is about: somebody reading a score flagged "budget, dates or

@@ -11,7 +11,7 @@ import 'assistant_repository.dart';
 ///
 /// Dart has no official Anthropic SDK, so this calls the Messages API over
 /// HTTP. Calling it from the device is only acceptable because the key belongs
-/// to the person using the app — a shared key shipped inside the APK could be
+/// to the person using the app, a shared key shipped inside the APK could be
 /// extracted by anyone who downloaded it.
 ///
 /// When the team moves to a backend, this class is replaced by one that posts
@@ -32,7 +32,7 @@ class ClaudeAssistantRepository implements AssistantRepository {
   static const model = 'claude-opus-5-5';
 
   /// Answers are short and the context is small, so the lowest effort setting
-  /// is the right trade here — it keeps replies quick and cheap without
+  /// is the right trade here, it keeps replies quick and cheap without
   /// costing accuracy on questions this direct.
   static const effort = 'low';
 
@@ -178,7 +178,7 @@ class ClaudeAssistantRepository implements AssistantRepository {
 You are the assistant inside PRAHM, a project health monitoring app used by
 small South African software teams.
 
-Answer questions about the data below. Be direct and brief — two or three
+Answer questions about the data below. Be direct and brief, two or three
 sentences for most questions. These are busy people checking their phone.
 
 Rules you must follow:
@@ -190,7 +190,7 @@ Rules you must follow:
   something, or who is underperforming, explain that the tool deliberately
   does not track individuals and answer at squad level instead.
 - Hours lost to load-shedding are reported but never deducted from a health
-  score. If a team looks slow and lost hours to outages, say both — do not
+  score. If a team looks slow and lost hours to outages, say both, do not
   present an outage as underdelivery.
 - When you cite a score, give the reasoning behind it from the breakdown
   rather than the number alone.

@@ -14,7 +14,7 @@ import 'providers.dart';
 ///
 /// Its state is the most recent alert, which the shell uses to show an in-app
 /// banner. That matters because a notification posted while somebody is
-/// looking at the app is easy to miss — the tray is for when they are not.
+/// looking at the app is easy to miss, the tray is for when they are not.
 class AlertNotifier extends Notifier<HealthAlert?> {
   @override
   HealthAlert? build() {

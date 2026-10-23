@@ -5,7 +5,7 @@ import 'health_state.dart';
 /// The research protocol this app implements commits to aggregation at squad
 /// level and rules out individual analytics: the risk being mitigated is that
 /// health data becomes a performance-management instrument. There is
-/// deliberately no member-level metric anywhere in this model — only a
+/// deliberately no member-level metric anywhere in this model, only a
 /// headcount, so capacity can be reasoned about without exposing anyone.
 class Squad {
   const Squad({
@@ -23,7 +23,7 @@ class Squad {
   /// How many people are in the squad. Not who.
   final int headcount;
 
-  /// Fraction of available capacity committed, 0–1. Above 1 is
+  /// Fraction of available capacity committed, 0-1. Above 1 is
   /// over-allocation, a leading indicator of schedule slip.
   final double capacityUsed;
 

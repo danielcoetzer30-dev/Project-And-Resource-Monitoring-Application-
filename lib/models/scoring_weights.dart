@@ -2,7 +2,7 @@
 ///
 /// Configurable per organisation because the research does not assume the same
 /// indicators matter equally to every team. Exposing these in settings is also
-/// what keeps the score from being a black box — a team can see, and change,
+/// what keeps the score from being a black box: a team can see, and change,
 /// what it is being measured on.
 class ScoringWeights {
   const ScoringWeights({

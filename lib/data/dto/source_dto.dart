@@ -6,7 +6,7 @@ import '../../models/ingestion_source.dart';
 ///
 /// [toMap] writes exactly four fields and never a credential. The security
 /// rules refuse a source document carrying `token`, `accessToken` or `apiKey`,
-/// so adding one here would not quietly succeed — it would fail every write.
+/// so adding one here would not quietly succeed, it would fail every write.
 /// That is the intended behaviour, not an obstacle to work around.
 ///
 /// `lastSyncedAt` is written by ingestion, never by the app, so it is read

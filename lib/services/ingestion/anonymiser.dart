@@ -4,25 +4,17 @@ import '../../models/squad_activity.dart';
 
 /// Strips individual identity from ingested activity.
 ///
-/// This is the single most important file in the ingestion layer, and the one
-/// the research protocol depends on. Section D of the proposal commits to a
-/// system "deliberately built without any individual identity", aggregating to
+/// The file the research protocol depends on: Section D of the proposal
+/// commits to a system built without individual identity, aggregating to
 /// squad level, with management barred from granular developer analytics.
 ///
-/// Everything that enters this class carries an author. Nothing that leaves it
-/// does. That is the whole contract, and [anonymiseTest] in the test suite
-/// exists to fail loudly if it is ever broken.
+/// Everything entering this class carries an author. Nothing leaving it does.
+/// The test suite fails loudly if that is ever broken.
 ///
-/// ## Why a minimum contributor count
-///
-/// Aggregating to squad level only protects someone if the squad has more than
-/// one person in it. A "squad total" covering a single contributor is that
-/// person's individual activity with a different label on it — technically
-/// aggregated, practically identifying.
-///
-/// So squads below [minimumContributors] are dropped rather than reported. The
-/// cost is that a genuinely tiny squad produces no metrics; the alternative is
-/// per-person surveillance that happens to be spelled "squad".
+/// Squads below [minimumContributors] are dropped rather than reported,
+/// because a "squad total" covering one contributor is that person's activity
+/// with a different label on it. The cost is that a genuinely tiny squad
+/// produces no metrics.
 class Anonymiser {
   const Anonymiser({
     this.squadOfAuthor = const {},
@@ -37,7 +29,7 @@ class Anonymiser {
   /// the team, not in the monitoring database.
   ///
   /// Needed only when one source feeds several squads. Where a repository
-  /// belongs to a single squad — which is the common case — [squadOfSource]
+  /// belongs to a single squad, which is the common case, [squadOfSource]
   /// does the same job without naming anybody, and is preferred for that
   /// reason: it is one fewer place a person's identity has to be written down.
   final Map<String, String> squadOfAuthor;
@@ -46,7 +38,7 @@ class Anonymiser {
   ///
   /// The whole of a repository's activity belongs to one squad, so nobody has
   /// to be listed for the aggregate to be built. Contributors are still
-  /// counted, in memory, from the events themselves — the threshold below
+  /// counted in memory from the events themselves, so the threshold below
   /// does not weaken because the configuration got simpler.
   final Map<String, String> squadOfSource;
 

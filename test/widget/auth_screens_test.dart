@@ -330,7 +330,7 @@ void main() {
       // milliseconds, so frames render while the request is in flight and the
       // gate rebuilds for the busy state. If that rebuild replaces the form,
       // the screen is unmounted before the error comes back and the message
-      // is dropped — which is exactly what happened on the phone while this
+      // is dropped, which is exactly what happened on the phone while this
       // file's other tests passed, because a fake that answers instantly
       // never lets a frame through.
       final auth = FakeAuthRepository(signedIn: false);

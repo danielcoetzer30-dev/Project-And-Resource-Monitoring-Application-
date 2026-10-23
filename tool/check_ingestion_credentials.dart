@@ -74,7 +74,7 @@ Future<void> main(List<String> arguments) async {
     final projects = await firestore.list('organisations/$orgId/projects');
     print(
       '2/3  Read organisations/$orgId/projects '
-      '— ${projects.length} project(s).',
+      '${projects.length} project(s).',
     );
 
     // Written into ingestion's own working-state collection, which no client

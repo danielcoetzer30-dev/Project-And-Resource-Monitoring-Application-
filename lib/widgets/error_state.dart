@@ -63,7 +63,7 @@ class ErrorState extends StatelessWidget {
     );
   }
 
-  /// Network trouble is expected here and styled as such — amber, not red.
+  /// Network trouble is expected here and styled as such, amber, not red.
   /// Treating an outage as a system failure would be the wrong tone in an app
   /// built for unreliable connectivity.
   Color get _colour => switch (failure) {

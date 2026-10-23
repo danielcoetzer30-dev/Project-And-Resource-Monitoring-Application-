@@ -122,7 +122,7 @@ class _SeamPainter extends CustomPainter {
 
       if (segment.flagged) {
         // A chalk tick above the band. Colour already encodes state, so the
-        // flag needs a different channel — position and shape — to be legible
+        // flag needs a different channel, position and shape, to be legible
         // to someone who cannot separate the hues.
         final notchWidth = width.clamp(1.0, 3.0);
         canvas.drawRect(
