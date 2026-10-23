@@ -131,7 +131,7 @@ reads a score reads no identity with it.
 
 Membership is held separately, in `squadMembers/{uid}` below. That collection
 was added on 21 October 2026 and it does mean squad membership is now
-derivable — see constraint 1 in `CLAUDE.md` for what that cost and what was
+derivable — see constraint 1 in `ARCHITECTURE.md` for what that cost and what was
 kept. No metric moved with it: nothing on a squad, a project or a signal
 resolves to a person.
 
@@ -290,7 +290,7 @@ would be counted twice.
 membership derivable, and a roster beside a squad's published metrics narrows
 those metrics to the people named. That is a real reduction in the privacy
 property the rest of this schema is built around, taken knowingly by the team.
-Constraint 1 in `CLAUDE.md` and the doc comment on
+Constraint 1 in `ARCHITECTURE.md` and the doc comment on
 `lib/models/squad_member.dart` set out the full reasoning. Ingestion does not
 read this collection: capacity is still committed hours over the hours a squad
 stated, so placing somebody changes who is accounted for and not what anything

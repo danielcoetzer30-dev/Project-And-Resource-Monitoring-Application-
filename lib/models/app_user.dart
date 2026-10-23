@@ -63,7 +63,7 @@ class AppUser {
 
   // Deliberately no per-project permission. Every project in an organisation
   // is visible to every member and writable by none, so there is nothing for
-  // such a check to decide. See "Per-project ownership" in CLAUDE.md.
+  // such a check to decide. See "Per-project ownership" in ARCHITECTURE.md.
 
   factory AppUser.fromMap(Map<String, dynamic> map, String documentId) {
     return AppUser(

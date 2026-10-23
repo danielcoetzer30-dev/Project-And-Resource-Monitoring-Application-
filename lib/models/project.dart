@@ -61,7 +61,7 @@ class Project {
   final bool isArchived;
 
   // Deliberately no lead or owner field. See "Per-project ownership" in
-  // CLAUDE.md: assigning one needs a member directory the privacy rules
+  // ARCHITECTURE.md: assigning one needs a member directory the privacy rules
   // forbid, and there is nothing on a project a client may write anyway.
 
   /// 0–100 composite.
