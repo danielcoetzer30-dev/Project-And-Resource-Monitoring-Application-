@@ -17,12 +17,8 @@ abstract final class ProjectDto {
       client: data['client'] as String? ?? '',
       squadId: data['squadId'] as String? ?? '',
       score: (data['score'] as num?)?.toDouble() ?? 0,
-      factors: factorList
-          .map((item) => _factorFromMap(item as Map<String, dynamic>))
-          .toList(),
-      seam: seamList
-          .map((item) => _segmentFromMap(item as Map<String, dynamic>))
-          .toList(),
+      factors: factorsFrom(factorList),
+      seam: seamFrom(seamList),
       openSignals: (data['openSignals'] as num?)?.toInt() ?? 0,
       budgetBurn: (data['budgetBurn'] as num?)?.toDouble() ?? 0,
       scheduleDaysRemaining:
@@ -61,6 +57,30 @@ abstract final class ProjectDto {
   // than as subcollections. They are always read together with the project and
   // never queried on their own, so a subcollection would cost extra reads for
   // no benefit.
+
+  /// Factors from a stored array, skipping anything that is not a map.
+  ///
+  /// Every scalar above falls back to a default rather than throwing, and
+  /// these do the same, because the cost of throwing here is not one bad
+  /// field. This runs inside the projects listener, where an exception is not
+  /// caught by the stream's onError: it would leave the whole collection
+  /// unparsed and every screen silently stale. A document hand-edited in the
+  /// Firebase console is enough to produce one.
+  static List<HealthFactor> factorsFrom(List<dynamic> items) {
+    return [
+      for (final item in items)
+        if (item is Map<String, dynamic>) _factorFromMap(item),
+    ];
+  }
+
+  /// Seam segments from a stored array. See [factorsFrom] on why it skips
+  /// rather than throws.
+  static List<SeamSegment> seamFrom(List<dynamic> items) {
+    return [
+      for (final item in items)
+        if (item is Map<String, dynamic>) _segmentFromMap(item),
+    ];
+  }
 
   static HealthFactor _factorFromMap(Map<String, dynamic> map) {
     return HealthFactor(

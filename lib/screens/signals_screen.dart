@@ -48,9 +48,20 @@ class SignalsScreen extends StatelessWidget {
     );
   }
 
-  String _projectName(String id) => snapshot.projects
-      .firstWhere((p) => p.id == id, orElse: () => snapshot.projects.first)
-      .name;
+  /// The name of the project a signal is about, or a placeholder when the
+  /// snapshot does not carry it.
+  ///
+  /// It can be absent either way round: the repository emits as each
+  /// collection arrives, so signals can land a frame ahead of projects, and
+  /// an archived project leaves its signals behind. Falling back to another
+  /// project would attribute a warning to a team it is not about, which is
+  /// worse than naming none.
+  String _projectName(String id) {
+    for (final project in snapshot.projects) {
+      if (project.id == id) return project.name;
+    }
+    return 'Unknown project';
+  }
 }
 
 class _Empty extends StatelessWidget {
