@@ -14,7 +14,9 @@ import '../screens/messaging/group_members_screen.dart';
 import '../screens/messaging/messages_screen.dart';
 import '../screens/messaging/new_group_screen.dart';
 import '../screens/messaging/new_message_screen.dart';
+import '../screens/members_screen.dart';
 import '../screens/project_detail_screen.dart';
+import '../screens/squad_form_screen.dart';
 import '../screens/settings/about_screen.dart';
 import '../screens/settings/accessibility_screen.dart';
 import '../screens/settings/api_key_screen.dart';
@@ -55,6 +57,14 @@ class ConversationArgs {
   const ConversationArgs({required this.conversationId});
 
   final String conversationId;
+}
+
+/// Arguments for the members route.
+class MembersArgs {
+  const MembersArgs({this.squadId});
+
+  /// The squad to open on. Null shows everyone.
+  final String? squadId;
 }
 
 /// Builds routes by name.
@@ -144,6 +154,35 @@ abstract final class AppRouter {
         return _page(
           GroupMembersScreen(conversationId: args.conversationId),
           settings,
+        );
+
+      case Routes.members:
+        final args = settings.arguments;
+        return _page(
+          MembersScreen(squadId: args is MembersArgs ? args.squadId : null),
+          settings,
+        );
+
+      case Routes.squadForm:
+        // Creating or renaming a squad changes what the organisation is
+        // divided into, so it is gated here as well as hidden in the UI. The
+        // rules refuse it too, and the repository says why.
+        return _guardedPage(
+          settings: settings,
+          builder: (ref) {
+            final user = ref.watch(currentUserProvider);
+            if (!(user?.canChangeSettings ?? false)) {
+              return const _NotPermitted(
+                message:
+                    'Only leads and managers can create or change squads. '
+                    'Everyone can see them.',
+              );
+            }
+
+            // Null means creating. A squad means editing that one.
+            final squad = settings.arguments;
+            return SquadFormScreen(squad: squad is Squad ? squad : null);
+          },
         );
 
       case Routes.settings:

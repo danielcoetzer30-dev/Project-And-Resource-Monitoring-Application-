@@ -58,7 +58,21 @@ class MockSquadRosterRepository implements SquadRosterRepository {
   }
 
   @override
-  Future<void> place({required String userId, required String squadId}) async {
+  Future<void> place({
+    required String userId,
+    required String squadId,
+    List<String> projectIds = const [],
+  }) async {
+    if (squadId.isEmpty && projectIds.isNotEmpty) {
+      throw const ValidationException(
+        'Choose a squad before choosing projects.',
+      );
+    }
+    if (projectIds.length > SquadRosterRules.maxProjects) {
+      throw ValidationException(
+        'Choose at most ${SquadRosterRules.maxProjects} projects.',
+      );
+    }
     if (author == null) {
       throw const AuthException('Sign in to move somebody between squads.');
     }
@@ -81,7 +95,11 @@ class MockSquadRosterRepository implements SquadRosterRepository {
     );
     if (problem != null) throw PermissionException(problem);
 
-    final placement = SquadPlacement(userId: userId, squadId: squadId);
+    final placement = SquadPlacement(
+      userId: userId,
+      squadId: squadId,
+      projectIds: projectIds,
+    );
     final index = _placements.indexWhere((p) => p.userId == userId);
     if (index >= 0) {
       _placements[index] = placement;

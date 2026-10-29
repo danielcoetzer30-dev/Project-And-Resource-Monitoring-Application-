@@ -22,5 +22,14 @@ abstract interface class SquadRosterRepository {
   ///
   /// Replaces whatever placement they had: somebody is on one squad at a time,
   /// because hours committed to two squads at once would be counted twice.
-  Future<void> place({required String userId, required String squadId});
+  ///
+  /// [projectIds] are the projects on that squad they are assigned to. Leaving
+  /// it empty clears them, so moving somebody never leaves them attached to a
+  /// project on a squad they have left. To change only their projects, place
+  /// them again on the squad they are already on.
+  Future<void> place({
+    required String userId,
+    required String squadId,
+    List<String> projectIds = const [],
+  });
 }

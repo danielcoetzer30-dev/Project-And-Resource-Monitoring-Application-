@@ -1,16 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/errors/exceptions.dart';
+import '../core/errors/failure.dart';
 import '../data/project_repository.dart';
 import '../models/app_user.dart';
+import '../models/project.dart';
 import '../models/squad.dart';
 import '../models/squad_member.dart';
+import '../routing/routes.dart';
 import '../state/auth_notifier.dart';
 import '../state/providers.dart';
 import '../theme/health_state_style.dart';
 import '../theme/tokens.dart';
 import '../theme/typography.dart';
+import '../widgets/confirm_dialog.dart';
 import '../widgets/panel.dart';
 import '../widgets/status_pill.dart';
 
@@ -40,6 +46,10 @@ class SquadsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     final squads = snapshot.squads;
+    final unplacedShown = [
+      for (final m in roster.unplaced)
+        if (m.role != UserRole.manager) m,
+    ];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -68,21 +78,74 @@ class SquadsScreen extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: Tokens.space3),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(Routes.members),
+                icon: const Icon(Icons.groups_outlined, size: 18),
+                label: const Text('View all members'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Tokens.beacon,
+                  side: const BorderSide(color: Tokens.rule),
+                  textStyle: AppType.bodyStrong,
+                  padding: const EdgeInsets.symmetric(vertical: Tokens.space3),
+                ),
+              ),
+            ),
+            if (user?.canChangeSettings ?? false) ...[
+              const SizedBox(width: Tokens.space3),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(Routes.squadForm),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('New squad'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Tokens.beacon,
+                    foregroundColor: Tokens.shaft,
+                    textStyle: AppType.bodyStrong,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: Tokens.space3,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: Tokens.space4),
+        if (squads.isEmpty)
+          Panel(
+            title: 'No squads yet',
+            child: Text(
+              (user?.canChangeSettings ?? false)
+                  ? 'Create the first squad, then place people on it from '
+                        'View all members.'
+                  : 'A lead or manager creates the squads. Once one exists '
+                        'it appears here.',
+              style: AppType.bodyMuted,
+            ),
+          ),
         for (final squad in squads) ...[
           _SquadCard(squad: squad, roster: roster, actor: user, squads: squads),
           const SizedBox(height: Tokens.space3),
         ],
-        if (roster.unplaced.isNotEmpty) ...[
+        // Managers are left off this list: nobody can place one, and they do
+        // not belong to a squad, so listing them here would only suggest
+        // somebody has been forgotten. They still appear on the members page.
+        if (unplacedShown.isNotEmpty) ...[
           const SizedBox(height: Tokens.space2),
-          _UnplacedCard(roster: roster, actor: user, squads: squads),
+          _UnplacedCard(members: unplacedShown, actor: user, squads: squads),
         ],
       ],
     );
   }
 }
 
-class _SquadCard extends StatelessWidget {
+class _SquadCard extends ConsumerWidget {
   const _SquadCard({
     required this.squad,
     required this.roster,
@@ -97,8 +160,52 @@ class _SquadCard extends StatelessWidget {
   /// Every squad, so the move sheet has somewhere to offer.
   final List<Squad> squads;
 
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    // The security rules cannot count, so the app checks that nothing is left
+    // attached before a squad goes. Deleting one with people or projects on it
+    // would leave placements and plans pointing at nothing.
+    final projects =
+        ref.read(healthSnapshotProvider).value?.projects ?? const [];
+    final hasProjects = projects.any(
+      (p) => p.squadId == squad.id && !p.isArchived,
+    );
+    if (roster.of(squad.id).isNotEmpty || hasProjects) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '${squad.name} still has '
+            '${roster.of(squad.id).isNotEmpty ? 'people' : 'projects'} on '
+            'it. Move them first, then delete the squad.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Delete ${squad.name}?',
+      body: 'The squad is removed for everyone. This cannot be undone.',
+      confirmLabel: 'Delete',
+    );
+    if (!confirmed) return;
+
+    // Not awaited: offline, Firestore holds the change.
+    unawaited(
+      ref.read(squadRepositoryProvider).delete(squad.id).catchError((
+        Object error,
+      ) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(failureFromException(error).message)),
+        );
+      }),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final trendDown = squad.velocityTrend < 0;
     final members = roster.of(squad.id);
 
@@ -130,6 +237,28 @@ class _SquadCard extends StatelessWidget {
                 ),
               ),
               StatusPill(state: squad.state),
+              if (actor?.canChangeSettings ?? false)
+                PopupMenuButton<String>(
+                  tooltip: 'Actions for ${squad.name}',
+                  icon: const Icon(
+                    Icons.more_vert,
+                    size: 20,
+                    color: Tokens.slate,
+                  ),
+                  onSelected: (action) {
+                    if (action == 'edit') {
+                      Navigator.of(
+                        context,
+                      ).pushNamed(Routes.squadForm, arguments: squad);
+                    } else {
+                      _delete(context, ref);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'edit', child: Text('Edit squad')),
+                    PopupMenuItem(value: 'delete', child: Text('Delete squad')),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: Tokens.space4),
@@ -219,7 +348,7 @@ class _Roster extends ConsumerWidget {
           Text('Nobody placed on this squad yet.', style: AppType.bodyMuted)
         else
           for (final member in members)
-            _MemberRow(
+            MemberRow(
               member: member,
               actor: actor,
               currentSquadId: squad.id,
@@ -238,12 +367,13 @@ class _Roster extends ConsumerWidget {
 /// dashboard says they are unaccounted for.
 class _UnplacedCard extends StatelessWidget {
   const _UnplacedCard({
-    required this.roster,
+    required this.members,
     required this.actor,
     required this.squads,
   });
 
-  final SquadRoster roster;
+  /// The people to list: everybody on no squad except managers.
+  final List<RosterMember> members;
   final AppUser? actor;
   final List<Squad> squads;
 
@@ -261,8 +391,8 @@ class _UnplacedCard extends StatelessWidget {
             style: AppType.bodyMuted,
           ),
           const SizedBox(height: Tokens.space3),
-          for (final member in roster.unplaced)
-            _MemberRow(
+          for (final member in members)
+            MemberRow(
               member: member,
               actor: actor,
               currentSquadId: '',
@@ -279,13 +409,19 @@ class _UnplacedCard extends StatelessWidget {
 /// The move control appears only when the signed-in person strictly outranks
 /// this one, which is [SquadRosterRules]. The rules refuse it again, so what
 /// is hidden here is a door that is already locked.
-class _MemberRow extends ConsumerWidget {
-  const _MemberRow({
+class MemberRow extends ConsumerWidget {
+  const MemberRow({
+    super.key,
     required this.member,
     required this.actor,
     required this.currentSquadId,
     required this.squads,
+    this.subtitle,
   });
+
+  /// A second line under the name, such as the squad when several are listed
+  /// together.
+  final String? subtitle;
 
   final RosterMember member;
   final AppUser? actor;
@@ -305,8 +441,20 @@ class _MemberRow extends ConsumerWidget {
           targetRole: member.role,
         );
 
+    // Projects are read from the snapshot already on screen, so a project
+    // that no longer exists is dropped rather than shown as an id.
+    final allProjects =
+        ref.watch(healthSnapshotProvider).value?.projects ?? const <Project>[];
+    final names = {for (final p in allProjects) p.id: p.name};
+    final projectNames = [
+      for (final id in member.projectIds)
+        if (names[id] != null) names[id]!,
+    ];
+
     return Semantics(
-      label: '${member.displayName}, ${member.role.label}',
+      label:
+          '${member.displayName}, ${member.role.label}'
+          '${projectNames.isEmpty ? '' : ', projects: ${projectNames.join(', ')}'}',
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: Tokens.space2),
@@ -315,10 +463,22 @@ class _MemberRow extends ConsumerWidget {
             const Icon(Icons.person_outline, size: 16, color: Tokens.slate),
             const SizedBox(width: Tokens.space3),
             Expanded(
-              child: Text(
-                member.displayName,
-                style: AppType.body,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.displayName,
+                    style: AppType.body,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null)
+                    Text(subtitle!, style: AppType.bodyMuted),
+                  if (projectNames.isNotEmpty)
+                    Text(
+                      'Projects: ${projectNames.join(', ')}',
+                      style: AppType.data,
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: Tokens.space2),
@@ -326,6 +486,16 @@ class _MemberRow extends ConsumerWidget {
               member.role.label.toUpperCase(),
               style: AppType.label.copyWith(fontSize: 10, color: Tokens.slate),
             ),
+            if (canMove && currentSquadId.isNotEmpty) ...[
+              const SizedBox(width: Tokens.space2),
+              IconButton(
+                onPressed: () => _openProjectSheet(context, ref, allProjects),
+                icon: const Icon(Icons.assignment_outlined, size: 18),
+                color: Tokens.beacon,
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Choose ${member.displayName}\'s projects',
+              ),
+            ],
             if (canMove) ...[
               const SizedBox(width: Tokens.space2),
               IconButton(
@@ -340,6 +510,48 @@ class _MemberRow extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Which of their squad's projects this person is assigned to.
+  Future<void> _openProjectSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<Project> allProjects,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final available = [
+      for (final p in allProjects)
+        if (p.squadId == currentSquadId && !p.isArchived) p,
+    ];
+
+    final chosen = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Tokens.seam,
+      builder: (context) => _ProjectSheet(
+        member: member,
+        projects: available,
+        selected: member.projectIds.toSet(),
+      ),
+    );
+    if (chosen == null) return;
+
+    try {
+      // Placing them again on the squad they are already on, with the new
+      // list. Same repository call, same rank check, same rules.
+      await ref
+          .read(squadRosterRepositoryProvider)
+          .place(
+            userId: member.userId,
+            squadId: currentSquadId,
+            projectIds: chosen,
+          );
+      messenger.showSnackBar(
+        SnackBar(content: Text('Updated ${member.displayName}\'s projects.')),
+      );
+    } on AppException catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 
   Future<void> _openMoveSheet(BuildContext context, WidgetRef ref) async {
@@ -392,6 +604,86 @@ class _MemberRow extends ConsumerWidget {
     activeProjectCount: 0,
     velocityTrend: 0,
   );
+}
+
+/// Pick the projects somebody is assigned to, from their squad's.
+class _ProjectSheet extends StatefulWidget {
+  const _ProjectSheet({
+    required this.member,
+    required this.projects,
+    required this.selected,
+  });
+
+  final RosterMember member;
+  final List<Project> projects;
+  final Set<String> selected;
+
+  @override
+  State<_ProjectSheet> createState() => _ProjectSheetState();
+}
+
+class _ProjectSheetState extends State<_ProjectSheet> {
+  late final Set<String> _selected = {...widget.selected};
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: Tokens.space3),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Tokens.space4,
+              Tokens.space2,
+              Tokens.space4,
+              Tokens.space3,
+            ),
+            child: Text(
+              '${widget.member.displayName}\'s projects',
+              style: AppType.heading,
+            ),
+          ),
+          const Divider(height: 1, color: Tokens.rule),
+          if (widget.projects.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(Tokens.space4),
+              child: Text(
+                'This squad has no projects yet.',
+                style: AppType.bodyMuted,
+              ),
+            )
+          else
+            for (final project in widget.projects)
+              CheckboxListTile(
+                value: _selected.contains(project.id),
+                onChanged: (checked) => setState(() {
+                  if (checked ?? false) {
+                    _selected.add(project.id);
+                  } else {
+                    _selected.remove(project.id);
+                  }
+                }),
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(project.name, style: AppType.bodyStrong),
+                subtitle: Text(project.client, style: AppType.bodyMuted),
+              ),
+          Padding(
+            padding: const EdgeInsets.all(Tokens.space4),
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(_selected.toList()),
+              style: FilledButton.styleFrom(
+                backgroundColor: Tokens.beacon,
+                foregroundColor: Tokens.shaft,
+                padding: const EdgeInsets.symmetric(vertical: Tokens.space3),
+              ),
+              child: const Text('Save projects'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Where to move somebody. Squads, plus taking them off every squad.

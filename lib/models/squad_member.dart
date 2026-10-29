@@ -16,14 +16,21 @@ import 'directory_entry.dart';
 ///    leaves memory, the anonymiser still aggregates before storage, and there
 ///    is no per-person field on any stored document. This adds membership, not
 ///    measurement.
-///  - A placement carries exactly one field, `squadId`. The name and role on
-///    screen are read from the directory, so this is not a second place names
-///    accumulate.
+///  - A placement carries a `squadId` and, optionally, the ids of the projects
+///    on that squad the person works on. Nothing else: no name, no hours, no
+///    figure. The name and role on screen are read from the directory, so this
+///    is not a second place names accumulate. The project list is the one
+///    addition since the original decision, and it is a list of ids a person
+///    was assigned to, not anything measured about them.
 ///  - Placement is an act of management and is recorded as one: only somebody
 ///    who strictly outranks you may move you, which is why [SquadRosterRules]
 ///    exists and why `firestore.rules` repeats it.
 class SquadPlacement {
-  const SquadPlacement({required this.userId, required this.squadId});
+  const SquadPlacement({
+    required this.userId,
+    required this.squadId,
+    this.projectIds = const [],
+  });
 
   /// The Firebase Auth uid, which is also the document id.
   final String userId;
@@ -32,6 +39,10 @@ class SquadPlacement {
   /// empty string rather than deleting, so a placement stays a record of a
   /// decision somebody made.
   final String squadId;
+
+  /// Projects, within [squadId], this person is assigned to. Always empty
+  /// when [squadId] is empty, and cleared when they move to another squad.
+  final List<String> projectIds;
 }
 
 /// One person as a squad roster shows them: a name, a role, and nothing else.
@@ -45,11 +56,15 @@ class RosterMember {
     required this.userId,
     required this.displayName,
     required this.role,
+    this.projectIds = const [],
   });
 
   final String userId;
   final String displayName;
   final UserRole role;
+
+  /// Ids of the projects they are assigned to.
+  final List<String> projectIds;
 }
 
 /// Every squad's roster, plus the people on no squad.
@@ -86,26 +101,27 @@ class SquadRoster {
     required List<DirectoryEntry> directory,
     required List<SquadPlacement> placements,
   }) {
-    final squadOf = <String, String>{
+    final placed = <String, SquadPlacement>{
       for (final placement in placements)
-        if (placement.squadId.isNotEmpty) placement.userId: placement.squadId,
+        if (placement.squadId.isNotEmpty) placement.userId: placement,
     };
 
     final bySquad = <String, List<RosterMember>>{};
     final unplaced = <RosterMember>[];
 
     for (final entry in directory) {
+      final placement = placed[entry.id];
       final member = RosterMember(
         userId: entry.id,
         displayName: entry.displayName,
         role: entry.role,
+        projectIds: placement?.projectIds ?? const [],
       );
 
-      final squadId = squadOf[entry.id];
-      if (squadId == null) {
+      if (placement == null) {
         unplaced.add(member);
       } else {
-        bySquad.putIfAbsent(squadId, () => []).add(member);
+        bySquad.putIfAbsent(placement.squadId, () => []).add(member);
       }
     }
 
@@ -139,6 +155,10 @@ class SquadRoster {
 /// is management, not self-service, so there is deliberately no "join a squad"
 /// for a developer and no "move myself" for anybody.
 abstract final class SquadRosterRules {
+  /// Most projects one person can be assigned to. `firestore.rules` repeats
+  /// it.
+  static const maxProjects = 20;
+
   /// Whether [actorRole] can place anybody at all. The gate on the screen.
   static bool canPlaceAnybody(UserRole actorRole) =>
       actorRole.outranks(UserRole.developer);

@@ -15,6 +15,8 @@ abstract final class Routes {
   static const scoringWeights = '/settings/weights';
   static const ingestionSources = '/settings/sources';
   static const projects = '/projects';
+  static const members = '/squads/members';
+  static const squadForm = '/squads/edit';
   static const editProject = '/projects/edit';
   static const connectSource = '/onboarding/connect';
   static const apiKey = '/settings/api-key';

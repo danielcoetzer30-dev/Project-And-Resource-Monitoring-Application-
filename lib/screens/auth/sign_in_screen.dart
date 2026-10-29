@@ -220,13 +220,21 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
             ),
             const SizedBox(height: Tokens.space3),
-            TextButton(
+            OutlinedButton(
               onPressed: _busy
                   ? null
                   : () => setState(() {
                       _isRegistering = !_isRegistering;
                       _error = null;
                     }),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Tokens.beacon,
+                side: const BorderSide(color: Tokens.beacon),
+                padding: const EdgeInsets.symmetric(vertical: Tokens.space4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Tokens.radiusSm),
+                ),
+              ),
               child: Text(
                 _isRegistering
                     ? 'I already have an account'

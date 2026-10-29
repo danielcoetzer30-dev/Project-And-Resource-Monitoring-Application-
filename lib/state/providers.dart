@@ -7,6 +7,7 @@ import '../data/comment_repository.dart';
 import '../data/firebase_auth_repository.dart';
 import '../data/firestore_comment_repository.dart';
 import '../data/firestore_project_plan_repository.dart';
+import '../data/firestore_squad_repository.dart';
 import '../data/firestore_squad_roster_repository.dart';
 import '../data/firestore_project_repository.dart';
 import '../data/firestore_messaging_repository.dart';
@@ -18,6 +19,7 @@ import '../data/project_repository.dart';
 import '../data/settings_repository.dart';
 import '../data/firestore_source_repository.dart';
 import '../data/source_repository.dart';
+import '../data/squad_repository.dart';
 import '../data/squad_roster_repository.dart';
 import '../models/comment.dart';
 import '../models/preferences.dart';
@@ -302,6 +304,18 @@ final projectPlanProvider = StreamProvider.autoDispose
       (ref, projectId) =>
           ref.watch(projectPlanRepositoryProvider).watchOne(projectId),
     );
+
+/// Creating, renaming and deleting squads.
+///
+/// Separate from [projectRepositoryProvider], which reads ingestion's output
+/// and cannot write: a squad's name and stated headcount are things a person
+/// states, and everything measured about it stays ingestion's. Writes are
+/// made as whoever is signed in.
+final squadRepositoryProvider = Provider<SquadRepository>((ref) {
+  final user = ref.watch(currentUserProvider);
+
+  return FirestoreSquadRepository(orgId: user?.orgId ?? '', author: user);
+});
 
 /// Who is on which squad.
 ///

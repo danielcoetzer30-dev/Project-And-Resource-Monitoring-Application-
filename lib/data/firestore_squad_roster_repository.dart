@@ -45,7 +45,21 @@ class FirestoreSquadRosterRepository implements SquadRosterRepository {
   }
 
   @override
-  Future<void> place({required String userId, required String squadId}) async {
+  Future<void> place({
+    required String userId,
+    required String squadId,
+    List<String> projectIds = const [],
+  }) async {
+    if (squadId.isEmpty && projectIds.isNotEmpty) {
+      throw const ValidationException(
+        'Choose a squad before choosing projects.',
+      );
+    }
+    if (projectIds.length > SquadRosterRules.maxProjects) {
+      throw ValidationException(
+        'Choose at most ${SquadRosterRules.maxProjects} projects.',
+      );
+    }
     if (author == null) {
       throw const AuthException('Sign in to move somebody between squads.');
     }
@@ -64,13 +78,32 @@ class FirestoreSquadRosterRepository implements SquadRosterRepository {
     );
     if (problem != null) throw PermissionException(problem);
 
-    await _members
-        .doc(userId)
-        .set(
-          SquadMemberDto.toMap(
-            SquadPlacement(userId: userId, squadId: squadId),
-          ),
-        );
+    try {
+      await _members
+          .doc(userId)
+          .set(
+            SquadMemberDto.toMap(
+              SquadPlacement(
+                userId: userId,
+                squadId: squadId,
+                projectIds: projectIds,
+              ),
+            ),
+          );
+    } on FirebaseException catch (error) {
+      // Said rather than thrown raw: the screen reports an AppException, and
+      // anything else would vanish and leave the roster looking unchanged.
+      throw switch (error.code) {
+        'permission-denied' => const PermissionException(
+          'The backend refused this move. Check that the latest security '
+          'rules are published and that that squad exists in the database.',
+        ),
+        'unavailable' || 'deadline-exceeded' => const NetworkException(
+          'The device could not reach the backend.',
+        ),
+        _ => ValidationException('The move could not be saved (${error.code}).'),
+      };
+    }
   }
 
   /// The role on the target's directory entry.
