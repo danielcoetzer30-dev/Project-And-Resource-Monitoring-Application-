@@ -5,8 +5,8 @@ import 'squad_repository.dart';
 
 /// An in-memory [SquadRepository], for tests and for running with no backend.
 ///
-/// Applies the same refusals as the real one — can you edit at all, is the
-/// input valid — so a test that passes here cannot rely on something
+/// Applies the same refusals as the real one, can you edit at all and is
+/// the input valid, so a test that passes here cannot rely on something
 /// Firestore would reject.
 class MockSquadRepository implements SquadRepository {
   MockSquadRepository({this.author});

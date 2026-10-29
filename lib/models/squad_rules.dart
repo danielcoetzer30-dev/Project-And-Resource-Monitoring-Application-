@@ -6,8 +6,8 @@ import 'squad.dart';
 /// `firestore.rules` repeats these limits. If you change one, change both.
 ///
 /// A person states two things about a squad: what it is called and how many
-/// people it says it has. Everything else a squad card shows — capacity
-/// committed, velocity, active projects — is measured, not stated, and is
+/// people it says it has. Everything else a squad card shows, capacity
+/// committed, velocity, active projects, is measured rather than stated and
 /// written by ingestion. A new squad starts with those at zero, and the rules
 /// refuse a client that tries to start one anywhere else, so nobody can create
 /// a squad that arrives already looking healthy.

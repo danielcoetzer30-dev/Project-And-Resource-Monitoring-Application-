@@ -57,20 +57,38 @@ abstract final class MemberSearch {
     return RegExp(buffer.toString());
   }
 
-  /// Number of single-letter changes to turn [a] into [b].
+  /// Number of typing mistakes between [a] and [b]: a letter inserted,
+  /// removed, replaced, or two adjacent letters typed the wrong way round.
+  ///
+  /// The transposition is why this is not plain edit distance. Swapping two
+  /// letters is the most common typing mistake there is, and counting `jhon`
+  /// as two mistakes away from `john` would put it outside the tolerance a
+  /// four-letter query is given, so the one typo people actually make would
+  /// be the one the search did not forgive.
   static int _distance(String a, String b) {
+    var beforePrevious = <int>[];
     var previous = List<int>.generate(b.length + 1, (i) => i);
     for (var i = 1; i <= a.length; i++) {
       final current = List<int>.filled(b.length + 1, 0)..[0] = i;
       for (var j = 1; j <= b.length; j++) {
         final cost = a[i - 1] == b[j - 1] ? 0 : 1;
-        final best = [
+        var best = [
           previous[j] + 1,
           current[j - 1] + 1,
           previous[j - 1] + cost,
         ].reduce((x, y) => x < y ? x : y);
+
+        if (i > 1 &&
+            j > 1 &&
+            a[i - 1] == b[j - 2] &&
+            a[i - 2] == b[j - 1]) {
+          final transposed = beforePrevious[j - 2] + 1;
+          if (transposed < best) best = transposed;
+        }
+
         current[j] = best;
       }
+      beforePrevious = previous;
       previous = current;
     }
     return previous[b.length];

@@ -269,18 +269,113 @@ void main() {
     });
   });
 
-  test('a stored placement is one field, and that field is the squad', () {
+  group('what a stored placement is allowed to carry', () {
     // The thing this feature must not become. A placement that could carry an
     // hours figure, an activity count or a name would be per-person
-    // measurement reached by the back door, and `firestore.rules` refuses any
-    // document with another key, so if this map ever grows, the rules start
-    // rejecting every write and the roster silently stops working.
-    final map = SquadMemberDto.toMap(
-      const SquadPlacement(userId: 'dev', squadId: 's1'),
-    );
+    // measurement reached by the back door, and `firestore.rules` accepts
+    // only `squadId` and `projectIds`, so if this map ever grows another key,
+    // the rules start rejecting every write and the roster silently stops
+    // working.
+    test('a plain placement is one field, and that field is the squad', () {
+      final map = SquadMemberDto.toMap(
+        const SquadPlacement(userId: 'dev', squadId: 's1'),
+      );
 
-    expect(map.keys, ['squadId']);
-    expect(map['squadId'], 's1');
+      expect(map.keys, ['squadId']);
+      expect(map['squadId'], 's1');
+    });
+
+    test('projects are stored as ids, and only when there are any', () {
+      final map = SquadMemberDto.toMap(
+        const SquadPlacement(
+          userId: 'dev',
+          squadId: 's1',
+          projectIds: ['p1', 'p2'],
+        ),
+      );
+
+      // The two the rules allow, and nothing else. Ids only: no name, no
+      // hours, no figure, which is what keeps this membership rather than
+      // measurement.
+      expect(map.keys.toSet(), {'squadId', 'projectIds'});
+      expect(map['projectIds'], ['p1', 'p2']);
+    });
+
+    test('an empty project list is left out rather than written as empty', () {
+      // The write replaces the whole document, so omitting the field is what
+      // clears it. It also means a plain move sends exactly what it sent
+      // before projects existed.
+      final map = SquadMemberDto.toMap(
+        const SquadPlacement(userId: 'dev', squadId: 's1', projectIds: []),
+      );
+
+      expect(map.keys, ['squadId']);
+    });
+  });
+
+  group('projects within a squad', () {
+    test('moving somebody to another squad clears their projects', () async {
+      // Otherwise a person stays attached to a project on a squad they have
+      // left, and the roster reports work they are no longer doing.
+      final repository = repositoryFor(manager);
+
+      await repository.place(
+        userId: 'dev',
+        squadId: 's1',
+        projectIds: ['p1', 'p2'],
+      );
+      await repository.place(userId: 'dev', squadId: 's2');
+
+      final roster = SquadRoster.from(
+        directory: directory,
+        placements: repository.placements,
+      );
+
+      expect(roster.of('s2').single.projectIds, isEmpty);
+    });
+
+    test('somebody on no squad cannot be assigned to a project', () async {
+      // `firestore.rules` refuses this too, because a project belongs to a
+      // squad: being on none and on one of its projects is not a state.
+      final repository = repositoryFor(manager);
+
+      await expectLater(
+        repository.place(userId: 'dev', squadId: '', projectIds: ['p1']),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('more projects than the rules allow is refused', () async {
+      final repository = repositoryFor(manager);
+
+      await expectLater(
+        repository.place(
+          userId: 'dev',
+          squadId: 's1',
+          projectIds: List.generate(
+            SquadRosterRules.maxProjects + 1,
+            (i) => 'p$i',
+          ),
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('the roster reads each person\'s projects from their placement', () {
+      final roster = SquadRoster.from(
+        directory: directory,
+        placements: const [
+          SquadPlacement(userId: 'dev', squadId: 's1', projectIds: ['p1']),
+          SquadPlacement(userId: 'lead', squadId: 's1'),
+        ],
+      );
+
+      final withProjects = roster.of('s1').firstWhere((m) => m.userId == 'dev');
+      final without = roster.of('s1').firstWhere((m) => m.userId == 'lead');
+
+      expect(withProjects.projectIds, ['p1']);
+      expect(without.projectIds, isEmpty);
+    });
   });
 
   group('the rules the screen and the security rules share', () {
