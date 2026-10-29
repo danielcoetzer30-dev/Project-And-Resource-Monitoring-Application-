@@ -9,9 +9,13 @@ rules_version = '2';
 //
 //   - Everything is denied unless a rule below allows it.
 //   - Organisation data is readable only by members of that organisation.
-//   - Projects, squads and signals are READ-ONLY to clients. They are written
-//     by ingestion, never by the app, which is what stops a team editing its
-//     own health scores.
+//   - Projects and signals are READ-ONLY to clients. They are written by
+//     ingestion, never by the app, which is what stops a team editing its own
+//     health scores.
+//   - A squad's name and stated headcount may be written by a lead or a
+//     manager, because those are stated rather than measured. Every measured
+//     figure on a squad is pinned to ingestion's value by the rule below, so
+//     the same guarantee holds.
 //   - Settings are the one thing a team may write, so scoring weights can be
 //     tuned from the app.
 //   - Comments on a signal are written by people, as themselves, and are
@@ -103,9 +107,57 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // A squad's name and stated headcount are things a person states, so a
+      // lead or a manager may write those two fields and nothing else. Every
+      // measured figure on the document stays ingestion's: a create must
+      // start them at zero, and an update must leave them exactly as they
+      // were. A team cannot raise its own capacity or velocity here any more
+      // than it can edit a project score above.
+      //
+      // maxName and maxHeadcount repeat SquadRules in
+      // lib/models/squad_rules.dart. Change one, change both.
       match /squads/{squadId} {
+
+        function statedFieldsValid(data) {
+          return data.name is string
+            && data.name.size() > 0
+            && data.name.size() <= 60
+            && data.headcount is int
+            && data.headcount >= 0
+            && data.headcount <= 99;
+        }
+
         allow read: if belongsToOrg(orgId);
-        allow write: if false;
+
+        // Exactly these fields, and the measured three start at zero.
+        allow create: if belongsToOrg(orgId)
+          && callerRole() != 'developer'
+          && request.resource.data.keys().hasOnly(
+               ['name', 'headcount', 'capacityUsed', 'activeProjectCount',
+                'velocityTrend', 'createdAt'])
+          && request.resource.data.keys().hasAll(
+               ['name', 'headcount', 'capacityUsed', 'activeProjectCount',
+                'velocityTrend'])
+          && statedFieldsValid(request.resource.data)
+          && request.resource.data.capacityUsed == 0
+          && request.resource.data.activeProjectCount == 0
+          && request.resource.data.velocityTrend == 0;
+
+        // An update is a merge, so request.resource.data is the whole
+        // document after the write. Pinning the measured fields to what they
+        // already are is what keeps them ingestion's.
+        allow update: if belongsToOrg(orgId)
+          && callerRole() != 'developer'
+          && statedFieldsValid(request.resource.data)
+          && request.resource.data.capacityUsed == resource.data.capacityUsed
+          && request.resource.data.activeProjectCount == resource.data.activeProjectCount
+          && request.resource.data.velocityTrend == resource.data.velocityTrend;
+
+        // Whether anybody is still placed on the squad, and whether a project
+        // still belongs to it, are counts. Rules cannot count, so the client
+        // checks both before offering this.
+        allow delete: if belongsToOrg(orgId)
+          && callerRole() != 'developer';
       }
 
       match /signals/{signalId} {
@@ -271,15 +323,33 @@ service cloud.firestore {
             || exists(/databases/$(database)/documents/organisations/$(orgId)/squads/$(squadId));
         }
 
+        // The projects within that squad somebody is assigned to. A list of
+        // ids and nothing else: still no name, no hours, no figure, so a
+        // placement cannot become a second place a person's details
+        // accumulate. Absent means none, which is what a plain move sends.
+        //
+        // Somebody on no squad cannot be assigned to a project on one, so an
+        // empty squadId refuses the field outright.
+        //
+        // maxProjects repeats SquadRosterRules in
+        // lib/models/squad_member.dart. Change one, change both.
+        function projectIdsValid() {
+          return !request.resource.data.keys().hasAny(['projectIds'])
+            || (request.resource.data.projectIds is list
+                && request.resource.data.projectIds.size() <= 20
+                && request.resource.data.squadId != '');
+        }
+
         allow read: if belongsToOrg(orgId);
 
         allow create, update: if belongsToOrg(orgId)
           && targetInThisOrg()
           && rankOf(callerRole()) > rankOf(roleOf(userId))
-          && request.resource.data.keys().hasOnly(['squadId'])
+          && request.resource.data.keys().hasOnly(['squadId', 'projectIds'])
           && request.resource.data.keys().hasAll(['squadId'])
           && request.resource.data.squadId is string
-          && squadExists(request.resource.data.squadId);
+          && squadExists(request.resource.data.squadId)
+          && projectIdsValid();
 
         allow delete: if false;
       }
